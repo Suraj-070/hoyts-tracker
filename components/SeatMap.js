@@ -119,14 +119,33 @@ function SeatMapContent({ data, col }) {
         </div>
       </div>
 
-      {/* Seat grid */}
-      <div style={{ overflowX: 'auto' }}>
+      {/* Seat grid — scale to fit container */}
+      <div style={{ width: '100%', overflowX: 'hidden' }}>
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          transformOrigin: 'top center',
+          transform: 'scale(var(--seat-scale, 1))',
+        }} ref={el => {
+          if (!el) return
+          const parent = el.parentElement
+          if (!parent) return
+          const gridW = el.scrollWidth
+          const parentW = parent.clientWidth
+          if (gridW > parentW) {
+            const scale = parentW / gridW
+            el.style.transform = `scale(${scale})`
+            el.style.marginBottom = `${-(gridW * (1 - scale) * 0.5)}px`
+          } else {
+            el.style.transform = 'scale(1)'
+            el.style.marginBottom = '0'
+          }
+        }}>
         {/* Rows — last row at top, row A at bottom (closest to screen) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
           {[...rows].reverse().map(row => (
             <div key={row.name} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <span style={{ fontFamily: MONO, fontSize: 8.5, color: 'rgba(255,255,255,0.35)', width: 12, textAlign: 'right', flexShrink: 0 }}>{row.name}</span>
-              <div style={{ display: 'flex', gap: 3 }}>
+              <div style={{ display: 'flex', gap: 4 }}>
                 {row.seats.map((seat, i) => (
                   <SeatDot key={i} seat={seat} />
                 ))}
@@ -136,11 +155,14 @@ function SeatMapContent({ data, col }) {
           ))}
         </div>
 
+        </div>{/* end rows wrapper */}
         {/* Screen — at bottom, closest to row A */}
         <div style={{ textAlign: 'center', marginTop: 10 }}>
           <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 2, color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase', marginBottom: 3 }}>Screen</div>
           <div style={{ display: 'inline-block', width: '55%', height: 2, background: 'linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)', borderRadius: 2 }} />
         </div>
+
+        </div>{/* end scale wrapper */}
 
         {/* Legend */}
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 12 }}>
@@ -172,12 +194,12 @@ function StatBox({ label, value, color }) {
 
 function SeatDot({ seat }) {
   if (seat.type === 'gap') {
-    return <div style={{ width: 13, height: 13 }} />
+    return <div style={{ width: 15, height: 15 }} />
   }
   if (seat.type === 'wheelchair') {
     return (
       <div title={`${seat.name}${seat.sold ? ' (Sold)' : ''}`} style={{
-        width: 13, height: 13, borderRadius: 3,
+        width: 15, height: 15, borderRadius: 3,
         background: seat.sold ? 'rgba(59,130,246,0.40)' : 'rgba(59,130,246,0.15)',
         border: '0.5px solid #3B82F6',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -198,7 +220,7 @@ function SeatDot({ seat }) {
   return (
     <div
       title={`${seat.name}${seat.sold ? ' (Sold)' : seat.unavailable ? ' (Unavailable)' : ' (Available)'}`}
-      style={{ width: 13, height: 13, borderRadius: 3, background: bg, border: `0.5px solid ${border}` }}
+      style={{ width: 15, height: 15, borderRadius: 3, background: bg, border: `0.5px solid ${border}` }}
     />
   )
 }

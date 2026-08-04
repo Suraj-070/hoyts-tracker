@@ -658,7 +658,7 @@ export default function App() {
               <div style={{ display:'flex', gap:8, marginBottom:24 }}>
                 <StatCard label="Halls" value={allSorted.length} />
                 <StatCard label="Total shows" value={totalShows} />
-                <StatCard label="Last show" value={latestStart} color={C.amberTxt} />
+                <StatCard label="Latest start" value={latestStart} color={C.amberTxt} />
               </div>
 
               {ALL_TYPES.map(t => (
