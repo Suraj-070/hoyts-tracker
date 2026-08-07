@@ -294,7 +294,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
                       )}
                     </div>
                   </div>
-                  {!s.disabled && s.sessionId && s.link && (
+                  {s.sessionId && (
                     <div style={{ padding:'0 14px 10px' }}>
                       <SeatMap sessionId={String(s.sessionId)} cinemaId={s.cinemaId || cinemaId} typeColor={col} />
                     </div>
