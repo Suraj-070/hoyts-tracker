@@ -248,7 +248,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
             <div style={{ flex:1, background:'var(--surface-1, #2A2B25)', borderRadius:8, padding:'8px 10px', border:'0.5px solid var(--border)' }}>
               <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase', color:'var(--text-muted, #7A7690)', fontWeight:400, marginBottom:3 }}>Ends</div>
               <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.70)', letterSpacing:'.5px', lineHeight:1 }}>
-                {last.runtime > 0 ? fmtTime(last.endMin) : '—'}
+                {last.runtime > 0 ? '~' + fmtTime(last.endMin) : '—'}
               </div>
             </div>
             <div style={{ flex:'.7', background:'var(--surface-1, #2A2B25)', borderRadius:8, padding:'8px 10px', border:'0.5px solid var(--border)' }}>
