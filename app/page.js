@@ -135,7 +135,7 @@ function Ticker({ sessions, movieMap }) {
 
   const placeholder = Array.from({ length: 6 }, (_, i) => (
     <span key={i} style={{ fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1.5, color:'#3a2800', padding:'0 24px', flexShrink:0 }}>
-      * HOYTS LAST SESSION TRACKER | LOAD YOUR CINEMA TO BEGIN
+      {'HOYTS LAST SESSION TRACKER | LOAD YOUR CINEMA TO BEGIN'}
     </span>
   ))
 
@@ -144,7 +144,7 @@ function Ticker({ sessions, movieMap }) {
         const last = hall.sessions[hall.sessions.length - 1]
         return (
           <span key={i} style={{ fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1.5, color:'#3a2800', padding:'0 24px', flexShrink:0 }}>
-            * {name} -- {last.movie} | LAST {fmtTime(last.startMin)}
+            {name + ' -- ' + last.movie + ' | LAST ' + fmtTime(last.startMin)}
           </span>
         )
       })
