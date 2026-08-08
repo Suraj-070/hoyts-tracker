@@ -342,10 +342,12 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
         <div style={{ padding:'12px 14px' }}>
           {/* Poster backdrop — blurred behind content */}
           <PosterBackdrop movieName={last.movie} movieId={last.movieId} />
-          <div style={{ position:'absolute', top:12, right:46, zIndex:2, pointerEvents:'none' }}><MoviePoster movieName={last.movie} movieId={last.movieId} size='md' /></div>
+
 
         {/* Top row */}
           <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8, gap:10 }}>
+            {/* Poster left side */}
+            <MoviePoster movieName={last.movie} movieId={last.movieId} size='md' />
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontFamily:MONO, fontSize:10, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.50)', fontWeight:400, marginBottom:4 }}>
                 {hallName}
@@ -428,7 +430,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
           </div>
           <div style={{ display:'flex', gap:6 }}>
             <div style={{ flex:1, background:'rgba(0,0,0,0.20)', borderRadius:8, padding:'8px 12px', border:'1px solid rgba(255,255,255,0.08)' }}>
-              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.35)', marginBottom:3 }}>~Ends</div>
+              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.35)', marginBottom:3 }}>Ends~</div>
               <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.70)', lineHeight:1 }}>{last.runtime > 0 ? '~' + fmtTime(last.endMin) : '—'}</div>
             </div>
             <div style={{ flex:1, background:'rgba(0,0,0,0.20)', borderRadius:8, padding:'8px 12px', border:'1px solid rgba(255,255,255,0.08)' }}>
