@@ -341,6 +341,10 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
         <div style={{ padding:'12px 14px' }}>
           {/* Poster backdrop */}
           <PosterBackdrop movieName={last.movie} movieId={last.movieId} />
+          {/* Poster thumbnail absolute top-right */}
+          <div style={{ position:'absolute', top:12, right:46, zIndex:2, pointerEvents:'none' }}>
+            <MoviePoster movieName={last.movie} movieId={last.movieId} size="md" />
+          </div>
           {/* Small poster thumbnail - top right corner */}
           <div style={{ position:'absolute', top:12, right:44, zIndex:2, pointerEvents:'none' }}>
             <MoviePoster movieName={last.movie} movieId={last.movieId} size="md" />
@@ -419,21 +423,38 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
             )}
           </div>
 
-          {/* Times */}
-          <div style={{ display:'flex', gap:6 }}>
-            <div style={{ flex:'1.3', background:'var(--surface-1, #2A2B25)', borderRadius:8, padding:'8px 10px', border:'0.5px solid var(--border)' }}>
-              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase', color:'var(--text-muted, #7A7690)', fontWeight:400, marginBottom:3 }}>Last session</div>
-              <div style={{ fontFamily:BEBAS, fontSize:'clamp(22px,5vw,28px)', color:col, letterSpacing:'1px', lineHeight:1 }}>{fmtTime(last.startMin)}</div>
+          {/* Times — Last session top full width, Ends+Runtime below */}
+        <div style={{ display:'flex', flexDirection:'column', gap:6, position:'relative', zIndex:1 }}>
+          <div style={{ background:'rgba(0,0,0,0.30)', borderRadius:8, padding:'10px 14px',
+            border:`1px solid ${col}35`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <div>
+              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase',
+                color:'rgba(255,255,255,0.45)', fontWeight:400, marginBottom:3 }}>Last Session</div>
+              <div style={{ fontFamily:BEBAS, fontSize:'clamp(28px,6vw,34px)', color:col,
+                letterSpacing:'1px', lineHeight:1 }}>{fmtTime(last.startMin)}</div>
             </div>
-            <div style={{ flex:1, background:'var(--surface-1, #2A2B25)', borderRadius:8, padding:'8px 10px', border:'0.5px solid var(--border)' }}>
-              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase', color:'var(--text-muted, #7A7690)', fontWeight:400, marginBottom:3 }}>Ends</div>
-              <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.70)', letterSpacing:'.5px', lineHeight:1 }}>
+            <div style={{ fontFamily:MONO, fontSize:10, color:'rgba(255,255,255,0.35)', letterSpacing:.5 }}>
+              {sess.length} show{sess.length!==1?'s':''}
+            </div>
+          </div>
+          <div style={{ display:'flex', gap:6 }}>
+            <div style={{ flex:1, background:'rgba(0,0,0,0.20)', borderRadius:8, padding:'8px 12px',
+              border:'1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase',
+                color:'rgba(255,255,255,0.35)', fontWeight:400, marginBottom:3 }}>~Ends</div>
+              <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.70)',
+                letterSpacing:'.5px', lineHeight:1 }}>
                 {last.runtime > 0 ? '~' + fmtTime(last.endMin) : '—'}
               </div>
             </div>
-            <div style={{ flex:'.7', background:'var(--surface-1, #2A2B25)', borderRadius:8, padding:'8px 10px', border:'0.5px solid var(--border)' }}>
-              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase', color:'var(--text-muted, #7A7690)', fontWeight:400, marginBottom:3 }}>Shows</div>
-              <div style={{ fontFamily:BEBAS, fontSize:'clamp(18px,4vw,24px)', color:'rgba(255,255,255,0.70)', letterSpacing:'.5px', lineHeight:1 }}>{sess.length}</div>
+            <div style={{ flex:1, background:'rgba(0,0,0,0.20)', borderRadius:8, padding:'8px 12px',
+              border:'1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase',
+                color:'rgba(255,255,255,0.35)', fontWeight:400, marginBottom:3 }}>Runtime</div>
+              <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.65)',
+                letterSpacing:'.5px', lineHeight:1 }}>
+                {last.runtime > 0 ? `${last.runtime}min` : '—'}
+              </div>
             </div>
           </div>
         </div>
