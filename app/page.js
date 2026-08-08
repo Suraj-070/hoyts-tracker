@@ -274,7 +274,7 @@ function PosterBackdrop({ movieName, movieId }) {
           position:'absolute', right:0, top:0,
           height:'100%', width:80,
           objectFit:'cover', objectPosition:'center top',
-          opacity:0.55,
+          opacity:0.80,
           maskImage:'linear-gradient(to left, rgba(0,0,0,0.85) 0%, transparent 100%)',
           WebkitMaskImage:'linear-gradient(to left, rgba(0,0,0,0.85) 0%, transparent 100%)',
         }}
@@ -339,8 +339,12 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
       >
         {/* Main card content */}
         <div style={{ padding:'12px 14px' }}>
-          {/* Poster backdrop — blurred behind content */}
+          {/* Poster backdrop */}
           <PosterBackdrop movieName={last.movie} movieId={last.movieId} />
+          {/* Small poster thumbnail - top right corner */}
+          <div style={{ position:'absolute', top:12, right:44, zIndex:2, pointerEvents:'none' }}>
+            <MoviePoster movieName={last.movie} movieId={last.movieId} size="md" />
+          </div>
 
         {/* Top row */}
           <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8, gap:10 }}>
@@ -353,7 +357,6 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
               </span>
             </div>
             <div style={{ display:'flex', alignItems:'flex-start', gap:8 }}>
-              <MoviePoster movieName={last.movie} movieId={last.movieId} size="sm" />
               <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4 }}>
               {/* Hall status dot */}
               {statusDot && (
@@ -377,7 +380,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
                 style={{ fontSize:16, color:'rgba(255,255,255,0.35)', transition:'transform .2s', transform: expanded ? 'rotate(180deg)' : 'none' }}
               />
               </div>{/* end dots+chevron col */}
-            </div>{/* end poster+controls row */}
+            </div>
           </div>
 
           {/* Movie title + status */}
