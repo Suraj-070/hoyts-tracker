@@ -503,7 +503,8 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
           </div>
         )}
         </div>{/* close expanded */}
-        </div>{/* close main */}
+        </div>{/* close main content div */}
+        </div>{/* close padding div */}
       </div>{/* close card */}
     </div>{/* close wrapper */}
   )
