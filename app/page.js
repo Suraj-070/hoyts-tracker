@@ -8,6 +8,38 @@ import {
 } from '../lib/utils'
 import SeatMap from '../components/SeatMap'
 
+// ─── Time helpers (must be before all components) ────────────────────────────
+function getNowMins() {
+  const now = new Date()
+  return now.getHours() * 60 + now.getMinutes()
+}
+
+function getHallStatus(sessions) {
+  const now = getNowMins()
+  for (const s of sessions) {
+    if (s.startMin <= now && now < s.endMin) return 'playing'
+  }
+  const last = sessions[sessions.length - 1]
+  if (now >= last.endMin) return 'done'
+  return 'upcoming'
+}
+
+function getCurrentSession(sessions) {
+  const now = getNowMins()
+  return sessions.find(s => s.startMin <= now && now < s.endMin) || null
+}
+
+function getNextSession(sessions) {
+  const now = getNowMins()
+  return sessions.find(s => s.startMin > now) || null
+}
+
+function minsToHuman(mins) {
+  if (!mins || mins < 1) return 'now'
+  if (mins < 60) return `${mins}m`
+  return `${Math.floor(mins / 60)}h ${mins % 60}m`
+}
+
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
   amber:    '#F0A500',
