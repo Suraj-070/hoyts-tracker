@@ -635,6 +635,9 @@ export default function App() {
   const cinema       = CINEMAS.find(c => c.id === cinemaId)
   const mergedMovies = { ...KNOWN_MOVIES, ...movieMap }
 
+  // Clear old caches on init
+  useEffect(() => { clearOldCaches() }, [])
+
   // Restore saved state
   useEffect(() => {
     const saved = localStorage.getItem('hoyts-cinema')
@@ -853,7 +856,28 @@ export default function App() {
             <SettingsRow label="Sessions loaded" value={sessions.length} />
             <SettingsRow label="Dates available" value={dates.length} />
             <SettingsRow label="Last updated"    value={lastFetched ? lastFetched.toLocaleTimeString('en-AU') : '—'} />
-            <button
+            <SettingsRow label="Cache"           value={(() => {
+              const c = loadSessionCache(cinemaId)
+              return c ? `${c.length} sessions (2 days)` : 'Empty'
+            })()} />
+            <div style={{ display:'flex', gap:8, marginTop:12, flexWrap:'wrap' }}>
+              <button onClick={() => fetchSessions(cinemaId)} disabled={loading}
+                style={{ fontFamily:SANS, fontWeight:600, fontSize:13, padding:'9px 14px', borderRadius:8,
+                  border:'0.5px solid rgba(255,255,255,0.12)', background:'rgba(0,0,0,0.20)',
+                  color:'#FFFFFF', cursor:'pointer' }}>
+                {loading ? 'Refreshing…' : 'Refresh now'}
+              </button>
+              <button onClick={() => {
+                localStorage.removeItem(CACHE_KEY(cinemaId))
+                setSessions([])
+                fetchSessions(cinemaId)
+              }} style={{ fontFamily:SANS, fontWeight:600, fontSize:13, padding:'9px 14px', borderRadius:8,
+                border:'0.5px solid rgba(255,87,87,0.30)', background:'transparent',
+                color:'#FF5757', cursor:'pointer' }}>
+                Clear Cache
+              </button>
+            </div>
+            <button style={{ display:'none' }}
               onClick={() => fetchSessions(cinemaId)}
               disabled={loading}
               style={{ marginTop:12, fontFamily:SANS, fontWeight:600, fontSize:13, padding:'9px 14px', borderRadius:8, border:'0.5px solid var(--border-strong)', background:'var(--surface-1, #2A2B25)', color:'var(--text-primary, #F5F3FF)', cursor:'pointer', transition:'background .15s' }}
