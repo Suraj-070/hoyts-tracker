@@ -240,6 +240,50 @@ function CinemaPicker({ value, onChange }) {
 }
 
 // ─── Hall Card ────────────────────────────────────────────────────────────────
+function PosterBackdrop({ movieName, movieId }) {
+  const [poster, setPoster] = useState(null)
+  const cacheKey = movieId || movieName
+
+  useEffect(() => {
+    if (!movieName || movieName === movieId) return
+    const saved = typeof window !== 'undefined' ? localStorage.getItem(`hoyts-poster-${cacheKey}`) : null
+    if (saved) { setPoster(saved); return }
+    fetch(`/api/poster?q=${encodeURIComponent(movieName)}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.poster) {
+          localStorage.setItem(`hoyts-poster-${cacheKey}`, d.poster)
+          setPoster(d.poster)
+        }
+      }).catch(() => {})
+  }, [movieName, cacheKey])
+
+  if (!poster) return null
+
+  return (
+    <div style={{
+      position:'absolute', inset:0, zIndex:0, pointerEvents:'none',
+      overflow:'hidden', borderRadius:12,
+    }}>
+      <img
+        src={poster}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position:'absolute', right:0, top:0,
+          height:'100%', width:'60%',
+          objectFit:'cover', objectPosition:'center top',
+          filter:'blur(3px) saturate(0.6)',
+          opacity:0.12,
+          maskImage:'linear-gradient(to left, rgba(0,0,0,0.8) 0%, transparent 100%)',
+          WebkitMaskImage:'linear-gradient(to left, rgba(0,0,0,0.8) 0%, transparent 100%)',
+        }}
+        onError={() => setPoster(null)}
+      />
+    </div>
+  )
+}
+
 function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "EGDENS" }) {
   const col  = typeColor[hall.typeId] || C.rec
   const bg   = typeBg[hall.typeId]   || C.recBg
@@ -295,8 +339,11 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
       >
         {/* Main card content */}
         <div style={{ padding:'12px 14px' }}>
-          {/* Top row */}
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8, gap:10 }}>
+          {/* Poster backdrop — blurred behind content */}
+          <PosterBackdrop movieName={last.movie} movieId={last.movieId} />
+
+        {/* Top row */}
+          <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8, gap:10 }}>
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontFamily:MONO, fontSize:10, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.50)', fontWeight:400, marginBottom:4 }}>
                 {hallName}
@@ -334,7 +381,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
           </div>
 
           {/* Movie title + status */}
-          <div style={{ marginBottom:10 }}>
+          <div style={{ marginBottom:10, position:'relative', zIndex:1 }}>
             <div style={{ fontFamily:SANS, fontSize:'clamp(15px,3.5vw,17px)', fontWeight:700, color:'#FFFFFF', lineHeight:1.3 }}>
               {last.movie}
             </div>
