@@ -573,7 +573,7 @@ function SkeletonGrid() {
 function EmptyState({ icon, title, sub }) {
   return (
     <div style={{ textAlign:'center', padding:'60px 20px' }}>
-      <div style={{ fontSize:40, marginBottom:14, opacity:.3 }}>{icon || '🎬'}</div>
+      <div style={{ fontSize:40, marginBottom:14, opacity:.3 }}>{icon || '[movie]'}</div>
       <div style={{ fontFamily:BEBAS, fontSize:22, color:'var(--text-secondary, #C4C0D4)', letterSpacing:'2px', marginBottom:6 }}>{title}</div>
       <div style={{ fontSize:13, color:'rgba(255,255,255,0.35)', lineHeight:1.7, maxWidth:280, margin:'0 auto' }}>{sub}</div>
     </div>
@@ -831,7 +831,7 @@ export default function App() {
           )}
 
           {!loading && !error && sessions.length > 0 && Object.keys(todayHalls).length === 0 && (
-            <EmptyState icon="🌙" title="No sessions today" sub="Nothing scheduled for today. Switch to Schedule to browse upcoming days." />
+            <EmptyState icon="night" title="No sessions today" sub="Nothing scheduled for today. Switch to Schedule to browse upcoming days." />
           )}
 
           {!loading && !error && Object.keys(todayHalls).length > 0 && (
@@ -865,7 +865,7 @@ export default function App() {
           {loading && <SkeletonGrid />}
 
           {!loading && !error && Object.keys(selHalls).length === 0 && (
-            <EmptyState icon="📅" title="No sessions" sub="Nothing scheduled for this day." />
+            <EmptyState icon="cal" title="No sessions" sub="Nothing scheduled for this day." />
           )}
 
           {!loading && !error && Object.keys(selHalls).length > 0 && (
