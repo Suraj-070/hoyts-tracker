@@ -423,6 +423,9 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
 
         </div>
 
+
+        </div>
+
         {/* Expanded session list */}
         {expanded && (
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.20)' }}>
