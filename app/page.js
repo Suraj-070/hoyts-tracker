@@ -265,20 +265,38 @@ function PosterBackdrop({ movieName, movieId }) {
       position:'absolute', inset:0, zIndex:0, pointerEvents:'none',
       overflow:'hidden', borderRadius:12,
     }}>
+      {/* Full blurred backdrop */}
       <img
         src={poster}
         alt=""
         aria-hidden="true"
         style={{
-          position:'absolute', right:0, top:0,
-          height:'100%', width:'60%',
+          position:'absolute', inset:0,
+          width:'100%', height:'100%',
           objectFit:'cover', objectPosition:'center top',
-          filter:'blur(3px) saturate(0.6)',
-          opacity:0.12,
-          maskImage:'linear-gradient(to left, rgba(0,0,0,0.8) 0%, transparent 100%)',
-          WebkitMaskImage:'linear-gradient(to left, rgba(0,0,0,0.8) 0%, transparent 100%)',
+          filter:'blur(24px) saturate(0.5) brightness(0.3)',
+          transform:'scale(1.1)',
+          opacity:0.9,
         }}
         onError={() => setPoster(null)}
+      />
+      {/* Dark overlay for readability */}
+      <div style={{
+        position:'absolute', inset:0,
+        background:'linear-gradient(135deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.40) 100%)',
+      }} />
+      {/* Sharp poster — right side */}
+      <img
+        src={poster}
+        alt=""
+        aria-hidden="true"
+        style={{
+          position:'absolute', right:0, top:0, bottom:0,
+          width:90, height:'100%',
+          objectFit:'cover', objectPosition:'center top',
+          maskImage:'linear-gradient(to left, rgba(0,0,0,1) 30%, transparent 100%)',
+          WebkitMaskImage:'linear-gradient(to left, rgba(0,0,0,1) 30%, transparent 100%)',
+        }}
       />
     </div>
   )
@@ -778,11 +796,7 @@ export default function App() {
     setSelectedDate(todayKey())
   }, [cinemaId])
 
-  // Auto-refresh every 5 min
-  useEffect(() => {
-    const t = setInterval(() => fetchSessions(cinemaId), 5 * 60 * 1000)
-    return () => clearInterval(t)
-  }, [cinemaId, fetchSessions])
+
 
   const byDate     = groupByDateAndHall(sessions, mergedMovies)
   const dates      = getUniqueDates(sessions)
