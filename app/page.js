@@ -379,8 +379,8 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
                 aria-hidden="true"
                 style={{ fontSize:16, color:'rgba(255,255,255,0.35)', transition:'transform .2s', transform: expanded ? 'rotate(180deg)' : 'none' }}
               />
-              </div>{/* end dots+chevron col */}
-            </div>{/* end poster+controls row */}
+              </div>
+            </div>
           </div>
 
           {/* Movie title + status */}
@@ -438,6 +438,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
               <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.65)', lineHeight:1 }}>{last.runtime > 0 ? last.runtime + 'min' : '—'}</div>
             </div>
           </div>
+        </div>
         </div>
 
         {/* Expanded session list */}
