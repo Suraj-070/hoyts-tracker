@@ -472,6 +472,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
           </div>
         )}
         </div>
+        </div>
       </div>
     </div>
   )
@@ -946,7 +947,7 @@ export default function App() {
                 style={{ fontFamily:SANS, fontWeight:600, fontSize:13, padding:'9px 14px', borderRadius:8,
                   border:'0.5px solid rgba(255,255,255,0.12)', background:'rgba(0,0,0,0.20)',
                   color:'#FFFFFF', cursor:'pointer' }}>
-                {loading ? 'Refreshing…' : 'Refresh now'}
+                {loading ? 'Refreshing...' : 'Refresh now'}
               </button>
               <button onClick={() => {
                 localStorage.removeItem(CACHE_KEY(cinemaId))
@@ -965,7 +966,7 @@ export default function App() {
               onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-0, #1E1F1A)'}
               onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-1, #2A2B25)'}
             >
-              {loading ? 'Refreshing…' : 'Refresh now'}
+              {loading ? 'Refreshing...' : 'Refresh now'}
             </button>
           </SettingsSection>
 
