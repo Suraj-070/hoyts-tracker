@@ -8,6 +8,44 @@ import {
 } from '../lib/utils'
 import SeatMap from '../components/SeatMap'
 
+// ─── Session cache helpers ────────────────────────────────────────────────────
+const CACHE_KEY = (id) => `hoyts-sessions-${id}`
+const MAX_AGE_MS = 2 * 24 * 60 * 60 * 1000 // 2 days
+
+function saveSessionCache(cinemaId, sessions) {
+  try {
+    localStorage.setItem(CACHE_KEY(cinemaId), JSON.stringify({ savedAt: Date.now(), sessions }))
+  } catch(e) {}
+}
+
+function loadSessionCache(cinemaId) {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY(cinemaId))
+    if (!raw) return null
+    const { savedAt, sessions } = JSON.parse(raw)
+    if (Date.now() - savedAt > MAX_AGE_MS) {
+      localStorage.removeItem(CACHE_KEY(cinemaId))
+      return null
+    }
+    const cutoff = Date.now() - MAX_AGE_MS
+    return sessions.filter(s => new Date(s.date || '').getTime() > cutoff)
+  } catch(e) { return null }
+}
+
+function clearOldCaches() {
+  try {
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('hoyts-sessions-'))
+      .forEach(key => {
+        try {
+          const { savedAt } = JSON.parse(localStorage.getItem(key))
+          if (Date.now() - savedAt > MAX_AGE_MS) localStorage.removeItem(key)
+        } catch(e) { localStorage.removeItem(key) }
+      })
+  } catch(e) {}
+}
+
+
 // ─── Time helpers (must be before all components) ────────────────────────────
 function getNowMins() {
   const now = new Date()
