@@ -144,7 +144,7 @@ function Ticker({ sessions, movieMap }) {
         const last = hall.sessions[hall.sessions.length - 1]
         return (
           <span key={i} style={{ fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1.5, color:'#3a2800', padding:'0 24px', flexShrink:0 }}>
-            ◆ {name} — {last.movie} · LAST {fmtTime(last.startMin)}
+            ◆ {name} -- {last.movie} · LAST {fmtTime(last.startMin)}
           </span>
         )
       })
@@ -326,7 +326,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
       >
         {/* Main card content */}
         <div style={{ padding:'12px 14px' }}>
-          {/* Poster backdrop — blurred behind content */}
+          {/* Poster backdrop -- blurred behind content */}
           <PosterBackdrop movieName={last.movie} movieId={last.movieId} />
 
         {/* Top row */}
@@ -415,11 +415,11 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
           <div style={{ display:'flex', gap:6 }}>
             <div style={{ flex:1, background:'rgba(0,0,0,0.20)', borderRadius:8, padding:'8px 12px', border:'1px solid rgba(255,255,255,0.08)' }}>
               <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.35)', marginBottom:3 }}>Ends</div>
-              <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.70)', lineHeight:1 }}>{last.runtime > 0 ? '~' + fmtTime(last.endMin) : '—'}</div>
+              <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.70)', lineHeight:1 }}>{last.runtime > 0 ? '~' + fmtTime(last.endMin) : '--'}</div>
             </div>
             <div style={{ flex:1, background:'rgba(0,0,0,0.20)', borderRadius:8, padding:'8px 12px', border:'1px solid rgba(255,255,255,0.08)' }}>
               <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.35)', marginBottom:3 }}>Runtime</div>
-              <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.65)', lineHeight:1 }}>{last.runtime > 0 ? last.runtime + 'min' : '—'}</div>
+              <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.65)', lineHeight:1 }}>{last.runtime > 0 ? last.runtime + 'min' : '--'}</div>
             </div>
           </div>
         </div>
@@ -797,7 +797,7 @@ export default function App() {
   const totalShows  = Object.values(todayHalls).reduce((a, h) => a + h.sessions.length, 0)
   const latestStart = allSorted.length
     ? fmtTime(Math.max(...allSorted.map(([, h]) => h.sessions[h.sessions.length - 1].startMin)))
-    : '—'
+    : '--'
 
   const wrap = { maxWidth:900, margin:'0 auto', padding:'20px 16px 0' }
 
@@ -931,10 +931,10 @@ export default function App() {
           </SettingsSection>
 
           <SettingsSection label="Status">
-            <SettingsRow label="Cinema"          value={cinema?.name || '—'} />
+            <SettingsRow label="Cinema"          value={cinema?.name || '--'} />
             <SettingsRow label="Sessions loaded" value={sessions.length} />
             <SettingsRow label="Dates available" value={dates.length} />
-            <SettingsRow label="Last updated"    value={lastFetched ? lastFetched.toLocaleTimeString('en-AU') : '—'} />
+            <SettingsRow label="Last updated"    value={lastFetched ? lastFetched.toLocaleTimeString('en-AU') : '--'} />
             <SettingsRow label="Cache"           value={(() => {
               const c = loadSessionCache(cinemaId)
               return c ? `${c.length} sessions (2 days)` : 'Empty'
