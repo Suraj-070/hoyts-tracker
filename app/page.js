@@ -265,38 +265,20 @@ function PosterBackdrop({ movieName, movieId }) {
       position:'absolute', inset:0, zIndex:0, pointerEvents:'none',
       overflow:'hidden', borderRadius:12,
     }}>
-      {/* Full blurred backdrop */}
+      {/* Sharp poster strip — far right only, fades into card */}
       <img
         src={poster}
         alt=""
         aria-hidden="true"
         style={{
-          position:'absolute', inset:0,
-          width:'100%', height:'100%',
+          position:'absolute', right:0, top:0,
+          height:'100%', width:80,
           objectFit:'cover', objectPosition:'center top',
-          filter:'blur(24px) saturate(0.5) brightness(0.3)',
-          transform:'scale(1.1)',
-          opacity:0.9,
+          opacity:0.55,
+          maskImage:'linear-gradient(to left, rgba(0,0,0,0.85) 0%, transparent 100%)',
+          WebkitMaskImage:'linear-gradient(to left, rgba(0,0,0,0.85) 0%, transparent 100%)',
         }}
         onError={() => setPoster(null)}
-      />
-      {/* Dark overlay for readability */}
-      <div style={{
-        position:'absolute', inset:0,
-        background:'linear-gradient(135deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.40) 100%)',
-      }} />
-      {/* Sharp poster — right side */}
-      <img
-        src={poster}
-        alt=""
-        aria-hidden="true"
-        style={{
-          position:'absolute', right:0, top:0, bottom:0,
-          width:90, height:'100%',
-          objectFit:'cover', objectPosition:'center top',
-          maskImage:'linear-gradient(to left, rgba(0,0,0,1) 30%, transparent 100%)',
-          WebkitMaskImage:'linear-gradient(to left, rgba(0,0,0,1) 30%, transparent 100%)',
-        }}
       />
     </div>
   )
