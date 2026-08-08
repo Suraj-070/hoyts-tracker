@@ -473,6 +473,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
         )}
         </div>
         </div>
+        </div>
       </div>
     </div>
   )
