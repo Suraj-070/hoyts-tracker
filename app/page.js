@@ -135,7 +135,7 @@ function Ticker({ sessions, movieMap }) {
 
   const placeholder = Array.from({ length: 6 }, (_, i) => (
     <span key={i} style={{ fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1.5, color:'#3a2800', padding:'0 24px', flexShrink:0 }}>
-      ◆ HOYTS LAST SESSION TRACKER · LOAD YOUR CINEMA TO BEGIN
+      > HOYTS LAST SESSION TRACKER | LOAD YOUR CINEMA TO BEGIN
     </span>
   ))
 
@@ -144,7 +144,7 @@ function Ticker({ sessions, movieMap }) {
         const last = hall.sessions[hall.sessions.length - 1]
         return (
           <span key={i} style={{ fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1.5, color:'#3a2800', padding:'0 24px', flexShrink:0 }}>
-            ◆ {name} -- {last.movie} · LAST {fmtTime(last.startMin)}
+            > {name} -- {last.movie} | LAST {fmtTime(last.startMin)}
           </span>
         )
       })
@@ -208,7 +208,7 @@ function CinemaPicker({ value, onChange }) {
           <div style={{ padding:'10px 12px', borderBottom:'0.5px solid var(--border, rgba(255,255,255,0.10))', position:'sticky', top:0, background:'var(--surface-2, #313229)' }}>
             <input
               autoFocus value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search cinemas…"
+              placeholder="Search cinemas..."
               style={{ width:'100%', fontFamily:SANS, fontSize:13 }}
             />
           </div>
@@ -379,7 +379,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
                 borderRadius:20, padding:'3px 10px' }}>
                 <div style={{ width:6, height:6, borderRadius:'50%', background:'#00D4A8', animation:'blip 1.2s ease-in-out infinite' }} />
                 <span style={{ fontFamily:MONO, fontSize:9, fontWeight:700, color:'#00D4A8', letterSpacing:1 }}>
-                  NOW PLAYING · ends in {minsToHuman(minsLeft)}
+                  NOW PLAYING - ends in {minsToHuman(minsLeft)}
                 </span>
               </div>
             )}
@@ -444,7 +444,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ fontSize:12, fontWeight:500, color:'var(--text-secondary, #C4C0D4)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{s.movie}</div>
                       {s.runtime > 0 && (
-                        <div style={{ fontFamily:MONO, fontSize:10, color:'rgba(255,255,255,0.35)', marginTop:1 }}>ends {fmtTime(s.endMin)} · {s.runtime}min</div>
+                        <div style={{ fontFamily:MONO, fontSize:10, color:'rgba(255,255,255,0.35)', marginTop:1 }}>ends {fmtTime(s.endMin)} . {s.runtime}min</div>
                       )}
                     </div>
                     <div style={{ display:'flex', gap:4, flexShrink:0 }}>
