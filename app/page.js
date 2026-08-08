@@ -246,13 +246,13 @@ function PosterBackdrop({ movieName, movieId }) {
 
   useEffect(() => {
     if (!movieName || movieName === movieId) return
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('hoyts-poster-' + cacheKey) : null
+    const saved = typeof window !== 'undefined' ? localStorage.getItem(`hoyts-poster-${cacheKey}`) : null
     if (saved) { setPoster(saved); return }
-    fetch('/api/poster?q=' + encodeURIComponent(movieName))
+    fetch(`/api/poster?q=${encodeURIComponent(movieName)}`)
       .then(r => r.json())
       .then(d => {
         if (d.poster) {
-          localStorage.setItem('hoyts-poster-' + cacheKey, d.poster)
+          localStorage.setItem(`hoyts-poster-${cacheKey}`, d.poster)
           setPoster(d.poster)
         }
       }).catch(() => {})
@@ -265,26 +265,21 @@ function PosterBackdrop({ movieName, movieId }) {
       position:'absolute', inset:0, zIndex:0, pointerEvents:'none',
       overflow:'hidden', borderRadius:12,
     }}>
-      {/* Full height poster — right side, wider, full card height */}
       <img
         src={poster}
         alt=""
         aria-hidden="true"
         style={{
           position:'absolute', right:0, top:0,
-          height:'100%', width:120,
+          height:'100%', width:'60%',
           objectFit:'cover', objectPosition:'center top',
-          opacity:0.90,
-          maskImage:'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, transparent 100%)',
-          WebkitMaskImage:'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, transparent 100%)',
+          filter:'blur(3px) saturate(0.6)',
+          opacity:0.12,
+          maskImage:'linear-gradient(to left, rgba(0,0,0,0.8) 0%, transparent 100%)',
+          WebkitMaskImage:'linear-gradient(to left, rgba(0,0,0,0.8) 0%, transparent 100%)',
         }}
         onError={() => setPoster(null)}
       />
-      {/* Subtle dark gradient so text stays readable */}
-      <div style={{
-        position:'absolute', inset:0,
-        background:'linear-gradient(to right, rgba(0,0,0,0) 50%, rgba(0,0,0,0.15) 100%)',
-      }} />
     </div>
   )
 }
@@ -348,10 +343,8 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
           {/* Poster backdrop — blurred behind content */}
           <PosterBackdrop movieName={last.movie} movieId={last.movieId} />
 
-
         {/* Top row */}
           <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8, gap:10 }}>
-            {/* Poster left side */}
             <MoviePoster movieName={last.movie} movieId={last.movieId} size='md' />
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontFamily:MONO, fontSize:10, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.50)', fontWeight:400, marginBottom:4 }}>
@@ -384,8 +377,8 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
                 aria-hidden="true"
                 style={{ fontSize:16, color:'rgba(255,255,255,0.35)', transition:'transform .2s', transform: expanded ? 'rotate(180deg)' : 'none' }}
               />
-              </div>
-            </div>
+              </div>{/* end dots+chevron col */}
+            </div>{/* end poster+controls row */}
           </div>
 
           {/* Movie title + status */}
@@ -425,7 +418,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
           </div>
 
           {/* Times */}
-        <div style={{ display:'flex', flexDirection:'column', gap:6, zIndex:1 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:6, position:'relative', zIndex:1 }}>
           <div style={{ background:'rgba(0,0,0,0.30)', borderRadius:8, padding:'10px 14px', border:'1px solid rgba(255,255,255,0.15)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
             <div>
               <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.45)', marginBottom:3 }}>Last Session</div>
@@ -435,7 +428,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
           </div>
           <div style={{ display:'flex', gap:6 }}>
             <div style={{ flex:1, background:'rgba(0,0,0,0.20)', borderRadius:8, padding:'8px 12px', border:'1px solid rgba(255,255,255,0.08)' }}>
-              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.35)', marginBottom:3 }}>Ends~</div>
+              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.35)', marginBottom:3 }}>Ends</div>
               <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.70)', lineHeight:1 }}>{last.runtime > 0 ? '~' + fmtTime(last.endMin) : '—'}</div>
             </div>
             <div style={{ flex:1, background:'rgba(0,0,0,0.20)', borderRadius:8, padding:'8px 12px', border:'1px solid rgba(255,255,255,0.08)' }}>
@@ -443,7 +436,6 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
               <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.65)', lineHeight:1 }}>{last.runtime > 0 ? last.runtime + 'min' : '—'}</div>
             </div>
           </div>
-        </div>
         </div>
 
         {/* Expanded session list */}
@@ -492,9 +484,6 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
             })}
           </div>
         )}
-        </div>
-        </div>
-        </div>
       </div>
     </div>
   )
@@ -792,7 +781,11 @@ export default function App() {
     setSelectedDate(todayKey())
   }, [cinemaId])
 
-
+  // Auto-refresh every 5 min
+  useEffect(() => {
+    const t = setInterval(() => fetchSessions(cinemaId), 5 * 60 * 1000)
+    return () => clearInterval(t)
+  }, [cinemaId, fetchSessions])
 
   const byDate     = groupByDateAndHall(sessions, mergedMovies)
   const dates      = getUniqueDates(sessions)
