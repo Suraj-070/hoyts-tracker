@@ -293,7 +293,6 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
   const sess = hall.sessions
   const last = sess[sess.length - 1]
 
-  // Auto-fetch occupancy for last session
   const [occupancy, setOccupancy] = useState(null)
   useEffect(() => {
     if (!last.sessionId) return
@@ -305,195 +304,160 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
 
   const blipColor = occupancy >= 95 ? '#FF3B3B' : occupancy >= 80 ? '#FF6B35' : null
 
-  // Hall status
   const [nowMins, setNowMins] = useState(getNowMins())
   useEffect(() => {
     const t = setInterval(() => setNowMins(getNowMins()), 30000)
     return () => clearInterval(t)
   }, [])
-  const hallStatus   = getHallStatus(sess)
-  const currentSess  = getCurrentSession(sess)
-  const nextSess     = getNextSession(sess)
-  const minsLeft     = currentSess ? currentSess.endMin - nowMins : null
-  const minsToNext   = nextSess ? nextSess.startMin - nowMins : null
 
-  const statusDot =
-    hallStatus === 'playing'  ? '#00D4A8' :
-    hallStatus === 'done'     ? 'rgba(255,255,255,0.20)' : null
+  const hallStatus  = getHallStatus(sess)
+  const currentSess = getCurrentSession(sess)
+  const nextSess    = getNextSession(sess)
+  const minsLeft    = currentSess ? currentSess.endMin - nowMins : null
+  const minsToNext  = nextSess    ? nextSess.startMin - nowMins  : null
+  const statusDot   = hallStatus === 'playing' ? '#00D4A8' : hallStatus === 'done' ? 'rgba(255,255,255,0.20)' : null
 
   return (
     <div
       className="fade-up"
-      style={{ animationDelay: `${delay}ms`, marginBottom:8 }}
+      style={{ animationDelay: `${delay}ms`, marginBottom: 8 }}
     >
       <div
         onClick={onToggle}
         style={{
-          background:'var(--surface-2, #313229)', border:`0.5px solid ${expanded ? 'var(--border-stronger, rgba(255,255,255,0.28))' : 'var(--border, rgba(255,255,255,0.10))'}`,
-          borderRadius:12, overflow:'hidden', cursor:'pointer',
-          transition:'border-color .15s, box-shadow .15s',
-          boxShadow: expanded ? 'var(--shadow-sm)' : 'none',
-          position:'relative',
+          background: 'rgba(0,0,0,0.25)',
+          border: `1px solid ${expanded ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.10)'}`,
+          borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
+          transition: 'border-color .15s, box-shadow .15s',
+          boxShadow: expanded ? '0 4px 20px rgba(0,0,0,0.4)' : 'none',
+          position: 'relative',
         }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-strong, rgba(255,255,255,0.18))' }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = expanded ? 'var(--border-stronger, rgba(255,255,255,0.28))' : 'var(--border, rgba(255,255,255,0.10))' }}
       >
-        {/* Main card content */}
-        <div style={{ padding:'12px 14px' }}>
-          {/* Poster backdrop */}
-          <PosterBackdrop movieName={last.movie} movieId={last.movieId} />
-          {/* Poster thumbnail — top right */}
-          <div style={{ position:'absolute', top:12, right:46, zIndex:2, pointerEvents:'none' }}>
-            <MoviePoster movieName={last.movie} movieId={last.movieId} size="md" />
-          </div>
+        {/* Poster backdrop */}
+        <PosterBackdrop movieName={last.movie} movieId={last.movieId} />
 
-        {/* Top row */}
-          <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8, gap:10 }}>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontFamily:MONO, fontSize:10, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.50)', fontWeight:400, marginBottom:4 }}>
+        {/* Poster thumbnail top-right */}
+        <div style={{ position: 'absolute', top: 12, right: 46, zIndex: 2, pointerEvents: 'none' }}>
+          <MoviePoster movieName={last.movie} movieId={last.movieId} size="md" />
+        </div>
+
+        {/* Main card content */}
+        <div style={{ padding: '12px 14px' }}>
+
+          {/* Top row: hall name + badge + controls */}
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, gap: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.50)', fontWeight: 400, marginBottom: 4 }}>
                 {hallName}
               </div>
-              <span style={{ fontFamily:SANS, fontSize:10, fontWeight:600, letterSpacing:.3, padding:'2px 8px', borderRadius:10, background:bg, color:txt, border:`0.5px solid ${bdr}` }}>
+              <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 600, letterSpacing: .3, padding: '2px 8px', borderRadius: 10, background: bg, color: txt, border: `0.5px solid ${bdr}` }}>
                 {lbl}
               </span>
             </div>
-            <div style={{ display:'flex', alignItems:'flex-start', gap:8 }}>
-              <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4 }}>
-              {/* Hall status dot */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               {statusDot && (
-                <div style={{
-                  width:8, height:8, borderRadius:'50%', background:statusDot, flexShrink:0,
-                  boxShadow: hallStatus === 'playing' ? `0 0 6px ${statusDot}` : 'none',
-                  animation: hallStatus === 'playing' ? 'blip 1.2s ease-in-out infinite' : 'none',
-                }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusDot, flexShrink: 0, boxShadow: hallStatus === 'playing' ? `0 0 6px ${statusDot}` : 'none', animation: hallStatus === 'playing' ? 'blip 1.2s ease-in-out infinite' : 'none' }} />
               )}
-              {/* Occupancy blip */}
               {blipColor && hallStatus !== 'done' && (
-                <div style={{
-                  width:8, height:8, borderRadius:'50%', background:blipColor, flexShrink:0,
-                  boxShadow:`0 0 6px ${blipColor}`,
-                  animation:'blip 1.2s ease-in-out infinite',
-                }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: blipColor, flexShrink: 0, boxShadow: `0 0 6px ${blipColor}`, animation: 'blip 1.2s ease-in-out infinite' }} />
               )}
-              <i
-                className="ti ti-chevron-down"
-                aria-hidden="true"
-                style={{ fontSize:16, color:'rgba(255,255,255,0.35)', transition:'transform .2s', transform: expanded ? 'rotate(180deg)' : 'none' }}
-              />
-              </div>
+              <i className="ti ti-chevron-down" aria-hidden="true" style={{ fontSize: 16, color: 'rgba(255,255,255,0.35)', transition: 'transform .2s', transform: expanded ? 'rotate(180deg)' : 'none' }} />
             </div>
           </div>
 
           {/* Movie title + status */}
-          <div style={{ marginBottom:10, position:'relative', zIndex:1 }}>
-            <div style={{ fontFamily:SANS, fontSize:'clamp(15px,3.5vw,17px)', fontWeight:700, color:'#FFFFFF', lineHeight:1.3 }}>
+          <div style={{ marginBottom: 10, position: 'relative', zIndex: 1 }}>
+            <div style={{ fontFamily: SANS, fontSize: 'clamp(15px,3.5vw,17px)', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3 }}>
               {last.movie}
             </div>
-            {/* Now playing banner */}
             {hallStatus === 'playing' && currentSess && (
-              <div style={{ marginTop:6, display:'inline-flex', alignItems:'center', gap:6,
-                background:'rgba(0,212,168,0.10)', border:'1px solid rgba(0,212,168,0.25)',
-                borderRadius:20, padding:'3px 10px' }}>
-                <div style={{ width:6, height:6, borderRadius:'50%', background:'#00D4A8', animation:'blip 1.2s ease-in-out infinite' }} />
-                <span style={{ fontFamily:MONO, fontSize:9, fontWeight:700, color:'#00D4A8', letterSpacing:1 }}>
+              <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,212,168,0.10)', border: '1px solid rgba(0,212,168,0.25)', borderRadius: 20, padding: '3px 10px' }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00D4A8', animation: 'blip 1.2s ease-in-out infinite' }} />
+                <span style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, color: '#00D4A8', letterSpacing: 1 }}>
                   NOW PLAYING · ends in {minsToHuman(minsLeft)}
                 </span>
               </div>
             )}
             {hallStatus === 'done' && (
-              <div style={{ marginTop:6, display:'inline-flex', alignItems:'center', gap:6,
-                background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.10)',
-                borderRadius:20, padding:'3px 10px' }}>
-                <span style={{ fontFamily:MONO, fontSize:9, color:'rgba(255,255,255,0.35)', letterSpacing:1 }}>
+              <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, padding: '3px 10px' }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1 }}>
                   DONE FOR THE NIGHT
                 </span>
               </div>
             )}
             {hallStatus === 'upcoming' && nextSess && minsToNext <= 30 && (
-              <div style={{ marginTop:6, display:'inline-flex', alignItems:'center', gap:6,
-                background:'rgba(240,165,0,0.10)', border:'1px solid rgba(240,165,0,0.25)',
-                borderRadius:20, padding:'3px 10px' }}>
-                <span style={{ fontFamily:MONO, fontSize:9, fontWeight:700, color:'#F0A500', letterSpacing:1 }}>
+              <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(240,165,0,0.10)', border: '1px solid rgba(240,165,0,0.25)', borderRadius: 20, padding: '3px 10px' }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, color: '#F0A500', letterSpacing: 1 }}>
                   STARTS IN {minsToHuman(minsToNext)}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Times — Last session top full width, Ends+Runtime below */}
-        <div style={{ display:'flex', flexDirection:'column', gap:6, position:'relative', zIndex:1 }}>
-          <div style={{ background:'rgba(0,0,0,0.30)', borderRadius:8, padding:'10px 14px',
-            border:`1px solid ${col}35`, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-            <div>
-              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase',
-                color:'rgba(255,255,255,0.45)', fontWeight:400, marginBottom:3 }}>Last Session</div>
-              <div style={{ fontFamily:BEBAS, fontSize:'clamp(28px,6vw,34px)', color:col,
-                letterSpacing:'1px', lineHeight:1 }}>{fmtTime(last.startMin)}</div>
-            </div>
-            <div style={{ fontFamily:MONO, fontSize:10, color:'rgba(255,255,255,0.35)', letterSpacing:.5 }}>
-              {sess.length} show{sess.length!==1?'s':''}
-            </div>
-          </div>
-          <div style={{ display:'flex', gap:6 }}>
-            <div style={{ flex:1, background:'rgba(0,0,0,0.20)', borderRadius:8, padding:'8px 12px',
-              border:'1px solid rgba(255,255,255,0.08)' }}>
-              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase',
-                color:'rgba(255,255,255,0.35)', fontWeight:400, marginBottom:3 }}>~Ends</div>
-              <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.70)',
-                letterSpacing:'.5px', lineHeight:1 }}>
-                {last.runtime > 0 ? '~' + fmtTime(last.endMin) : '—'}
+          {/* Times: Last Session top full-width, Ends + Runtime below */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, position: 'relative', zIndex: 1 }}>
+            <div style={{ background: 'rgba(0,0,0,0.30)', borderRadius: 8, padding: '10px 14px', border: `1px solid ${col}35`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', fontWeight: 400, marginBottom: 3 }}>Last Session</div>
+                <div style={{ fontFamily: BEBAS, fontSize: 'clamp(28px,6vw,34px)', color: col, letterSpacing: '1px', lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: .5 }}>
+                {sess.length} show{sess.length !== 1 ? 's' : ''}
               </div>
             </div>
-            <div style={{ flex:1, background:'rgba(0,0,0,0.20)', borderRadius:8, padding:'8px 12px',
-              border:'1px solid rgba(255,255,255,0.08)' }}>
-              <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1.5, textTransform:'uppercase',
-                color:'rgba(255,255,255,0.35)', fontWeight:400, marginBottom:3 }}>Runtime</div>
-              <div style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:'rgba(255,255,255,0.65)',
-                letterSpacing:'.5px', lineHeight:1 }}>
-                {last.runtime > 0 ? `${last.runtime}min` : '—'}
+            <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ flex: 1, background: 'rgba(0,0,0,0.20)', borderRadius: 8, padding: '8px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', fontWeight: 400, marginBottom: 3 }}>~Ends</div>
+                <div style={{ fontFamily: BEBAS, fontSize: 'clamp(16px,4vw,20px)', color: 'rgba(255,255,255,0.70)', letterSpacing: '.5px', lineHeight: 1 }}>
+                  {last.runtime > 0 ? '~' + fmtTime(last.endMin) : '—'}
+                </div>
+              </div>
+              <div style={{ flex: 1, background: 'rgba(0,0,0,0.20)', borderRadius: 8, padding: '8px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', fontWeight: 400, marginBottom: 3 }}>Runtime</div>
+                <div style={{ fontFamily: BEBAS, fontSize: 'clamp(16px,4vw,20px)', color: 'rgba(255,255,255,0.65)', letterSpacing: '.5px', lineHeight: 1 }}>
+                  {last.runtime > 0 ? `${last.runtime}min` : '—'}
+                </div>
               </div>
             </div>
           </div>
+
         </div>
 
         {/* Expanded session list */}
         {expanded && (
-          <div style={{ borderTop:'0.5px solid var(--border)', background:'var(--surface-1, #2A2B25)' }}>
-            <div style={{ padding:'8px 14px 4px', fontFamily:MONO, fontSize:10, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.40)', fontWeight:400 }}>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.20)' }}>
+            <div style={{ padding: '8px 14px 4px', fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.40)', fontWeight: 400 }}>
               All sessions
             </div>
             {sess.map((s, i) => {
               const isLast = i === sess.length - 1
               return (
-                <div key={i} style={{
-                  borderBottom: i < sess.length - 1 ? '0.5px solid var(--border, rgba(255,255,255,0.10))' : 'none',
-                  background: isLast ? 'rgba(0,0,0,0.20)' : 'transparent',
-                }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 14px' }}>
-                    <div style={{ fontFamily:MONO, fontSize:'clamp(11px,3vw,13px)', fontWeight: isLast ? 700 : 400, color: isLast ? '#FFFFFF' : 'rgba(255,255,255,0.55)', minWidth:70 }}>
+                <div key={i} style={{ borderBottom: i < sess.length - 1 ? '0.5px solid rgba(255,255,255,0.08)' : 'none', background: isLast ? 'rgba(0,0,0,0.20)' : 'transparent' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 'clamp(11px,3vw,13px)', fontWeight: isLast ? 700 : 400, color: isLast ? '#FFFFFF' : 'rgba(255,255,255,0.55)', minWidth: 70 }}>
                       {fmtTime(s.startMin)}
                     </div>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:12, fontWeight:500, color:'var(--text-secondary, #C4C0D4)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{s.movie}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.70)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.movie}</div>
                       {s.runtime > 0 && (
-                        <div style={{ fontFamily:MONO, fontSize:10, color:'rgba(255,255,255,0.35)', marginTop:1 }}>ends {fmtTime(s.endMin)} · {s.runtime}min</div>
+                        <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>~{fmtTime(s.endMin)} · {s.runtime}min</div>
                       )}
                     </div>
-                    <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+                    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                       {s.soldOut && <MicroBadge label="Sold out" bg={C.errBg} color={C.err} border={C.errBdr} />}
                       {s.sellingFast && !s.soldOut && <MicroBadge label="Fast" bg={C.amberBg} color={C.amberTxt} border={C.amberBdr} />}
                       {isLast && <MicroBadge label="Last" bg={bg} color={txt} border={bdr} />}
                       {s.link && !s.disabled && (
                         <a href={`https://hoyts.com.au${s.link}`} target="_blank" rel="noopener"
                           onClick={e => e.stopPropagation()}
-                          style={{ fontFamily:MONO, fontSize:8.5, fontWeight:700, letterSpacing:.5, padding:'2px 7px', borderRadius:6, background:'rgba(240,165,0,0.12)', color:'#F0A500', border:'0.5px solid rgba(240,165,0,0.30)', textDecoration:'none' }}>
+                          style={{ fontFamily: MONO, fontSize: 8.5, fontWeight: 700, letterSpacing: .5, padding: '2px 7px', borderRadius: 6, background: 'rgba(240,165,0,0.12)', color: '#F0A500', border: '0.5px solid rgba(240,165,0,0.30)', textDecoration: 'none' }}>
                           Book
                         </a>
                       )}
                     </div>
                   </div>
                   {s.sessionId && (
-                    <div style={{ padding:'0 14px 10px' }}>
+                    <div style={{ padding: '0 14px 10px' }}>
                       <SeatMap sessionId={String(s.sessionId)} cinemaId={s.cinemaId || cinemaId} typeColor={col} />
                     </div>
                   )}
@@ -502,9 +466,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
             })}
           </div>
         )}
-        </div>
-        </div>
-        </div>
+
       </div>
     </div>
   )
