@@ -181,7 +181,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
   // Auto-fetch occupancy for last session
   const [occupancy, setOccupancy] = useState(null)
   useEffect(() => {
-    if (!last.sessionId || !last.link || last.disabled) return
+    if (!last.sessionId) return
     fetch(`/api/hoyts/seats?sessionId=${last.sessionId}&cinemaId=${last.cinemaId || cinemaId}`)
       .then(r => r.json())
       .then(d => { if (d.summary) setOccupancy(d.summary.occupancyPct) })
@@ -189,6 +189,22 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
   }, [last.sessionId])
 
   const blipColor = occupancy >= 95 ? '#FF3B3B' : occupancy >= 80 ? '#FF6B35' : null
+
+  // Hall status
+  const [nowMins, setNowMins] = useState(getNowMins())
+  useEffect(() => {
+    const t = setInterval(() => setNowMins(getNowMins()), 30000)
+    return () => clearInterval(t)
+  }, [])
+  const hallStatus   = getHallStatus(sess)
+  const currentSess  = getCurrentSession(sess)
+  const nextSess     = getNextSession(sess)
+  const minsLeft     = currentSess ? currentSess.endMin - nowMins : null
+  const minsToNext   = nextSess ? nextSess.startMin - nowMins : null
+
+  const statusDot =
+    hallStatus === 'playing'  ? '#00D4A8' :
+    hallStatus === 'done'     ? 'rgba(255,255,255,0.20)' : null
 
   return (
     <div
@@ -211,7 +227,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
           {/* Top row */}
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8 }}>
             <div>
-              <div style={{ fontFamily:MONO, fontSize:9, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.45)', fontWeight:400, marginBottom:4 }}>
+              <div style={{ fontFamily:MONO, fontSize:10, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.50)', fontWeight:400, marginBottom:4 }}>
                 {hallName}
               </div>
               <span style={{ fontFamily:SANS, fontSize:10, fontWeight:600, letterSpacing:.3, padding:'2px 8px', borderRadius:10, background:bg, color:txt, border:`0.5px solid ${bdr}` }}>
@@ -219,7 +235,16 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
               </span>
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-              {blipColor && (
+              {/* Hall status dot */}
+              {statusDot && (
+                <div style={{
+                  width:8, height:8, borderRadius:'50%', background:statusDot, flexShrink:0,
+                  boxShadow: hallStatus === 'playing' ? `0 0 6px ${statusDot}` : 'none',
+                  animation: hallStatus === 'playing' ? 'blip 1.2s ease-in-out infinite' : 'none',
+                }} />
+              )}
+              {/* Occupancy blip */}
+              {blipColor && hallStatus !== 'done' && (
                 <div style={{
                   width:8, height:8, borderRadius:'50%', background:blipColor, flexShrink:0,
                   boxShadow:`0 0 6px ${blipColor}`,
@@ -234,9 +259,40 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
             </div>
           </div>
 
-          {/* Movie title */}
-          <div style={{ fontFamily:SANS, fontSize:'clamp(14px,3.5vw,16px)', fontWeight:700, color:'#FFFFFF', lineHeight:1.3, marginBottom:10 }}>
-            {last.movie}
+          {/* Movie title + status */}
+          <div style={{ marginBottom:10 }}>
+            <div style={{ fontFamily:SANS, fontSize:'clamp(15px,3.5vw,17px)', fontWeight:700, color:'#FFFFFF', lineHeight:1.3 }}>
+              {last.movie}
+            </div>
+            {/* Now playing banner */}
+            {hallStatus === 'playing' && currentSess && (
+              <div style={{ marginTop:6, display:'inline-flex', alignItems:'center', gap:6,
+                background:'rgba(0,212,168,0.10)', border:'1px solid rgba(0,212,168,0.25)',
+                borderRadius:20, padding:'3px 10px' }}>
+                <div style={{ width:6, height:6, borderRadius:'50%', background:'#00D4A8', animation:'blip 1.2s ease-in-out infinite' }} />
+                <span style={{ fontFamily:MONO, fontSize:9, fontWeight:700, color:'#00D4A8', letterSpacing:1 }}>
+                  NOW PLAYING · ends in {minsToHuman(minsLeft)}
+                </span>
+              </div>
+            )}
+            {hallStatus === 'done' && (
+              <div style={{ marginTop:6, display:'inline-flex', alignItems:'center', gap:6,
+                background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.10)',
+                borderRadius:20, padding:'3px 10px' }}>
+                <span style={{ fontFamily:MONO, fontSize:9, color:'rgba(255,255,255,0.35)', letterSpacing:1 }}>
+                  DONE FOR THE NIGHT
+                </span>
+              </div>
+            )}
+            {hallStatus === 'upcoming' && nextSess && minsToNext <= 30 && (
+              <div style={{ marginTop:6, display:'inline-flex', alignItems:'center', gap:6,
+                background:'rgba(240,165,0,0.10)', border:'1px solid rgba(240,165,0,0.25)',
+                borderRadius:20, padding:'3px 10px' }}>
+                <span style={{ fontFamily:MONO, fontSize:9, fontWeight:700, color:'#F0A500', letterSpacing:1 }}>
+                  STARTS IN {minsToHuman(minsToNext)}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Times */}
@@ -261,7 +317,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
         {/* Expanded session list */}
         {expanded && (
           <div style={{ borderTop:'0.5px solid var(--border)', background:'var(--surface-1, #2A2B25)' }}>
-            <div style={{ padding:'8px 14px 4px', fontFamily:MONO, fontSize:8.5, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.35)', fontWeight:400 }}>
+            <div style={{ padding:'8px 14px 4px', fontFamily:MONO, fontSize:10, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.40)', fontWeight:400 }}>
               All sessions
             </div>
             {sess.map((s, i) => {
@@ -278,7 +334,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ fontSize:12, fontWeight:500, color:'var(--text-secondary, #C4C0D4)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{s.movie}</div>
                       {s.runtime > 0 && (
-                        <div style={{ fontFamily:MONO, fontSize:9.5, color:'rgba(255,255,255,0.30)', marginTop:1 }}>ends {fmtTime(s.endMin)} · {s.runtime}min</div>
+                        <div style={{ fontFamily:MONO, fontSize:10, color:'rgba(255,255,255,0.35)', marginTop:1 }}>ends {fmtTime(s.endMin)} · {s.runtime}min</div>
                       )}
                     </div>
                     <div style={{ display:'flex', gap:4, flexShrink:0 }}>
@@ -328,7 +384,7 @@ function TypeSection({ typeId, halls, expandedHalls, toggleHall, prefix, cinemaI
       <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12, paddingBottom:10, borderBottom:'0.5px solid var(--border, rgba(255,255,255,0.10))' }}>
         <div style={{ width:3, height:18, borderRadius:2, background:col, flexShrink:0 }} />
         <span style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:col, letterSpacing:'2px' }}>{lbl}</span>
-        <span style={{ fontFamily:MONO, fontSize:9, color:'rgba(255,255,255,0.35)', fontWeight:400, marginLeft:'auto' }}>
+        <span style={{ fontFamily:MONO, fontSize:10, color:'rgba(255,255,255,0.40)', fontWeight:400, marginLeft:'auto' }}>
           {halls.length} hall{halls.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -374,7 +430,7 @@ function DateTabs({ dates, selected, onSelect }) {
 function StatCard({ label, value, color }) {
   return (
     <div style={{ flex:1, background:'var(--surface-1, #2A2B25)', borderRadius:10, padding:'10px 12px', border:'0.5px solid var(--border)' }}>
-      <div style={{ fontFamily:MONO, fontSize:8.5, letterSpacing:1.2, textTransform:'uppercase', color:'rgba(255,255,255,0.40)', fontWeight:400, marginBottom:4 }}>{label}</div>
+      <div style={{ fontFamily:MONO, fontSize:10, letterSpacing:1.2, textTransform:'uppercase', color:'rgba(255,255,255,0.40)', fontWeight:400, marginBottom:4 }}>{label}</div>
       <div style={{ fontFamily:BEBAS, fontSize:'clamp(24px,5vw,30px)', color: color || '#FFFFFF', letterSpacing:'1px', lineHeight:1 }}>{value}</div>
     </div>
   )
@@ -448,6 +504,7 @@ function BottomNav({ view, setView }) {
   const tabs = [
     { id:'tonight',  label:'Tonight',  icon:'ti-moon' },
     { id:'schedule', label:'Schedule', icon:'ti-calendar' },
+    { id:'closing',  label:'Closing',  icon:'ti-clock-off' },
     { id:'settings', label:'Settings', icon:'ti-settings' },
   ]
   return (
@@ -523,7 +580,7 @@ function Header({ cinemaId, setCinemaId, loading, lastFetched, onRefresh }) {
 function PageTitle({ eyebrow, title }) {
   return (
     <div style={{ marginBottom:18 }}>
-      <div style={{ fontFamily:MONO, fontSize:9.5, letterSpacing:2, color:'rgba(255,255,255,0.40)', textTransform:'uppercase', fontWeight:400, marginBottom:6 }}>{eyebrow}</div>
+      <div style={{ fontFamily:MONO, fontSize:11, letterSpacing:2, color:'rgba(255,255,255,0.45)', textTransform:'uppercase', fontWeight:400, marginBottom:6 }}>{eyebrow}</div>
       <div style={{ fontFamily:BEBAS, fontSize:'clamp(28px,6vw,40px)', color:'#FFFFFF', letterSpacing:'2px', lineHeight:1 }}>{title}</div>
     </div>
   )
@@ -566,14 +623,22 @@ export default function App() {
       const arr  = Array.isArray(data) ? data : []
       setSessions(arr)
       setLastFetched(new Date())
-      // Auto-fetch missing movie details
-      const ids     = [...new Set(arr.map(s => s.movieId).filter(Boolean))]
-      const missing = ids.filter(mid => !KNOWN_MOVIES[mid])
+      // Auto-fetch movie details for any ID without a name yet
+      const ids = [...new Set(arr.map(s => s.movieId).filter(Boolean))]
+      const missing = ids.filter(mid => {
+        const m = { ...KNOWN_MOVIES, ...movieMap }[mid]
+        return !m || !m.name
+      })
       if (missing.length > 0) {
         fetch(`/api/hoyts/films?ids=${missing.join(',')}`)
           .then(r => r.json())
           .then(map => {
-            const merged = { ...movieMap, ...map }
+            const merged = { ...movieMap }
+            Object.entries(map).forEach(([id, film]) => {
+              if (film && (film.name || film.runtime)) {
+                merged[id] = { ...(merged[id] || {}), ...film }
+              }
+            })
             setMovieMap(merged)
             localStorage.setItem('hoyts-movies', JSON.stringify(merged))
           }).catch(() => {})
@@ -692,6 +757,49 @@ export default function App() {
                 <TypeSection key={t} typeId={t} halls={selGroups[t]} expandedHalls={expandedHalls} toggleHall={toggleHall} prefix={`sch-${selectedDate}`} cinemaId={cinemaId} />
               ))}
             </>
+          )}
+        </div>
+      )}
+
+      {/* ── CLOSING BOARD ── */}
+      {view === 'closing' && (
+        <div className="fade-in">
+          <PageTitle eyebrow="Tonight" title="Closing Times" />
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {sortHalls(todayHalls).map(([name, hall], i) => {
+              const last = hall.sessions[hall.sessions.length - 1]
+              const col  = typeColor[hall.typeId] || C.rec
+              const status = getHallStatus(hall.sessions)
+              const currentSess = getCurrentSession(hall.sessions)
+              const nowMins = getNowMins()
+              const minsLeft = currentSess ? currentSess.endMin - nowMins : null
+              return (
+                <div key={name} style={{
+                  display:'flex', alignItems:'center', gap:14,
+                  background:'rgba(0,0,0,0.25)', border:`1px solid ${status==='playing'?col+'40':'rgba(255,255,255,0.08)'}`,
+                  borderLeft:`3px solid ${status==='done'?'rgba(255,255,255,0.15)':col}`,
+                  borderRadius:10, padding:'12px 16px',
+                  opacity: status === 'done' ? 0.45 : 1,
+                }}>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontFamily:MONO, fontSize:9, color:'rgba(255,255,255,0.40)', letterSpacing:1, textTransform:'uppercase', marginBottom:2 }}>{name}</div>
+                    <div style={{ fontFamily:SANS, fontSize:13, fontWeight:600, color:'#FFFFFF', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{last.movie}</div>
+                  </div>
+                  <div style={{ textAlign:'right', flexShrink:0 }}>
+                    <div style={{ fontFamily:BEBAS, fontSize:22, color: status==='done'?'rgba(255,255,255,0.25)':col, letterSpacing:1, lineHeight:1 }}>
+                      ~{fmtTime(last.endMin)}
+                    </div>
+                    <div style={{ fontFamily:MONO, fontSize:9, letterSpacing:.5, marginTop:2,
+                      color: status==='playing'?'#00D4A8': status==='done'?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.40)' }}>
+                      {status==='playing' ? `ends in ${minsToHuman(minsLeft)}` : status==='done' ? 'CLOSED' : `last @ ${fmtTime(last.startMin)}`}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          {Object.keys(todayHalls).length === 0 && (
+            <EmptyState title="No sessions today" sub="Switch cinema or check Schedule tab." />
           )}
         </div>
       )}
