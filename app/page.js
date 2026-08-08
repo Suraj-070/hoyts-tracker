@@ -246,13 +246,13 @@ function PosterBackdrop({ movieName, movieId }) {
 
   useEffect(() => {
     if (!movieName || movieName === movieId) return
-    const saved = typeof window !== 'undefined' ? localStorage.getItem(`hoyts-poster-${cacheKey}`) : null
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('hoyts-poster-' + cacheKey) : null
     if (saved) { setPoster(saved); return }
-    fetch(`/api/poster?q=${encodeURIComponent(movieName)}`)
+    fetch('/api/poster?q=' + encodeURIComponent(movieName))
       .then(r => r.json())
       .then(d => {
         if (d.poster) {
-          localStorage.setItem(`hoyts-poster-${cacheKey}`, d.poster)
+          localStorage.setItem('hoyts-poster-' + cacheKey, d.poster)
           setPoster(d.poster)
         }
       }).catch(() => {})
@@ -265,21 +265,26 @@ function PosterBackdrop({ movieName, movieId }) {
       position:'absolute', inset:0, zIndex:0, pointerEvents:'none',
       overflow:'hidden', borderRadius:12,
     }}>
-      {/* Sharp poster strip — far right only, fades into card */}
+      {/* Full height poster — right side, wider, full card height */}
       <img
         src={poster}
         alt=""
         aria-hidden="true"
         style={{
           position:'absolute', right:0, top:0,
-          height:'100%', width:80,
+          height:'100%', width:120,
           objectFit:'cover', objectPosition:'center top',
-          opacity:0.80,
-          maskImage:'linear-gradient(to left, rgba(0,0,0,0.85) 0%, transparent 100%)',
-          WebkitMaskImage:'linear-gradient(to left, rgba(0,0,0,0.85) 0%, transparent 100%)',
+          opacity:0.90,
+          maskImage:'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, transparent 100%)',
+          WebkitMaskImage:'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 50%, transparent 100%)',
         }}
         onError={() => setPoster(null)}
       />
+      {/* Subtle dark gradient so text stays readable */}
+      <div style={{
+        position:'absolute', inset:0,
+        background:'linear-gradient(to right, rgba(0,0,0,0) 50%, rgba(0,0,0,0.15) 100%)',
+      }} />
     </div>
   )
 }
