@@ -7,6 +7,7 @@ import {
   groupByDateAndHall, sortHalls, getUniqueDates
 } from '../lib/utils'
 import SeatMap from '../components/SeatMap'
+import MoviePoster from '../components/MoviePoster'
 
 // ─── Session cache helpers ────────────────────────────────────────────────────
 const CACHE_KEY = (id) => `hoyts-sessions-${id}`
@@ -295,8 +296,8 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
         {/* Main card content */}
         <div style={{ padding:'12px 14px' }}>
           {/* Top row */}
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8 }}>
-            <div>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8, gap:10 }}>
+            <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontFamily:MONO, fontSize:10, letterSpacing:1.5, textTransform:'uppercase', color:'rgba(255,255,255,0.50)', fontWeight:400, marginBottom:4 }}>
                 {hallName}
               </div>
@@ -304,7 +305,9 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
                 {lbl}
               </span>
             </div>
-            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+            <div style={{ display:'flex', alignItems:'flex-start', gap:8 }}>
+              <MoviePoster movieName={last.movie} movieId={last.movieId} size="sm" />
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4 }}>
               {/* Hall status dot */}
               {statusDot && (
                 <div style={{
@@ -326,7 +329,8 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
                 aria-hidden="true"
                 style={{ fontSize:16, color:'rgba(255,255,255,0.35)', transition:'transform .2s', transform: expanded ? 'rotate(180deg)' : 'none' }}
               />
-            </div>
+              </div>{/* end dots+chevron col */}
+            </div>{/* end poster+controls row */}
           </div>
 
           {/* Movie title + status */}
@@ -854,6 +858,7 @@ export default function App() {
                   borderRadius:10, padding:'12px 16px',
                   opacity: status === 'done' ? 0.45 : 1,
                 }}>
+                  <MoviePoster movieName={last.movie} movieId={last.movieId} size="sm" />
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontFamily:MONO, fontSize:9, color:'rgba(255,255,255,0.40)', letterSpacing:1, textTransform:'uppercase', marginBottom:2 }}>{name}</div>
                     <div style={{ fontFamily:SANS, fontSize:13, fontWeight:600, color:'#FFFFFF', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{last.movie}</div>
