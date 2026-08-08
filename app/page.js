@@ -333,6 +333,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
           borderRadius:12, overflow:'hidden', cursor:'pointer',
           transition:'border-color .15s, box-shadow .15s',
           boxShadow: expanded ? 'var(--shadow-sm)' : 'none',
+          position:'relative',
         }}
         onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-strong, rgba(255,255,255,0.18))' }}
         onMouseLeave={e => { e.currentTarget.style.borderColor = expanded ? 'var(--border-stronger, rgba(255,255,255,0.28))' : 'var(--border, rgba(255,255,255,0.10))' }}
@@ -341,12 +342,8 @@ function HallCard({ hallName, hall, expanded, onToggle, delay = 0, cinemaId = "E
         <div style={{ padding:'12px 14px' }}>
           {/* Poster backdrop */}
           <PosterBackdrop movieName={last.movie} movieId={last.movieId} />
-          {/* Poster thumbnail absolute top-right */}
+          {/* Poster thumbnail — top right */}
           <div style={{ position:'absolute', top:12, right:46, zIndex:2, pointerEvents:'none' }}>
-            <MoviePoster movieName={last.movie} movieId={last.movieId} size="md" />
-          </div>
-          {/* Small poster thumbnail - top right corner */}
-          <div style={{ position:'absolute', top:12, right:44, zIndex:2, pointerEvents:'none' }}>
             <MoviePoster movieName={last.movie} movieId={last.movieId} size="md" />
           </div>
 
