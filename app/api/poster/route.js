@@ -16,7 +16,14 @@ async function getHoytsMovies() {
     const d = await res.json()
     const arr = Array.isArray(d) ? d : d.movies || d.data || []
     const map = {}
-    arr.forEach(m => { if (m.vistaId) map[m.vistaId] = m.name })
+    arr.forEach(m => {
+      if (!m.vistaId) return
+      // vistaId can be comma-separated e.g. "HO00010000,HO00011219"
+      const ids = m.vistaId.split(',').map(s => s.trim())
+      ids.forEach(id => {
+        if (id) map[id] = { name: m.name, runtime: m.runtime?.minutes || m.duration || 0 }
+      })
+    })
     moviesCache = map
     cacheTime = Date.now()
     return map
@@ -43,11 +50,12 @@ export async function GET(request) {
 
   if (!q && !vistaId) return Response.json({ poster: null })
 
-  // If vistaId provided, look up name from HOYTS movies list first
+  const movies = await getHoytsMovies()
   let searchName = q
+
   if (vistaId) {
-    const movies = await getHoytsMovies()
-    searchName = movies[vistaId] || q
+    const found = movies[vistaId]
+    if (found) searchName = found.name
   }
 
   if (!searchName) return Response.json({ poster: null })
