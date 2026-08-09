@@ -322,10 +322,16 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                   <span style={{ fontFamily: MONO, fontSize: 8.5, color: 'rgba(0,212,168,0.70)', marginLeft: 'auto' }}>ends in {minsToHuman(minsLeft)}</span>
                 </div>
                 <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3 }}>{currentSess.movie}</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
-                  <div style={{ fontFamily: BEBAS, fontSize: 'clamp(18px,4vw,22px)', color: 'rgba(0,212,168,0.80)', letterSpacing: '1px', lineHeight: 1 }}>{fmtTime(currentSess.startMin)}</div>
+                <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                  <div style={{ flex: 1.3, background: 'rgba(0,0,0,0.20)', borderRadius: 8, padding: '6px 10px', border: '1px solid rgba(0,212,168,0.15)' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(0,212,168,0.50)', marginBottom: 2 }}>Start</div>
+                    <div style={{ fontFamily: BEBAS, fontSize: 'clamp(18px,4vw,22px)', color: 'rgba(0,212,168,0.90)', letterSpacing: '1px', lineHeight: 1 }}>{fmtTime(currentSess.startMin)}</div>
+                  </div>
                   {currentSess.runtime > 0 && (
-                    <div style={{ fontFamily: BEBAS, fontSize: 'clamp(16px,3.5vw,20px)', color: 'rgba(255,255,255,0.40)', letterSpacing: '1px', lineHeight: 1 }}>{'~' + fmtTime(currentSess.endMin)}</div>
+                    <div style={{ flex: 1.3, background: 'rgba(0,0,0,0.20)', borderRadius: 8, padding: '6px 10px', border: '1px solid rgba(0,212,168,0.15)' }}>
+                      <div style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(0,212,168,0.50)', marginBottom: 2 }}>~Ends</div>
+                      <div style={{ fontFamily: BEBAS, fontSize: 'clamp(18px,4vw,22px)', color: 'rgba(255,255,255,0.60)', letterSpacing: '1px', lineHeight: 1 }}>~{fmtTime(currentSess.endMin)}</div>
+                    </div>
                   )}
                 </div>
               </div>
@@ -340,13 +346,22 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
               {!isSameMovie && (
                 <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3, marginBottom: 4 }}>{last.movie}</div>
               )}
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-                <div style={{ fontFamily: BEBAS, fontSize: 'clamp(28px,6vw,36px)', color: hallStatus === 'done' ? 'rgba(255,255,255,0.30)' : col, letterSpacing: '1px', lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
+              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                <div style={{ flex: 1.3, background: 'rgba(0,0,0,0.30)', borderRadius: 8, padding: '8px 10px', border: '1px solid rgba(255,255,255,0.10)' }}>
+                  <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 3 }}>Start</div>
+                  <div style={{ fontFamily: BEBAS, fontSize: 'clamp(20px,4vw,26px)', color: hallStatus === 'done' ? 'rgba(255,255,255,0.25)' : col, letterSpacing: '1px', lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
+                </div>
                 {last.runtime > 0 && (
-                  <div style={{ fontFamily: BEBAS, fontSize: 'clamp(20px,4vw,26px)', color: 'rgba(255,255,255,0.50)', letterSpacing: '1px', lineHeight: 1 }}>~{fmtTime(last.endMin)}</div>
+                  <div style={{ flex: 1.3, background: 'rgba(0,0,0,0.30)', borderRadius: 8, padding: '8px 10px', border: '1px solid rgba(255,255,255,0.10)' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 3 }}>~Ends</div>
+                    <div style={{ fontFamily: BEBAS, fontSize: 'clamp(20px,4vw,26px)', color: 'rgba(255,255,255,0.60)', letterSpacing: '1px', lineHeight: 1 }}>~{fmtTime(last.endMin)}</div>
+                  </div>
                 )}
                 {last.runtime > 0 && (
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.30)' }}>{last.runtime}min</div>
+                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 8, padding: '8px 10px', border: '1px solid rgba(255,255,255,0.10)' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 3 }}>Runtime</div>
+                    <div style={{ fontFamily: BEBAS, fontSize: 'clamp(18px,4vw,22px)', color: 'rgba(255,255,255,0.50)', letterSpacing: '1px', lineHeight: 1 }}>{last.runtime}min</div>
+                  </div>
                 )}
               </div>
             </div>
