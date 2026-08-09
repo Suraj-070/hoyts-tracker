@@ -41,10 +41,10 @@ export default function MoviePoster({ movieName, movieId, size = 'sm' }) {
   if (err || !poster) return null
 
   const sizes = {
-    sm: { width: 36,  height: 54,  borderRadius: 4 },
-    md: { width: 52,  height: 78,  borderRadius: 6 },
-    lg: { width: 80,  height: 120, borderRadius: 8 },
-    xl: { width: 100, height: 150, borderRadius: 10 },
+    sm: { width: 36, height: 54,  borderRadius: 4 },
+    md: { width: 48, height: 72,  borderRadius: 6 },
+    lg: { width: 60, height: 90,  borderRadius: 8 },
+    xl: { width: 70, height: 105, borderRadius: 8 },
   }
   const s = sizes[size] || sizes.sm
 
