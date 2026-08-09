@@ -11,27 +11,26 @@ export default function MoviePoster({ movieName, movieId, size = 'sm' }) {
 
   useEffect(() => {
     if (!cacheKey) return
-    // Need either a real vistaId OR a real movie name (not the placeholder)
+    // Always try if we have a vistaId, OR if we have a real name
     const hasVistaId = movieId && movieId.startsWith('HO')
-    const hasName = movieName && movieName !== movieId && movieName !== 'Loading...' && movieName !== 'Unknown Film'
+    const hasName = movieName && movieName !== 'Loading...' && movieName !== 'Unknown Film'
     if (!hasVistaId && !hasName) return
 
-    // Check memory cache
+    // Memory cache
     if (posterCache[cacheKey]) { setPoster(posterCache[cacheKey]); return }
 
-    // Check localStorage - but skip null/bad entries
+    // localStorage cache - only use valid URLs
     try {
       const saved = localStorage.getItem('hoyts-poster-' + cacheKey)
-      if (saved && saved.startsWith('http')) {
+      if (saved && saved.startsWith('https://')) {
         posterCache[cacheKey] = saved
         setPoster(saved)
         return
       }
-      // Clear bad cache entry
       if (saved) localStorage.removeItem('hoyts-poster-' + cacheKey)
     } catch (e) {}
 
-    // Fetch - use vistaId directly if available (most reliable)
+    // Fetch - vistaId is most reliable, fallback to name
     const url = hasVistaId
       ? '/api/poster?vistaId=' + movieId
       : '/api/poster?q=' + encodeURIComponent(movieName)
@@ -48,31 +47,27 @@ export default function MoviePoster({ movieName, movieId, size = 'sm' }) {
         }
       })
       .catch(() => setErr(true))
-  }, [cacheKey, movieId, movieName])
+  }, [cacheKey])
 
   if (err || !poster) return null
 
   const sizes = {
-    sm:   { width: 36, height: 54,  borderRadius: 4 },
-    md:   { width: 48, height: 72,  borderRadius: 6 },
-    lg:   { width: 60, height: 90,  borderRadius: 8 },
-    xl:   { width: 70, height: 105, borderRadius: 8 },
+    sm: { width: 36,  height: 54,  borderRadius: 4 },
+    md: { width: 48,  height: 72,  borderRadius: 6 },
+    lg: { width: 60,  height: 90,  borderRadius: 8 },
+    xl: { width: 70,  height: 105, borderRadius: 8 },
   }
 
   if (size === 'full') {
     return (
       <div style={{
-        flexShrink: 0, alignSelf: 'stretch',
-        width: 160,
+        flexShrink: 0, alignSelf: 'stretch', width: 160,
         borderRadius: '8px 0 0 8px', overflow: 'hidden',
         border: '1px solid rgba(255,255,255,0.10)',
       }}>
-        <img
-          src={poster}
-          alt={movieName}
+        <img src={poster} alt={movieName}
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
-          onError={() => setErr(true)}
-        />
+          onError={() => setErr(true)} />
       </div>
     )
   }
@@ -85,14 +80,10 @@ export default function MoviePoster({ movieName, movieId, size = 'sm' }) {
       border: '1px solid rgba(255,255,255,0.12)',
       boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
     }}>
-      <img
-        src={poster}
-        alt={movieName}
-        width={s.width}
-        height={s.height}
+      <img src={poster} alt={movieName}
+        width={s.width} height={s.height}
         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-        onError={() => setErr(true)}
-      />
+        onError={() => setErr(true)} />
     </div>
   )
 }
