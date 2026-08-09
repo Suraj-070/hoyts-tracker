@@ -1,9 +1,37 @@
 const HOYTS_BASE = 'https://apim-aea.hoyts.com.au/cinemaapi-au-live/api'
+const MOVIES_URL = HOYTS_BASE + '/movies'
+const POSTER_BASE = 'https://www.hoyts.com.au/_next/image?url=https%3A%2F%2Fimages.hoyts.com.au%2F'
 
-function extract(data) {
-  const name = data.name || data.title || data.movieName || data.film?.name || data.Movie?.name || null
-  const runtime = Number(data.runtimeWithCredits || data.runtime || data.runTime || data.film?.runtime || data.Movie?.runtime || 0)
-  return { name, runtime, rating: data.rating || data.classification || null }
+let moviesCache = null
+let moviesCacheTime = 0
+const CACHE_TTL = 3600 * 1000 // 1 hour
+
+async function getAllMovies() {
+  if (moviesCache && Date.now() - moviesCacheTime < CACHE_TTL) return moviesCache
+  const res = await fetch(MOVIES_URL, {
+    headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+    next: { revalidate: 3600 },
+  })
+  if (!res.ok) throw new Error('movies list HTTP ' + res.status)
+  const d = await res.json()
+  const arr = Array.isArray(d) ? d : d.movies || d.data || []
+  // Build a map by vistaId
+  const map = {}
+  arr.forEach(m => {
+    if (m.vistaId) {
+      map[m.vistaId] = {
+        name: m.name,
+        runtime: m.runtime?.minutes || m.duration || 0,
+        slug: m.slug,
+        poster: m.posterImage ? POSTER_BASE + encodeURIComponent(m.posterImage) + '&w=400&q=75' : null,
+        rating: m.rating?.id || null,
+        summary: m.summary || null,
+      }
+    }
+  })
+  moviesCache = map
+  moviesCacheTime = Date.now()
+  return map
 }
 
 export async function GET(request) {
@@ -11,32 +39,18 @@ export async function GET(request) {
   const ids = (searchParams.get('ids') || '').split(',').map(s => s.trim()).filter(Boolean)
   if (ids.length === 0) return Response.json({ error: 'Pass ?ids=HO00010000' }, { status: 400 })
 
-  const headers = { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
-
-  const results = await Promise.allSettled(
-    ids.map(async (id) => {
-      const paths = ['/film/' + id, '/films/' + id, '/movies/' + id, '/movie/' + id, '/content/film/' + id]
-      for (const path of paths) {
-        try {
-          const res = await fetch(HOYTS_BASE + path, { headers, next: { revalidate: 3600 } })
-          if (!res.ok) continue
-          const data = await res.json()
-          const film = extract(data)
-          if (film.name) return { id, film }
-        } catch (e) { continue }
-      }
-      return { id, film: null }
+  try {
+    const allMovies = await getAllMovies()
+    const result = {}
+    ids.forEach(id => {
+      if (allMovies[id]) result[id] = allMovies[id]
     })
-  )
-
-  const map = {}
-  results.forEach(r => {
-    if (r.status === 'fulfilled' && r.value?.film) map[r.value.id] = r.value.film
-  })
-
-  return Response.json(map, { headers: { 'Access-Control-Allow-Origin': '*' } })
+    return Response.json(result, { headers: { 'Access-Control-Allow-Origin': '*' } })
+  } catch (e) {
+    return Response.json({ error: e.message }, { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } })
+  }
 }
 
 export async function OPTIONS() {
-  return new Response(null, { headers: { 'Access-Control-Allow-Origin': '*' } })
+  return new Response(null, { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET' } })
 }
