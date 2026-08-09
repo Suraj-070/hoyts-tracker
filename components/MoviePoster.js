@@ -24,7 +24,7 @@ export default function MoviePoster({ movieName, movieId, size = 'sm' }) {
       return
     }
     // Fetch from proxy
-    fetch(`/api/poster?q=${encodeURIComponent(movieName)}`)
+    fetch(movieId && movieId.startsWith('HO') ? '/api/poster?vistaId=' + movieId : '/api/poster?q=' + encodeURIComponent(movieName || ''))
       .then(r => r.json())
       .then(d => {
         if (d.poster) {
