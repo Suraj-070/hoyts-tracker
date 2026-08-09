@@ -84,3 +84,21 @@ input[type="number"]::-webkit-inner-spin-button {
   margin: 0;
 }
 input[type="number"] { -moz-appearance: textfield; }
+
+/* ── Mobile optimizations ───────────────────────────── */
+@media (max-width: 420px) {
+  /* Smaller bottom nav labels */
+  .bottom-nav-label { font-size: 8px; }
+
+  /* Prevent horizontal overflow */
+  * { box-sizing: border-box; }
+  body { overflow-x: hidden; }
+
+  /* Tighter section headers */
+  .type-section-header { padding-bottom: 6px; margin-bottom: 8px; }
+}
+
+@media (max-width: 360px) {
+  /* Very small phones - hide runtime box to save space */
+  .runtime-box { display: none; }
+}
