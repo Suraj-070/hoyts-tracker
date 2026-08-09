@@ -352,17 +352,12 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                 {!isSameMovie && (
                   <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.40)', marginBottom: 6 }}>{last.movie}</div>
                 )}
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 8, padding: '8px 10px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: 3 }}>Started</div>
-                    <div style={{ fontFamily: BEBAS, fontSize: 'clamp(18px,4vw,22px)', color: 'rgba(255,255,255,0.25)', letterSpacing: '1px', lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                  <div style={{ fontFamily: BEBAS, fontSize: 'clamp(18px,4vw,22px)', color: 'rgba(255,255,255,0.25)', letterSpacing: '1px', lineHeight: 1, flexShrink: 0 }}>{fmtTime(last.startMin)}</div>
                   {last.runtime > 0 && (
-                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 8, padding: '8px 10px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', marginBottom: 3 }}>Ended</div>
-                      <div style={{ fontFamily: BEBAS, fontSize: 'clamp(18px,4vw,22px)', color: 'rgba(255,87,87,0.60)', letterSpacing: '1px', lineHeight: 1 }}>~{fmtTime(last.endMin)}</div>
-                    </div>
+                    <div style={{ fontFamily: BEBAS, fontSize: 'clamp(16px,3.5vw,20px)', color: 'rgba(255,87,87,0.50)', letterSpacing: '1px', lineHeight: 1, flexShrink: 0 }}>~{fmtTime(last.endMin)}</div>
                   )}
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.20)', flexShrink: 0 }}>ended</div>
                 </div>
               </div>
             ) : isLastSession ? (
