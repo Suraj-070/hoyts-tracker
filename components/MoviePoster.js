@@ -55,7 +55,7 @@ export default function MoviePoster({ movieName, movieId, size = 'sm' }) {
         borderRadius: '8px 0 0 8px', overflow: 'hidden',
         border: '1px solid rgba(255,255,255,0.10)',
         background: '#111',
-        width: 100,
+        width: 133,
       }}>
         <img
           src={poster}
