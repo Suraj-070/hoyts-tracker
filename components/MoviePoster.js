@@ -41,13 +41,32 @@ export default function MoviePoster({ movieName, movieId, size = 'sm' }) {
   if (err || !poster) return null
 
   const sizes = {
-    sm: { width: 36, height: 54,  borderRadius: 4 },
-    md: { width: 48, height: 72,  borderRadius: 6 },
-    lg: { width: 60, height: 90,  borderRadius: 8 },
-    xl: { width: 70, height: 105, borderRadius: 8 },
+    sm:   { width: 36, height: 54,  borderRadius: 4 },
+    md:   { width: 48, height: 72,  borderRadius: 6 },
+    lg:   { width: 60, height: 90,  borderRadius: 8 },
+    xl:   { width: 70, height: 105, borderRadius: 8 },
   }
-  const s = sizes[size] || sizes.sm
 
+  // full = fills parent height, fixed width
+  if (size === 'full') {
+    return (
+      <div style={{
+        width: 90, alignSelf: 'stretch', flexShrink: 0,
+        borderRadius: '8px 0 0 8px', overflow: 'hidden',
+        border: '1px solid rgba(255,255,255,0.12)',
+        boxShadow: '2px 0 8px rgba(0,0,0,0.4)',
+      }}>
+        <img
+          src={poster}
+          alt={movieName}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+          onError={() => setErr(true)}
+        />
+      </div>
+    )
+  }
+
+  const s = sizes[size] || sizes.sm
   return (
     <div style={{
       width: s.width, height: s.height, flexShrink: 0,
