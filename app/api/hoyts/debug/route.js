@@ -1,36 +1,23 @@
-const MOVIES_URL = 'https://apim-aea.hoyts.com.au/cinemaapi-au-live/api/movies'
-
 export async function GET(request) {
-  const { searchParams } = new URL(request.url)
-  const vistaId = searchParams.get('id') || 'HO00011139'
+  const posterPath = 'mx/posters/au/ice-cream-man-b0505c5e.jpg'
+  const headers = { 'User-Agent': 'Mozilla/5.0' }
 
-  const res = await fetch(MOVIES_URL, {
-    headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
-    cache: 'no-store',
-  })
-  const d = await res.json()
-  const arr = Array.isArray(d) ? d : d.movies || d.data || []
-  const movie = arr.find(m => m.vistaId === vistaId)
-
-  if (!movie) return Response.json({ error: 'not found' })
-
-  // Test poster URLs
-  const posterPaths = [
-    'https://images.hoyts.com.au/' + movie.posterImage,
-    'https://www.hoyts.com.au/' + movie.posterImage,
-    'https://cdn.hoyts.com.au/' + movie.posterImage,
+  const urls = [
+    'https://www.hoyts.com.au/_next/image?url=https%3A%2F%2Fimages.hoyts.com.au%2F' + posterPath + '&w=400&q=75',
+    'https://www.hoyts.com.au/_next/image?url=%2F' + posterPath + '&w=400&q=75',
+    'https://media.hoyts.com.au/' + posterPath,
+    'https://assets.hoyts.com.au/' + posterPath,
+    'https://static.hoyts.com.au/' + posterPath,
   ]
 
-  const results = { movie: { name: movie.name, posterImage: movie.posterImage }, tests: {} }
-
-  for (const url of posterPaths) {
+  const results = {}
+  for (const url of urls) {
     try {
-      const r = await fetch(url, { method: 'HEAD', headers: { 'User-Agent': 'Mozilla/5.0' } })
-      results.tests[url] = { status: r.status, ok: r.ok, type: r.headers.get('content-type') }
+      const r = await fetch(url, { method: 'HEAD', headers, redirect: 'follow' })
+      results[url] = { status: r.status, ok: r.ok, type: r.headers.get('content-type') }
     } catch (e) {
-      results.tests[url] = { error: e.message }
+      results[url] = { error: e.message }
     }
   }
-
   return Response.json(results, { headers: { 'Access-Control-Allow-Origin': '*' } })
 }
