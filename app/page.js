@@ -345,7 +345,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,87,87,0.60)' }} />
-                    <span style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: 1, color: 'rgba(255,87,87,0.80)', textTransform: 'uppercase', fontWeight: 700 }}>Hall Closed</span>
+                    <span style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: 1, color: 'rgba(255,87,87,0.80)', textTransform: 'uppercase', fontWeight: 700 }}>Done for the Day</span>
                   </div>
                   <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.30)', letterSpacing: 1 }}>last show ended</span>
                 </div>
