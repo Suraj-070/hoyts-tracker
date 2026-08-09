@@ -276,12 +276,13 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   const minsLeft    = currentSess ? currentSess.endMin - nowMins : null
   const minsToNext  = nextSess ? nextSess.startMin - nowMins : null
   const statusDot   = hallStatus === 'playing' ? '#00D4A8' : hallStatus === 'done' ? 'rgba(255,255,255,0.20)' : null
+  const isLastSession = currentSess && currentSess.startMin === last.startMin
+  const isSameMovie   = currentSess && currentSess.movie === last.movie
+  const posterSess    = currentSess || last
 
   // Poster = current movie if playing, else last session movie
   const posterSess = currentSess || last
   const isSameMovie = currentSess && currentSess.movie === last.movie
-  // Is the currently playing session the last session of the night?
-  const isLastSession = currentSess && currentSess.startMin === last.startMin
 
   return (
     <div className="fade-up" style={{ animationDelay: delay + 'ms', marginBottom: 8 }}>
@@ -304,7 +305,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
 
             {/* Hall name + badge + chevron */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <div style={{ minWidth: 0 }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 3 }}>{hallName}</div>
                 <span style={{ fontFamily: SANS, fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 8, background: bg, color: txt, border: '0.5px solid ' + bdr }}>{lbl}</span>
               </div>
@@ -317,7 +318,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
 
             {/* NOW PLAYING - only when NOT the last session */}
             {currentSess && hallStatus === 'playing' && !isLastSession && (
-              <div style={{ marginBottom: 6, padding: '7px 10px', background: 'rgba(0,212,168,0.08)', border: '1px solid rgba(0,212,168,0.18)', borderRadius: 7 }}>
+              <div style={{ marginBottom: 5, padding: '7px 10px', background: 'rgba(0,212,168,0.08)', border: '1px solid rgba(0,212,168,0.18)', borderRadius: 7 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                     <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#00D4A8', animation: 'blip 1.2s ease-in-out infinite' }} />
@@ -332,7 +333,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
               </div>
             )}
 
-            {/* FINAL SHOW playing */}
+            {/* Status section: FINAL SHOW / DONE / LAST SESSION */}
             {isLastSession ? (
               <div style={{ padding: '7px 10px', background: 'rgba(240,165,0,0.08)', border: '1px solid rgba(240,165,0,0.22)', borderRadius: 7 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
@@ -376,52 +377,3 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
             )}
 
           </div>
-
-        {/* Expanded session list */}
-        {expanded && (
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.20)' }}>
-            <div style={{ padding: '8px 14px 4px', fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.40)', fontWeight: 400 }}>
-              All sessions
-            </div>
-            {sess.map(function(s, i) {
-              const isLast = i === sess.length - 1
-              return (
-                <div key={i} style={{ borderBottom: i < sess.length - 1 ? '0.5px solid rgba(255,255,255,0.08)' : 'none', background: isLast ? 'rgba(0,0,0,0.20)' : 'transparent' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: isLast ? 700 : 400, color: isLast ? '#FFFFFF' : 'rgba(255,255,255,0.55)', minWidth: 70 }}>
-                      {fmtTime(s.startMin)}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.70)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.movie}</div>
-                      {s.runtime > 0 && (
-                        <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>ends {fmtTime(s.endMin)} - {s.runtime}min</div>
-                      )}
-                    </div>
-                    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                      {s.soldOut && <MicroBadge label="Sold out" bg={C.errBg} color={C.err} border={C.errBdr} />}
-                      {s.sellingFast && !s.soldOut && <MicroBadge label="Fast" bg={C.amberBg} color={C.amberTxt} border={C.amberBdr} />}
-                      {isLast && <MicroBadge label="Last" bg={bg} color={txt} border={bdr} />}
-                      {s.link && !s.disabled && (
-                        <a href={'https://hoyts.com.au' + s.link} target="_blank" rel="noopener"
-                          onClick={function(e) { e.stopPropagation() }}
-                          style={{ fontFamily: MONO, fontSize: 8.5, fontWeight: 700, letterSpacing: .5, padding: '2px 7px', borderRadius: 6, background: 'rgba(240,165,0,0.12)', color: '#F0A500', border: '0.5px solid rgba(240,165,0,0.30)', textDecoration: 'none' }}>
-                          Book
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                  {s.sessionId && (
-                    <div style={{ padding: '0 14px 10px' }}>
-                      <SeatMap sessionId={String(s.sessionId)} cinemaId={s.cinemaId || cinemaId} typeColor={col} />
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-      </div>
-    </div>
-  )
-}
