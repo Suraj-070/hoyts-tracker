@@ -280,6 +280,8 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   // Poster = current movie if playing, else last session movie
   const posterSess = currentSess || last
   const isSameMovie = currentSess && currentSess.movie === last.movie
+  // Is the currently playing session the last session of the night?
+  const isLastSession = currentSess && currentSess.startMin === last.startMin
 
   return (
     <div className="fade-up" style={{ animationDelay: delay + 'ms', marginBottom: 8 }}>
@@ -313,8 +315,8 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
               </div>
             </div>
 
-            {/* NOW PLAYING section */}
-            {currentSess && hallStatus === 'playing' && (
+            {/* NOW PLAYING section - only show if current session is NOT the last session */}
+            {currentSess && hallStatus === 'playing' && !isLastSession && (
               <div style={{ marginBottom: 8, padding: '10px 12px', background: 'rgba(0,212,168,0.08)', border: '1px solid rgba(0,212,168,0.20)', borderRadius: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00D4A8', animation: 'blip 1.2s ease-in-out infinite', flexShrink: 0 }} />
@@ -363,7 +365,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                   )}
                 </div>
               </div>
-            ) : currentSess && currentSess.startMin === last.startMin ? (
+            ) : isLastSession ? (
               <div style={{ padding: '12px', background: 'rgba(240,165,0,0.06)', border: '1px solid rgba(240,165,0,0.25)', borderRadius: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#F0A500', animation: 'blip 1.2s ease-in-out infinite' }} />
