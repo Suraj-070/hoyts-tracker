@@ -294,8 +294,8 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
 
         <div style={{ padding: '12px 14px' }}>
 
-          <div style={{ display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', marginBottom: 8, gap: 12, position: 'relative', zIndex: 1 }}>
-            <MoviePoster movieName={last.movie} movieId={last.movieId} size="lg" />
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10, gap: 12, position: 'relative', zIndex: 1 }}>
+            <MoviePoster movieName={last.movie} movieId={last.movieId} size="md" />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.50)', fontWeight: 400, marginBottom: 4 }}>
                 {hallName}
