@@ -51,16 +51,16 @@ export default function MoviePoster({ movieName, movieId, size = 'sm' }) {
   if (size === 'full') {
     return (
       <div style={{
-        flexShrink: 0, alignSelf: 'stretch',
+        flexShrink: 0,
         borderRadius: '8px 0 0 8px', overflow: 'hidden',
         border: '1px solid rgba(255,255,255,0.10)',
-        background: '#0a0a0a',
-        display: 'flex', alignItems: 'center',
+        background: '#111',
+        width: 100,
       }}>
         <img
           src={poster}
           alt={movieName}
-          style={{ width: 'auto', height: '100%', maxWidth: 130, objectFit: 'contain', display: 'block' }}
+          style={{ width: '100%', height: 'auto', display: 'block' }}
           onError={() => setErr(true)}
         />
       </div>
