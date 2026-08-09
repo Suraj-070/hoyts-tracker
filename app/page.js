@@ -374,3 +374,54 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                 </div>
               </div>
             )}
+
+          </div>
+
+        {/* Expanded session list */}
+        {expanded && (
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.20)' }}>
+            <div style={{ padding: '8px 14px 4px', fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.40)', fontWeight: 400 }}>
+              All sessions
+            </div>
+            {sess.map(function(s, i) {
+              const isLast = i === sess.length - 1
+              return (
+                <div key={i} style={{ borderBottom: i < sess.length - 1 ? '0.5px solid rgba(255,255,255,0.08)' : 'none', background: isLast ? 'rgba(0,0,0,0.20)' : 'transparent' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: isLast ? 700 : 400, color: isLast ? '#FFFFFF' : 'rgba(255,255,255,0.55)', minWidth: 70 }}>
+                      {fmtTime(s.startMin)}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.70)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.movie}</div>
+                      {s.runtime > 0 && (
+                        <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>ends {fmtTime(s.endMin)} - {s.runtime}min</div>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                      {s.soldOut && <MicroBadge label="Sold out" bg={C.errBg} color={C.err} border={C.errBdr} />}
+                      {s.sellingFast && !s.soldOut && <MicroBadge label="Fast" bg={C.amberBg} color={C.amberTxt} border={C.amberBdr} />}
+                      {isLast && <MicroBadge label="Last" bg={bg} color={txt} border={bdr} />}
+                      {s.link && !s.disabled && (
+                        <a href={'https://hoyts.com.au' + s.link} target="_blank" rel="noopener"
+                          onClick={function(e) { e.stopPropagation() }}
+                          style={{ fontFamily: MONO, fontSize: 8.5, fontWeight: 700, letterSpacing: .5, padding: '2px 7px', borderRadius: 6, background: 'rgba(240,165,0,0.12)', color: '#F0A500', border: '0.5px solid rgba(240,165,0,0.30)', textDecoration: 'none' }}>
+                          Book
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  {s.sessionId && (
+                    <div style={{ padding: '0 14px 10px' }}>
+                      <SeatMap sessionId={String(s.sessionId)} cinemaId={s.cinemaId || cinemaId} typeColor={col} />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+      </div>
+    </div>
+  )
+}
