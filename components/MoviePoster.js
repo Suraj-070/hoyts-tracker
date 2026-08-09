@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-// Cache poster URLs in memory so we don't re-fetch
 const posterCache = {}
 
 export default function MoviePoster({ movieName, movieId, size = 'sm' }) {
@@ -11,32 +10,45 @@ export default function MoviePoster({ movieName, movieId, size = 'sm' }) {
   const cacheKey = movieId || movieName
 
   useEffect(() => {
-    if (!movieName || movieName === movieId) return // no name yet
-    if (posterCache[cacheKey]) {
-      setPoster(posterCache[cacheKey])
-      return
-    }
-    // Check localStorage
-    const saved = localStorage.getItem(`hoyts-poster-${cacheKey}`)
-    if (saved) {
-      posterCache[cacheKey] = saved
-      setPoster(saved)
-      return
-    }
-    // Fetch from proxy
-    fetch(movieId && movieId.startsWith('HO') ? '/api/poster?vistaId=' + movieId : '/api/poster?q=' + encodeURIComponent(movieName || ''))
+    if (!cacheKey) return
+    // Need either a real vistaId OR a real movie name (not the placeholder)
+    const hasVistaId = movieId && movieId.startsWith('HO')
+    const hasName = movieName && movieName !== movieId && movieName !== 'Loading...' && movieName !== 'Unknown Film'
+    if (!hasVistaId && !hasName) return
+
+    // Check memory cache
+    if (posterCache[cacheKey]) { setPoster(posterCache[cacheKey]); return }
+
+    // Check localStorage - but skip null/bad entries
+    try {
+      const saved = localStorage.getItem('hoyts-poster-' + cacheKey)
+      if (saved && saved.startsWith('http')) {
+        posterCache[cacheKey] = saved
+        setPoster(saved)
+        return
+      }
+      // Clear bad cache entry
+      if (saved) localStorage.removeItem('hoyts-poster-' + cacheKey)
+    } catch (e) {}
+
+    // Fetch - use vistaId directly if available (most reliable)
+    const url = hasVistaId
+      ? '/api/poster?vistaId=' + movieId
+      : '/api/poster?q=' + encodeURIComponent(movieName)
+
+    fetch(url)
       .then(r => r.json())
       .then(d => {
         if (d.poster) {
           posterCache[cacheKey] = d.poster
-          localStorage.setItem(`hoyts-poster-${cacheKey}`, d.poster)
+          try { localStorage.setItem('hoyts-poster-' + cacheKey, d.poster) } catch(e) {}
           setPoster(d.poster)
         } else {
           setErr(true)
         }
       })
       .catch(() => setErr(true))
-  }, [movieName, cacheKey])
+  }, [cacheKey, movieId, movieName])
 
   if (err || !poster) return null
 
@@ -47,7 +59,6 @@ export default function MoviePoster({ movieName, movieId, size = 'sm' }) {
     xl:   { width: 70, height: 105, borderRadius: 8 },
   }
 
-  // full = fills parent height, fixed width
   if (size === 'full') {
     return (
       <div style={{
