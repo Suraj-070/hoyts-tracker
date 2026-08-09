@@ -300,10 +300,10 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
 
         <div style={{ display: 'flex', alignItems: 'stretch' }}>
           <MoviePoster movieName={posterSess.movie} movieId={posterSess.movieId} size="full" />
-          <div style={{ flex: 1, minWidth: 0, padding: '10px 10px', overflow: 'hidden' }}>
+          <div style={{ flex: 1, minWidth: 0, padding: 'clamp(6px,2vw,10px) clamp(6px,2vw,10px)', overflow: 'hidden', minWidth: 0 }}>
 
             {/* Hall name + badge + dots + chevron */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10, gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6, gap: 6 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: MONO, fontSize: 'clamp(8px,2vw,10px)', letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(255,255,255,0.50)', marginBottom: 3 }}>{hallName}</div>
                 <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 10, background: bg, color: txt, border: '0.5px solid ' + bdr }}>{lbl}</span>
@@ -317,13 +317,13 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
 
             {/* NOW PLAYING section - only show if current session is NOT the last session */}
             {currentSess && hallStatus === 'playing' && !isLastSession && (
-              <div style={{ marginBottom: 6, padding: '8px 10px', background: 'rgba(0,212,168,0.08)', border: '1px solid rgba(0,212,168,0.20)', borderRadius: 8 }}>
+              <div style={{ marginBottom: 5, padding: 'clamp(5px,1.5vw,8px) clamp(6px,2vw,10px)', background: 'rgba(0,212,168,0.08)', border: '1px solid rgba(0,212,168,0.20)', borderRadius: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00D4A8', animation: 'blip 1.2s ease-in-out infinite', flexShrink: 0 }} />
                   <span style={{ fontFamily: MONO, fontSize: 'clamp(7px,2vw,9px)', fontWeight: 700, color: '#00D4A8', letterSpacing: 1 }}>NOW PLAYING</span>
                   <span style={{ fontFamily: MONO, fontSize: 'clamp(7px,2vw,9px)', color: 'rgba(0,212,168,0.70)', marginLeft: 'auto', whiteSpace: 'nowrap' }}>ends in {minsToHuman(minsLeft)}</span>
                 </div>
-                <div style={{ fontFamily: SANS, fontSize: 'clamp(12px,3vw,14px)', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3 }}>{currentSess.movie}</div>
+                <div style={{ fontFamily: SANS, fontSize: 'clamp(11px,3vw,14px)', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.2 }}>{currentSess.movie}</div>
                 <div style={{ display: 'flex', gap: 4, marginTop: 5 }}>
                   <div style={{ flex: 1.3, background: 'rgba(0,0,0,0.20)', borderRadius: 8, padding: '6px 10px', border: '1px solid rgba(0,212,168,0.15)' }}>
                     <div style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(0,212,168,0.50)', marginBottom: 2 }}>Start</div>
@@ -345,7 +345,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,87,87,0.60)' }} />
-                    <span style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: 1, color: 'rgba(255,87,87,0.80)', textTransform: 'uppercase', fontWeight: 700 }}>Done for the Day</span>
+                    <span style={{ fontFamily: MONO, fontSize: 'clamp(7px,2vw,8.5px)', letterSpacing: 1, color: 'rgba(255,87,87,0.80)', textTransform: 'uppercase', fontWeight: 700 }}>Done for the Day</span>
                   </div>
                   <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.30)', letterSpacing: 1 }}>last show ended</span>
                 </div>
@@ -364,7 +364,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
               <div style={{ padding: '12px', background: 'rgba(240,165,0,0.06)', border: '1px solid rgba(240,165,0,0.25)', borderRadius: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#F0A500', animation: 'blip 1.2s ease-in-out infinite' }} />
-                  <span style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: 1, color: '#F0A500', fontWeight: 700, textTransform: 'uppercase' }}>Final Show - Playing Now</span>
+                  <span style={{ fontFamily: MONO, fontSize: 'clamp(7px,2vw,8.5px)', letterSpacing: 1, color: '#F0A500', fontWeight: 700, textTransform: 'uppercase' }}>Final Show - Playing Now</span>
                   <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(240,165,0,0.60)', marginLeft: 'auto' }}>ends in {minsToHuman(minsLeft)}</span>
                 </div>
                 {!isSameMovie && (
@@ -390,15 +390,15 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                 </div>
               </div>
             ) : (
-              <div style={{ padding: '8px 10px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 8 }}>
+              <div style={{ padding: 'clamp(5px,1.5vw,8px) clamp(6px,2vw,10px)', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: 1, color: 'rgba(255,255,255,0.40)', textTransform: 'uppercase' }}>Last Session Tonight</span>
+                  <span style={{ fontFamily: MONO, fontSize: 'clamp(7px,2vw,8.5px)', letterSpacing: 1, color: 'rgba(255,255,255,0.40)', textTransform: 'uppercase' }}>Last Session Tonight</span>
                   {minsToNext !== null && minsToNext > 0 && nextSess && nextSess.startMin === last.startMin && (
                     <span style={{ fontFamily: MONO, fontSize: 8, color: col, letterSpacing: 1 }}>in {minsToHuman(minsToNext)}</span>
                   )}
                 </div>
                 {!isSameMovie && (
-                  <div style={{ fontFamily: SANS, fontSize: 'clamp(12px,3vw,14px)', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3, marginBottom: 4 }}>{last.movie}</div>
+                  <div style={{ fontFamily: SANS, fontSize: 'clamp(11px,3vw,14px)', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.2, marginBottom: 4 }}>{last.movie}</div>
                 )}
                 <div style={{ display: 'flex', gap: 4, marginTop: 5 }}>
                   <div style={{ flex: 1, minWidth: 0, background: 'rgba(0,0,0,0.30)', borderRadius: 8, padding: '6px 8px', border: '1px solid rgba(255,255,255,0.10)' }}>
