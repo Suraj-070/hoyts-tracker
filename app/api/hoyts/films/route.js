@@ -1,35 +1,28 @@
 const HOYTS_BASE = 'https://apim-aea.hoyts.com.au/cinemaapi-au-live/api'
 
 function extract(data) {
-  return {
-    name: data.name || data.title || data.movieName || data.film?.name || null,
-    runtime: Number(data.runtimeWithCredits || data.runtime || data.runTime || data.film?.runtime || 0),
-    rating: data.rating || data.classification || null,
-    synopsis: data.synopsis || data.description || null,
-    posterUrl: data.posterUrl || data.imageUrl || null,
-  }
+  const name = data.name || data.title || data.movieName || data.film?.name || data.Movie?.name || null
+  const runtime = Number(data.runtimeWithCredits || data.runtime || data.runTime || data.film?.runtime || data.Movie?.runtime || 0)
+  return { name, runtime, rating: data.rating || data.classification || null }
 }
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const ids = (searchParams.get('ids') || '').split(',').map(s => s.trim()).filter(Boolean)
+  if (ids.length === 0) return Response.json({ error: 'Pass ?ids=HO00010000' }, { status: 400 })
 
-  if (ids.length === 0) {
-    return Response.json({ error: 'Pass ?ids=HO00010000,HO00010001' }, { status: 400 })
-  }
+  const headers = { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
 
   const results = await Promise.allSettled(
     ids.map(async (id) => {
-      for (const path of [`/film/${id}`, `/movies/${id}`, `/movie/${id}`]) {
+      const paths = ['/film/' + id, '/films/' + id, '/movies/' + id, '/movie/' + id, '/content/film/' + id]
+      for (const path of paths) {
         try {
-          const res = await fetch(`${HOYTS_BASE}${path}`, {
-            headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
-            next: { revalidate: 3600 },
-          })
+          const res = await fetch(HOYTS_BASE + path, { headers, next: { revalidate: 3600 } })
           if (!res.ok) continue
           const data = await res.json()
           const film = extract(data)
-          if (film.name || film.runtime > 0) return { id, film }
+          if (film.name) return { id, film }
         } catch (e) { continue }
       }
       return { id, film: null }
