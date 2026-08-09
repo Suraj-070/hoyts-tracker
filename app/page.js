@@ -265,6 +265,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   const blipColor = occupancy >= 95 ? '#FF3B3B' : occupancy >= 80 ? '#FF6B35' : null
 
   const [nowMins, setNowMins] = useState(getNowMins())
+  const [showLast, setShowLast] = useState(false)
   useEffect(() => {
     const t = setInterval(function() { setNowMins(getNowMins()) }, 30000)
     return function() { clearInterval(t) }
@@ -276,6 +277,11 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   const minsLeft    = currentSess ? currentSess.endMin - nowMins : null
   const minsToNext  = nextSess ? nextSess.startMin - nowMins : null
   const statusDot   = hallStatus === 'playing' ? '#00D4A8' : hallStatus === 'done' ? 'rgba(255,255,255,0.20)' : null
+
+  // Display session: if playing show current, else show last
+  // showLast toggle overrides to always show last session
+  const displaySess = showLast ? last : (currentSess || last)
+  const isShowingCurrent = !showLast && !!currentSess
 
   return (
     <div className="fade-up" style={{ animationDelay: delay + 'ms', marginBottom: 8 }}>
@@ -293,7 +299,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
       >
 
         <div style={{ display: 'flex', alignItems: 'stretch' }}>
-          <MoviePoster movieName={last.movie} movieId={last.movieId} size="full" />
+          <MoviePoster movieName={displaySess.movie} movieId={displaySess.movieId} size="full" />
           <div style={{ flex: 1, minWidth: 0, padding: '12px 14px' }}>
 
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10, gap: 8, position: 'relative', zIndex: 1 }}>
@@ -317,24 +323,46 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
           </div>
 
           <div style={{ marginBottom: 10, position: 'relative', zIndex: 1 }}>
-            <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3 }}>
-              {last.movie}
+            {/* NOW / LAST toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3 }}>
+                {displaySess.movie}
+              </div>
+              <button
+                onClick={function(e) { e.stopPropagation(); setShowLast(function(p) { return !p }) }}
+                style={{
+                  fontFamily: MONO, fontSize: 8, fontWeight: 700, letterSpacing: 1,
+                  padding: '3px 8px', borderRadius: 6, cursor: 'pointer', flexShrink: 0, marginLeft: 8,
+                  background: showLast ? 'rgba(240,165,0,0.15)' : 'rgba(0,212,168,0.15)',
+                  color: showLast ? '#F0A500' : '#00D4A8',
+                  border: '1px solid ' + (showLast ? 'rgba(240,165,0,0.30)' : 'rgba(0,212,168,0.30)'),
+                }}
+              >
+                {showLast ? 'LAST' : (currentSess ? 'NOW' : 'LAST')}
+              </button>
             </div>
-            {hallStatus === 'playing' && currentSess && (
-              <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,212,168,0.10)', border: '1px solid rgba(0,212,168,0.25)', borderRadius: 20, padding: '3px 10px' }}>
+            {isShowingCurrent && hallStatus === 'playing' && (
+              <div style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,212,168,0.10)', border: '1px solid rgba(0,212,168,0.25)', borderRadius: 20, padding: '3px 10px' }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00D4A8', animation: 'blip 1.2s ease-in-out infinite' }} />
                 <span style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, color: '#00D4A8', letterSpacing: 1 }}>
                   NOW PLAYING - ends in {minsToHuman(minsLeft)}
                 </span>
               </div>
             )}
+            {showLast && currentSess && (
+              <div style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(240,165,0,0.10)', border: '1px solid rgba(240,165,0,0.25)', borderRadius: 20, padding: '3px 10px' }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, color: '#F0A500', letterSpacing: 1 }}>
+                  LAST SESSION OF NIGHT
+                </span>
+              </div>
+            )}
             {hallStatus === 'done' && (
-              <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, padding: '3px 10px' }}>
+              <div style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 20, padding: '3px 10px' }}>
                 <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1 }}>DONE FOR THE NIGHT</span>
               </div>
             )}
-            {hallStatus === 'upcoming' && nextSess && minsToNext <= 30 && (
-              <div style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(240,165,0,0.10)', border: '1px solid rgba(240,165,0,0.25)', borderRadius: 20, padding: '3px 10px' }}>
+            {!currentSess && hallStatus === 'upcoming' && nextSess && minsToNext <= 30 && (
+              <div style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(240,165,0,0.10)', border: '1px solid rgba(240,165,0,0.25)', borderRadius: 20, padding: '3px 10px' }}>
                 <span style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, color: '#F0A500', letterSpacing: 1 }}>
                   STARTS IN {minsToHuman(minsToNext)}
                 </span>
@@ -346,21 +374,23 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
             <div style={{ background: 'rgba(0,0,0,0.30)', borderRadius: 8, padding: '10px 14px', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 3 }}>Last Session</div>
-                <div style={{ fontFamily: BEBAS, fontSize: 'clamp(28px,6vw,34px)', color: col, letterSpacing: '1px', lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
+                <div style={{ fontFamily: BEBAS, fontSize: 'clamp(28px,6vw,34px)', color: isShowingCurrent && currentSess ? '#00D4A8' : col, letterSpacing: '1px', lineHeight: 1 }}>{fmtTime(displaySess.startMin)}</div>
               </div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{sess.length} show{sess.length !== 1 ? 's' : ''}</div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>
+              {isShowingCurrent && currentSess ? fmtTime(currentSess.startMin) : fmtTime(last.startMin) + ' last'}
+            </div>
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               <div style={{ flex: 1, background: 'rgba(0,0,0,0.20)', borderRadius: 8, padding: '8px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 3 }}>Ends</div>
                 <div style={{ fontFamily: BEBAS, fontSize: 'clamp(16px,4vw,20px)', color: 'rgba(255,255,255,0.70)', lineHeight: 1 }}>
-                  {last.runtime > 0 ? '~' + fmtTime(last.endMin) : '--'}
+                  {displaySess.runtime > 0 ? '~' + fmtTime(displaySess.endMin) : '--'}
                 </div>
               </div>
               <div style={{ flex: 1, background: 'rgba(0,0,0,0.20)', borderRadius: 8, padding: '8px 12px', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 3 }}>Runtime</div>
                 <div style={{ fontFamily: BEBAS, fontSize: 'clamp(16px,4vw,20px)', color: 'rgba(255,255,255,0.65)', lineHeight: 1 }}>
-                  {last.runtime > 0 ? last.runtime + 'min' : '--'}
+                  {displaySess.runtime > 0 ? displaySess.runtime + 'min' : '--'}
                 </div>
               </div>
             </div>
