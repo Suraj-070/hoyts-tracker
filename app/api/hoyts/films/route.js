@@ -19,14 +19,12 @@ async function getAllMovies() {
   const map = {}
   arr.forEach(m => {
     if (m.vistaId) {
-      map[m.vistaId] = {
+      const ids = m.vistaId.split(",").map(s => s.trim())
+      ids.forEach(id => { if(id) map[id] = {
         name: m.name,
-        runtime: m.runtime?.minutes || m.duration || 0,
-        slug: m.slug,
-        poster: m.posterImage ? POSTER_BASE + encodeURIComponent(m.posterImage) + '&w=400&q=75' : null,
-        rating: m.rating?.id || null,
-        summary: m.summary || null,
-      }
+            runtime: m.runtime?.minutes || m.duration || 0,
+          }})
+        }
     }
   })
   moviesCache = map
