@@ -240,35 +240,6 @@ function CinemaPicker({ value, onChange }) {
 }
 
 // ─── Hall Card ────────────────────────────────────────────────────────────────
-function PosterBackdrop({ movieName, movieId }) {
-  const [poster, setPoster] = useState(null)
-  const cacheKey = movieId || movieName
-  useEffect(() => {
-    if (!movieName || movieName === movieId) return
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('hoyts-poster-' + cacheKey) : null
-    if (saved) { setPoster(saved); return }
-    fetch('/api/poster?q=' + encodeURIComponent(movieName))
-      .then(r => r.json())
-      .then(d => { if (d.poster) { localStorage.setItem('hoyts-poster-' + cacheKey, d.poster); setPoster(d.poster) } })
-      .catch(() => {})
-  }, [movieName, cacheKey])
-  if (!poster) return null
-  return (
-    <div style={{ position:'absolute', inset:0, zIndex:0, pointerEvents:'none', overflow:'hidden', borderRadius:12 }}>
-      <img src={poster} alt="" aria-hidden="true"
-        style={{
-          position:'absolute', right:0, top:0,
-          height:'100%', width:130,
-          objectFit:'cover', objectPosition:'center top',
-          opacity:0.90,
-          maskImage:'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)',
-          WebkitMaskImage:'linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)',
-        }}
-        onError={() => setPoster(null)}
-      />
-    </div>
-  )
-}
 
 function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   delay = delay || 0
@@ -320,7 +291,6 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
           transition: 'border-color .15s',
         }}
       >
-        <PosterBackdrop movieName={last.movie} movieId={last.movieId} />
 
         <div style={{ padding: '12px 14px' }}>
 
