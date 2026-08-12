@@ -109,7 +109,7 @@ input[type="number"] { -moz-appearance: textfield; }
 .poster-mobile-banner { display: none; }
 .poster-desktop-strip { display: block; }
 
-/* Mobile: hide left poster strip, show top banner */
+/* Mobile: hide top banner, show narrow left strip */
 @media (max-width: 600px) {
   .poster-mobile-banner { display: block; }
   .poster-desktop-strip { display: none; }
