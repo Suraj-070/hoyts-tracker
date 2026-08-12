@@ -280,6 +280,9 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   const isSameMovie   = currentSess && currentSess.movie === last.movie
   const posterSess    = currentSess || last
 
+  // Poster = current movie if playing, else last session movie
+  const posterSess = currentSess || last
+  const isSameMovie = currentSess && currentSess.movie === last.movie
 
   return (
     <div className="fade-up" style={{ animationDelay: delay + 'ms', marginBottom: 8 }}>
@@ -296,19 +299,14 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
         }}
       >
 
-        {/* RESPONSIVE LAYOUT */}
-
-        {/* Mobile: top banner poster (hidden on desktop via max-width) */}
-        <div className="poster-mobile-banner">
-          <PosterMobile movieName={posterSess.movie} movieId={posterSess.movieId} />
-        </div>
-
-        {/* Desktop: left poster + right content row */}
         <div style={{ display: 'flex', alignItems: 'stretch' }}>
 
-          {/* Desktop poster - hidden on mobile */}
+          {/* Poster - mobile: 70px, desktop: 100px */}
           <div className="poster-desktop-strip">
             <PosterDesktop movieName={posterSess.movie} movieId={posterSess.movieId} />
+          </div>
+          <div className="poster-mobile-strip">
+            <PosterMobile movieName={posterSess.movie} movieId={posterSess.movieId} />
           </div>
 
           {/* Content */}
@@ -327,54 +325,106 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
               </div>
             </div>
 
-            {/* NOW PLAYING - only when NOT last session */}
+            {/* NOW PLAYING */}
             {currentSess && hallStatus === 'playing' && !isLastSession && (
-              <div style={{ marginBottom: 5, padding: '7px 10px', background: 'rgba(0,212,168,0.08)', border: '1px solid rgba(0,212,168,0.18)', borderRadius: 7 }}>
+              <div style={{ marginBottom: 6, padding: '6px 8px', background: 'rgba(0,212,168,0.08)', border: '1px solid rgba(0,212,168,0.18)', borderRadius: 7 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#00D4A8', animation: 'blip 1.2s ease-in-out infinite' }} />
                     <span style={{ fontFamily: MONO, fontSize: 8, fontWeight: 700, color: '#00D4A8', letterSpacing: 0.8 }}>NOW PLAYING</span>
                   </div>
-                  <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(0,212,168,0.60)', whiteSpace: 'nowrap' }}>ends in {minsToHuman(minsLeft)}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(0,212,168,0.60)' }}>ends in {minsToHuman(minsLeft)}</span>
                 </div>
-                <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentSess.movie}</div>
-                <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(0,212,168,0.70)' }}>{fmtTime(currentSess.startMin)}{currentSess.runtime > 0 ? ' - ' + fmtTime(currentSess.endMin) : ''}</div>
+                <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: '#fff', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentSess.movie}</div>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '4px 6px', border: '1px solid rgba(0,212,168,0.15)' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(0,212,168,0.50)', letterSpacing: 1, marginBottom: 1 }}>START</div>
+                    <div style={{ fontFamily: BEBAS, fontSize: 16, color: 'rgba(0,212,168,0.90)', lineHeight: 1 }}>{fmtTime(currentSess.startMin)}</div>
+                  </div>
+                  {currentSess.runtime > 0 && (
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '4px 6px', border: '1px solid rgba(0,212,168,0.15)' }}>
+                      <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(0,212,168,0.50)', letterSpacing: 1, marginBottom: 1 }}>ENDS</div>
+                      <div style={{ fontFamily: BEBAS, fontSize: 16, color: 'rgba(255,255,255,0.60)', lineHeight: 1 }}>{'~'}{fmtTime(currentSess.endMin)}</div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* Status: FINAL SHOW / DONE / LAST SESSION */}
+            {/* FINAL SHOW / DONE / LAST SESSION */}
             {isLastSession ? (
-              <div style={{ padding: '7px 10px', background: 'rgba(240,165,0,0.08)', border: '1px solid rgba(240,165,0,0.22)', borderRadius: 7 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ padding: '6px 8px', background: 'rgba(240,165,0,0.08)', border: '1px solid rgba(240,165,0,0.22)', borderRadius: 7 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#F0A500', animation: 'blip 1.2s ease-in-out infinite' }} />
                     <span style={{ fontFamily: MONO, fontSize: 8, fontWeight: 700, color: '#F0A500', letterSpacing: 0.8 }}>FINAL SHOW</span>
                   </div>
-                  <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(240,165,0,0.60)', whiteSpace: 'nowrap' }}>ends in {minsToHuman(minsLeft)}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(240,165,0,0.60)' }}>ends in {minsToHuman(minsLeft)}</span>
                 </div>
-                <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>
-                <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(240,165,0,0.70)' }}>{fmtTime(last.startMin)}{last.runtime > 0 ? ' - ' + fmtTime(last.endMin) + ' ' + last.runtime + 'm' : ''}</div>
+                <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: '#fff', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '4px 6px', border: '1px solid rgba(240,165,0,0.15)' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(240,165,0,0.50)', letterSpacing: 1, marginBottom: 1 }}>START</div>
+                    <div style={{ fontFamily: BEBAS, fontSize: 16, color: '#F0A500', lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
+                  </div>
+                  {last.runtime > 0 && (
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '4px 6px', border: '1px solid rgba(240,165,0,0.15)' }}>
+                      <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(240,165,0,0.50)', letterSpacing: 1, marginBottom: 1 }}>ENDS</div>
+                      <div style={{ fontFamily: BEBAS, fontSize: 16, color: 'rgba(255,255,255,0.60)', lineHeight: 1 }}>{'~'}{fmtTime(last.endMin)}</div>
+                    </div>
+                  )}
+                  {last.runtime > 0 && (
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '4px 6px', border: '1px solid rgba(240,165,0,0.15)' }}>
+                      <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(240,165,0,0.50)', letterSpacing: 1, marginBottom: 1 }}>RUNTIME</div>
+                      <div style={{ fontFamily: BEBAS, fontSize: 16, color: 'rgba(255,255,255,0.50)', lineHeight: 1 }}>{last.runtime}m</div>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : hallStatus === 'done' ? (
-              <div style={{ padding: '7px 10px', background: 'rgba(255,87,87,0.06)', border: '1px solid rgba(255,87,87,0.18)', borderRadius: 7 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+              <div style={{ padding: '6px 8px', background: 'rgba(255,87,87,0.06)', border: '1px solid rgba(255,87,87,0.18)', borderRadius: 7 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
                   <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(255,87,87,0.50)' }} />
                   <span style={{ fontFamily: MONO, fontSize: 8, fontWeight: 700, color: 'rgba(255,87,87,0.70)', letterSpacing: 0.8 }}>DONE FOR THE DAY</span>
                 </div>
-                {!isSameMovie && <div style={{ fontFamily: SANS, fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>}
-                <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>{fmtTime(last.startMin)}{last.runtime > 0 ? ' - ' + fmtTime(last.endMin) : ''}</div>
+                {!isSameMovie && <div style={{ fontFamily: SANS, fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>}
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.20)', borderRadius: 6, padding: '4px 6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginBottom: 1 }}>STARTED</div>
+                    <div style={{ fontFamily: BEBAS, fontSize: 16, color: 'rgba(255,255,255,0.25)', lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
+                  </div>
+                  {last.runtime > 0 && (
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.20)', borderRadius: 6, padding: '4px 6px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginBottom: 1 }}>ENDED</div>
+                      <div style={{ fontFamily: BEBAS, fontSize: 16, color: 'rgba(255,87,87,0.50)', lineHeight: 1 }}>{'~'}{fmtTime(last.endMin)}</div>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
-              <div style={{ padding: '7px 10px', background: 'rgba(0,0,0,0.20)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7 }}>
+              <div style={{ padding: '6px 8px', background: 'rgba(0,0,0,0.20)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
                   <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>Last Session</span>
                   {nextSess && nextSess.startMin === last.startMin && minsToNext > 0 && <span style={{ fontFamily: MONO, fontSize: 8, color: col }}>in {minsToHuman(minsToNext)}</span>}
                 </div>
-                {!isSameMovie && <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>}
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                  <div style={{ fontFamily: BEBAS, fontSize: 'clamp(22px,5vw,26px)', color: col, letterSpacing: '1px', lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
-                  {last.runtime > 0 && <div style={{ fontFamily: BEBAS, fontSize: 'clamp(16px,4vw,20px)', color: 'rgba(255,255,255,0.45)', letterSpacing: '1px', lineHeight: 1 }}>{'~'}{fmtTime(last.endMin)}</div>}
-                  {last.runtime > 0 && <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.25)' }}>{last.runtime}m</div>}
+                {!isSameMovie && <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, color: '#fff', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>}
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '4px 6px', border: '1px solid rgba(255,255,255,0.10)' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 1 }}>LAST</div>
+                    <div style={{ fontFamily: BEBAS, fontSize: 'clamp(18px,4vw,22px)', color: col, lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
+                  </div>
+                  {last.runtime > 0 && (
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '4px 6px', border: '1px solid rgba(255,255,255,0.10)' }}>
+                      <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 1 }}>ENDS</div>
+                      <div style={{ fontFamily: BEBAS, fontSize: 'clamp(16px,3.5vw,20px)', color: 'rgba(255,255,255,0.50)', lineHeight: 1 }}>{'~'}{fmtTime(last.endMin)}</div>
+                    </div>
+                  )}
+                  {last.runtime > 0 && (
+                    <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '4px 6px', border: '1px solid rgba(255,255,255,0.10)' }}>
+                      <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 1 }}>RUNTIME</div>
+                      <div style={{ fontFamily: BEBAS, fontSize: 'clamp(14px,3vw,18px)', color: 'rgba(255,255,255,0.40)', lineHeight: 1 }}>{last.runtime}m</div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
