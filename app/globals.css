@@ -102,3 +102,15 @@ input[type="number"] { -moz-appearance: textfield; }
   /* Very small phones - hide runtime box to save space */
   .runtime-box { display: none; }
 }
+
+/* ── Responsive poster layout ───────────────────────── */
+
+/* Desktop: show left poster strip, hide mobile banner */
+.poster-mobile-banner { display: none; }
+.poster-desktop-strip { display: block; }
+
+/* Mobile: hide left poster strip, show top banner */
+@media (max-width: 600px) {
+  .poster-mobile-banner { display: block; }
+  .poster-desktop-strip { display: none; }
+}
