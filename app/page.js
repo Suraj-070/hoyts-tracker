@@ -280,9 +280,6 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   const isSameMovie   = currentSess && currentSess.movie === last.movie
   const posterSess    = currentSess || last
 
-  // Poster = current movie if playing, else last session movie
-  const posterSess = currentSess || last
-  const isSameMovie = currentSess && currentSess.movie === last.movie
 
   return (
     <div className="fade-up" style={{ animationDelay: delay + 'ms', marginBottom: 8 }}>
