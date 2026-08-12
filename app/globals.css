@@ -328,3 +328,45 @@ input:focus {
   color: rgba(255,87,87,0.70) !important;
   border-color: rgba(255,87,87,0.25) !important;
 }
+
+/* ── Seat map mobile fixes ───────────────────────────── */
+@media (max-width: 480px) {
+  /* Larger tap areas for seat dots on mobile */
+  .seat-dot {
+    min-width: 12px !important;
+    min-height: 12px !important;
+  }
+
+  /* No hover scale on mobile (touch devices) */
+  @media (hover: none) {
+    .seat-dot:hover { transform: none !important; }
+    .hall-card:hover { transform: none !important; box-shadow: none !important; }
+    .stat-card:hover { transform: none !important; }
+  }
+
+  /* Bigger occupancy badge on mobile */
+  .occ-badge {
+    font-size: 10px !important;
+    padding: 3px 10px !important;
+  }
+
+  /* Legend wraps nicely */
+  .seat-legend {
+    gap: 8px !important;
+  }
+}
+
+/* Touch device - disable hover effects, keep tap */
+@media (hover: none) and (pointer: coarse) {
+  .view-seats-btn:hover {
+    background: rgba(255,255,255,0.08) !important;
+    transform: none !important;
+  }
+  button:active {
+    opacity: 0.70 !important;
+    transform: scale(0.94) !important;
+  }
+  .hall-card:active {
+    transform: scale(0.99) !important;
+  }
+}
