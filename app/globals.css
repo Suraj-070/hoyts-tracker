@@ -468,3 +468,21 @@ input:focus {
 .hall-card.is-done {
   opacity: 0.65;
 }
+
+/* ── SLIDE ANIMATIONS (offline banner, PWA prompt, pull-to-refresh) ── */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-100%); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── GLASSMORPHISM NAV (fallback where backdrop-filter unsupported) ── */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-nav { background: #1a1c18 !important; }
+}
+
+/* ── AMBIENT BLOBS TRANSITION ── */
+.ambient-blob { transition: background 1s ease, opacity 1s ease; }
