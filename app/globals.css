@@ -120,3 +120,149 @@ input[type="number"] { -moz-appearance: textfield; }
   .poster-desktop-strip { display: none;  }
   .poster-mobile-strip  { display: block; }
 }
+
+/* ── Smooth animations & transitions ─────────────────── */
+
+/* Smooth everything */
+*, *::before, *::after {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Card hover lift */
+.hall-card {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.2s ease,
+              border-color 0.2s ease;
+}
+.hall-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.hall-card:active {
+  transform: translateY(0px) scale(0.995);
+}
+
+/* Smooth dropdown expand/collapse */
+.expanded-panel {
+  animation: slideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: top;
+  overflow: hidden;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 2000px;
+  }
+}
+
+/* Seat map slide in */
+.seat-map-enter {
+  animation: fadeSlideUp 0.2s ease forwards;
+}
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Tab switch fade */
+.fade-in {
+  animation: pageFade 0.2s ease forwards;
+}
+@keyframes pageFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Smooth card fade-up on load */
+.fade-up {
+  animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Status badges pulse glow */
+.status-now {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,168,0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(0,212,168,0); }
+}
+
+/* Bottom nav smooth active */
+.bottom-nav-item {
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+.bottom-nav-item:active {
+  transform: scale(0.90);
+}
+
+/* Smooth button press */
+button {
+  transition: opacity 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+button:active {
+  opacity: 0.75;
+  transform: scale(0.96);
+}
+
+/* Section headers slide in */
+.type-section {
+  animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Stat cards pop in */
+.stat-card {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.stat-card:hover {
+  transform: scale(1.02);
+}
+
+/* Chevron smooth rotate */
+.chevron {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Blip animation smoother */
+@keyframes blip {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Status pill glow on NOW PLAYING */
+@keyframes nowPlayingGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,168,0.3), inset 0 0 0 0 rgba(0,212,168,0.1); }
+  50%       { box-shadow: 0 0 12px 2px rgba(0,212,168,0.15), inset 0 0 8px 0 rgba(0,212,168,0.05); }
+}
+
+/* Smooth image load fade */
+img {
+  transition: opacity 0.3s ease;
+}
+
+/* Input focus smooth */
+input:focus {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
