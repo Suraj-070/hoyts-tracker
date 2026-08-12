@@ -72,46 +72,29 @@ export function PosterDesktop({ movieName, movieId }) {
   )
 }
 
-// Mobile: wide banner at top of card, blurred bg + sharp poster centered
+// Mobile: compact left poster + right content (no banner)
 export function PosterMobile({ movieName, movieId }) {
   const poster = usePoster(movieName, movieId)
   if (!poster) return (
-    <div style={{ height: 80, background: 'rgba(0,0,0,0.30)', borderRadius: '10px 10px 0 0' }} />
+    <div style={{
+      width: 70, alignSelf: 'stretch', flexShrink: 0,
+      background: 'rgba(0,0,0,0.30)',
+      borderRadius: '10px 0 0 10px',
+    }} />
   )
   return (
     <div style={{
-      height: 90, position: 'relative',
-      borderRadius: '10px 10px 0 0',
+      width: 70, alignSelf: 'stretch', flexShrink: 0,
+      borderRadius: '10px 0 0 10px',
       overflow: 'hidden',
-      background: '#111',
     }}>
-      {/* Blurred bg */}
-      <img src={poster} alt="" aria-hidden="true"
-        style={{
-          position: 'absolute', inset: 0,
-          width: '100%', height: '100%',
-          objectFit: 'cover', objectPosition: 'center 20%',
-          filter: 'blur(12px) brightness(0.4)',
-          transform: 'scale(1.1)',
-        }}
-      />
-      {/* Sharp poster centered */}
       <img src={poster} alt=""
         style={{
-          position: 'absolute', left: '50%', top: '50%',
-          transform: 'translate(-50%, -50%)',
-          height: '110%', width: 'auto',
-          objectFit: 'contain',
-          borderRadius: 4,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
+          width: '100%', height: '100%',
+          objectFit: 'cover', objectPosition: 'center top',
+          display: 'block',
         }}
       />
-      {/* Bottom fade into card */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        height: 40,
-        background: 'linear-gradient(to bottom, transparent, rgba(18,19,15,0.95))',
-      }} />
     </div>
   )
 }
