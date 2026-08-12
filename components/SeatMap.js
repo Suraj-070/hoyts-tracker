@@ -28,10 +28,11 @@ export default function SeatMap({ sessionId, cinemaId, typeColor }) {
   if (!open) {
     return (
       <button className="view-seats-btn" onClick={e => { e.stopPropagation(); setOpen(true) }}
-        style={{ fontFamily:MONO, fontSize:9, fontWeight:700, letterSpacing:1, padding:'4px 10px',
-          borderRadius:6, cursor:'pointer', marginTop:4, background:'rgba(255,255,255,0.08)',
-          color:'rgba(255,255,255,0.65)', border:'1px solid rgba(255,255,255,0.18)',
-          transition:'all 0.2s cubic-bezier(0.34,1.56,0.64,1)' }}>
+        style={{ fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1, padding:'8px 16px',
+          borderRadius:8, cursor:'pointer', marginTop:6, background:'rgba(255,255,255,0.08)',
+          color:'rgba(255,255,255,0.70)', border:'1px solid rgba(255,255,255,0.20)',
+          display:'block', width:'100%', textAlign:'center',
+          transition:'all 0.2s cubic-bezier(0.34,1.56,0.64,1)', minHeight:36 }}>
         VIEW SEATS →
       </button>
     )
@@ -39,11 +40,12 @@ export default function SeatMap({ sessionId, cinemaId, typeColor }) {
 
   return (
     <div onClick={e => e.stopPropagation()} style={{ marginTop:10, background:'rgba(0,0,0,0.35)',
-      border:'1px solid rgba(255,255,255,0.10)', borderRadius:10, padding:14,
+      border:'1px solid rgba(255,255,255,0.10)', borderRadius:10,
+      padding:'clamp(10px,3vw,14px)',
       animation:'seatMapOpen 0.3s cubic-bezier(0.16,1,0.3,1) forwards' }}>
 
       {loading && (
-        <div style={{ textAlign:'center', padding:'20px 0', fontFamily:MONO, fontSize:10,
+        <div style={{ textAlign:'center', padding:'24px 0', fontFamily:MONO, fontSize:'clamp(10px,3vw,12px)',
           color:'rgba(255,255,255,0.40)', letterSpacing:1.5 }}>LOADING SEATS…</div>
       )}
 
@@ -54,9 +56,10 @@ export default function SeatMap({ sessionId, cinemaId, typeColor }) {
       {data && !loading && <SeatMapContent data={data} col={col} />}
 
       <button className="close-btn" onClick={e => { e.stopPropagation(); setOpen(false) }}
-        style={{ marginTop:12, fontFamily:MONO, fontSize:8.5, letterSpacing:1, padding:'3px 10px',
-          borderRadius:6, cursor:'pointer', background:'rgba(255,255,255,0.06)',
-          color:'rgba(255,255,255,0.40)', border:'1px solid rgba(255,255,255,0.12)' }}>
+        style={{ marginTop:12, fontFamily:MONO, fontSize:10, letterSpacing:1, padding:'8px 16px',
+          borderRadius:8, cursor:'pointer', background:'rgba(255,255,255,0.06)',
+          color:'rgba(255,255,255,0.40)', border:'1px solid rgba(255,255,255,0.12)',
+          width:'100%', minHeight:36 }}>
         CLOSE
       </button>
     </div>
@@ -174,7 +177,7 @@ function StatBox({ label, value, color }) {
     <div style={{ flex:1, background:'rgba(0,0,0,0.30)', borderRadius:8, padding:'8px 10px',
       textAlign:'center', border:'1px solid rgba(255,255,255,0.08)',
       animation:'fadeSlideUp 0.25s ease both' }}>
-      <div style={{ fontFamily:BEBAS, fontSize:22, color, letterSpacing:1, lineHeight:1 }}>{value}</div>
+      <div style={{ fontFamily:BEBAS, fontSize:'clamp(20px,5vw,26px)', color, letterSpacing:1, lineHeight:1 }}>{value}</div>
       <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1, color:'rgba(255,255,255,0.40)',
         textTransform:'uppercase', marginTop:2 }}>{label}</div>
     </div>
@@ -196,7 +199,7 @@ function SeatDot({ seat }) {
   const border = seat.sold ? '#FF6B35'                : seat.unavailable ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.28)'
   return (
     <div className="seat-dot" title={`${seat.name}${seat.sold?' (Sold)':seat.unavailable?' (Unavailable)':' (Available)'}`}
-      style={{ width:15, height:15, borderRadius:3, background:bg, border:`0.5px solid ${border}`,
+      style={{ width:'clamp(12px,3vw,15px)', height:'clamp(12px,3vw,15px)', borderRadius:3, background:bg, border:`0.5px solid ${border}`,
           transition:'transform 0.15s ease, opacity 0.15s ease' }} />
   )
 }
