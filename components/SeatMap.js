@@ -30,7 +30,8 @@ export default function SeatMap({ sessionId, cinemaId, typeColor }) {
       <button onClick={e => { e.stopPropagation(); setOpen(true) }}
         style={{ fontFamily:MONO, fontSize:9, fontWeight:700, letterSpacing:1, padding:'4px 10px',
           borderRadius:6, cursor:'pointer', marginTop:4, background:'rgba(255,255,255,0.08)',
-          color:'rgba(255,255,255,0.65)', border:'1px solid rgba(255,255,255,0.18)' }}>
+          color:'rgba(255,255,255,0.65)', border:'1px solid rgba(255,255,255,0.18)',
+          transition:'all 0.2s cubic-bezier(0.34,1.56,0.64,1)' }}>
         VIEW SEATS →
       </button>
     )
@@ -38,7 +39,8 @@ export default function SeatMap({ sessionId, cinemaId, typeColor }) {
 
   return (
     <div onClick={e => e.stopPropagation()} style={{ marginTop:10, background:'rgba(0,0,0,0.35)',
-      border:'1px solid rgba(255,255,255,0.10)', borderRadius:10, padding:14 }}>
+      border:'1px solid rgba(255,255,255,0.10)', borderRadius:10, padding:14,
+      animation:'seatMapOpen 0.3s cubic-bezier(0.16,1,0.3,1) forwards' }}>
 
       {loading && (
         <div style={{ textAlign:'center', padding:'20px 0', fontFamily:MONO, fontSize:10,
@@ -100,7 +102,7 @@ function SeatMapContent({ data, col }) {
       {/* Occupancy bar */}
       <div style={{ marginBottom:14 }}>
         <div style={{ height:5, background:'rgba(255,255,255,0.10)', borderRadius:3, overflow:'hidden', marginBottom:6 }}>
-          <div style={{ height:'100%', width:`${pct}%`, background:barColor, borderRadius:3, transition:'width .5s ease' }} />
+          <div style={{ height:'100%', width:`${pct}%`, background:barColor, borderRadius:3, transition:'width 0.8s cubic-bezier(0.16,1,0.3,1)' }} />
         </div>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <span style={{ fontFamily:MONO, fontSize:8.5, color:'rgba(255,255,255,0.35)', letterSpacing:1 }}>OCCUPANCY</span>
@@ -170,7 +172,8 @@ function SeatMapContent({ data, col }) {
 function StatBox({ label, value, color }) {
   return (
     <div style={{ flex:1, background:'rgba(0,0,0,0.30)', borderRadius:8, padding:'8px 10px',
-      textAlign:'center', border:'1px solid rgba(255,255,255,0.08)' }}>
+      textAlign:'center', border:'1px solid rgba(255,255,255,0.08)',
+      animation:'fadeSlideUp 0.25s ease both' }}>
       <div style={{ fontFamily:BEBAS, fontSize:22, color, letterSpacing:1, lineHeight:1 }}>{value}</div>
       <div style={{ fontFamily:MONO, fontSize:8, letterSpacing:1, color:'rgba(255,255,255,0.40)',
         textTransform:'uppercase', marginTop:2 }}>{label}</div>
@@ -193,6 +196,7 @@ function SeatDot({ seat }) {
   const border = seat.sold ? '#FF6B35'                : seat.unavailable ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.28)'
   return (
     <div title={`${seat.name}${seat.sold?' (Sold)':seat.unavailable?' (Unavailable)':' (Available)'}`}
-      style={{ width:15, height:15, borderRadius:3, background:bg, border:`0.5px solid ${border}` }} />
+      style={{ width:15, height:15, borderRadius:3, background:bg, border:`0.5px solid ${border}`,
+          transition:'transform 0.15s ease, opacity 0.15s ease' }} />
   )
 }
