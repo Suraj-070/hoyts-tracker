@@ -49,14 +49,14 @@ export function PosterDesktop({ movieName, movieId }) {
   const poster = usePoster(movieName, movieId)
   if (!poster) return (
     <div style={{
-      width: 110, alignSelf: 'stretch', flexShrink: 0,
+      width: 100, alignSelf: 'stretch', flexShrink: 0,
       background: 'rgba(0,0,0,0.30)',
       borderRadius: '10px 0 0 10px',
     }} />
   )
   return (
     <div style={{
-      width: 110, alignSelf: 'stretch', flexShrink: 0,
+      width: 100, alignSelf: 'stretch', flexShrink: 0,
       borderRadius: '10px 0 0 10px',
       overflow: 'hidden',
       position: 'relative',
