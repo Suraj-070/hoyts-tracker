@@ -285,6 +285,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
     <div className="fade-up" style={{ animationDelay: delay + 'ms', marginBottom: 8 }}>
       <div
         onClick={onToggle}
+        className="hall-card"
         style={{
           background: 'rgba(0,0,0,0.25)',
           border: '1px solid ' + (expanded ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.10)'),
@@ -311,7 +312,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
               {statusDot && <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusDot, boxShadow: hallStatus === 'playing' ? '0 0 6px ' + statusDot : 'none', animation: hallStatus === 'playing' ? 'blip 1.2s ease-in-out infinite' : 'none' }} />}
               {blipColor && hallStatus !== 'done' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: blipColor, boxShadow: '0 0 6px ' + blipColor, animation: 'blip 1.2s ease-in-out infinite' }} />}
-              <i className="ti ti-chevron-down" aria-hidden="true" style={{ fontSize: 16, color: 'rgba(255,255,255,0.35)', transition: 'transform .2s', transform: expanded ? 'rotate(180deg)' : 'none' }} />
+              <i className="ti ti-chevron-down chevron" aria-hidden="true" style={{ fontSize: 16, color: 'rgba(255,255,255,0.35)', transform: expanded ? 'rotate(180deg)' : 'none' }} />
             </div>
           </div>
 
@@ -421,7 +422,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
 
         </div>
         {expanded && (
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.20)' }}>
+          <div className="expanded-panel" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.20)' }}>
             <div style={{ padding: '8px 14px 4px', fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.40)', fontWeight: 400 }}>
               All sessions
             </div>
