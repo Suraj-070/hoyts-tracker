@@ -46,8 +46,7 @@ function clearOldCaches() {
   } catch(e) {}
 }
 
-
-// ─── Time helpers (must be before all components) ────────────────────────────
+// ─── Time helpers ─────────────────────────────────────────────────────────────
 function getNowMins() {
   const now = new Date()
   return now.getHours() * 60 + now.getMinutes()
@@ -127,6 +126,197 @@ const BEBAS = "'Bebas Neue',sans-serif"
 const SANS  = "'Inter',sans-serif"
 const MONO  = "'Space Mono',monospace"
 
+// ─── Ambient background blobs ─────────────────────────────────────────────────
+function AmbientBlobs({ view }) {
+  const colors = {
+    tonight:  ['rgba(240,165,0,0.06)', 'rgba(0,212,168,0.04)'],
+    schedule: ['rgba(129,140,248,0.06)', 'rgba(240,165,0,0.04)'],
+    closing:  ['rgba(224,85,85,0.05)', 'rgba(255,107,53,0.04)'],
+    settings: ['rgba(167,139,250,0.05)', 'rgba(0,212,168,0.03)'],
+  }
+  const [c1, c2] = colors[view] || colors.tonight
+  return (
+    <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0, overflow:'hidden' }} aria-hidden="true">
+      <div style={{
+        position:'absolute', top:'-20%', left:'-15%',
+        width:'60vw', height:'60vw', maxWidth:500, maxHeight:500,
+        borderRadius:'50%', background:c1,
+        filter:'blur(80px)', transition:'background 1s ease',
+      }} />
+      <div style={{
+        position:'absolute', bottom:'-10%', right:'-20%',
+        width:'50vw', height:'50vw', maxWidth:420, maxHeight:420,
+        borderRadius:'50%', background:c2,
+        filter:'blur(100px)', transition:'background 1s ease',
+      }} />
+    </div>
+  )
+}
+
+// ─── Offline Banner ───────────────────────────────────────────────────────────
+function OfflineBanner() {
+  const [offline, setOffline] = useState(false)
+  const [show, setShow] = useState(false)
+
+  useEffect(() => {
+    const setOff = () => { setOffline(true); setShow(true) }
+    const setOn  = () => { setShow(true); setTimeout(() => setOffline(false), 2000) }
+    window.addEventListener('offline', setOff)
+    window.addEventListener('online',  setOn)
+    if (!navigator.onLine) { setOffline(true); setShow(true) }
+    return () => {
+      window.removeEventListener('offline', setOff)
+      window.removeEventListener('online',  setOn)
+    }
+  }, [])
+
+  if (!show) return null
+
+  return (
+    <div style={{
+      position:'fixed', top:54, left:0, right:0, zIndex:200,
+      display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+      padding:'8px 16px',
+      background: offline ? 'rgba(224,85,85,0.92)' : 'rgba(0,212,168,0.92)',
+      backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)',
+      borderBottom: `1px solid ${offline ? 'rgba(255,87,87,0.4)' : 'rgba(0,212,168,0.4)'}`,
+      transition:'background 0.4s ease',
+      animation:'slideDown 0.3s ease',
+    }}>
+      <i className={`ti ${offline ? 'ti-wifi-off' : 'ti-wifi'}`} style={{ fontSize:14, color:'#fff' }} />
+      <span style={{ fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1, color:'#fff', textTransform:'uppercase' }}>
+        {offline ? 'No connection -- showing cached data' : 'Back online'}
+      </span>
+    </div>
+  )
+}
+
+// ─── PWA Install Prompt ───────────────────────────────────────────────────────
+function PWAInstallBanner() {
+  const [prompt, setPrompt] = useState(null)
+  const [dismissed, setDismissed] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('pwa-dismissed')
+    if (saved) { setDismissed(true); return }
+    const handler = (e) => { e.preventDefault(); setPrompt(e) }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  if (!prompt || dismissed) return null
+
+  const install = async () => {
+    prompt.prompt()
+    const { outcome } = await prompt.userChoice
+    if (outcome === 'accepted' || outcome === 'dismissed') {
+      setPrompt(null)
+      localStorage.setItem('pwa-dismissed', '1')
+    }
+  }
+
+  const dismiss = () => {
+    setPrompt(null)
+    setDismissed(true)
+    localStorage.setItem('pwa-dismissed', '1')
+  }
+
+  return (
+    <div style={{
+      position:'fixed', bottom:66, left:12, right:12, zIndex:150,
+      background:'var(--surface-2, #252720)',
+      border:`0.5px solid ${C.amberBdr}`,
+      borderRadius:14, padding:'12px 14px',
+      display:'flex', alignItems:'center', gap:12,
+      boxShadow:'0 8px 32px rgba(0,0,0,0.5)',
+      animation:'slideUp 0.35s cubic-bezier(0.16,1,0.3,1)',
+    }}>
+      <div style={{ width:36, height:36, background:C.amberBg, border:`0.5px solid ${C.amberBdr}`, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+        <i className="ti ti-device-mobile" style={{ fontSize:18, color:C.amber }} />
+      </div>
+      <div style={{ flex:1 }}>
+        <div style={{ fontFamily:SANS, fontSize:13, fontWeight:600, color:'var(--text-primary)', marginBottom:2 }}>Install Last Session</div>
+        <div style={{ fontFamily:SANS, fontSize:11, color:'rgba(255,255,255,0.50)' }}>Add to home screen for quick access</div>
+      </div>
+      <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+        <button onClick={dismiss} style={{ fontFamily:MONO, fontSize:9, padding:'5px 8px', borderRadius:6, border:'0.5px solid rgba(255,255,255,0.12)', background:'transparent', color:'rgba(255,255,255,0.45)', cursor:'pointer', letterSpacing:0.5 }}>
+          Skip
+        </button>
+        <button onClick={install} style={{ fontFamily:MONO, fontSize:9, fontWeight:700, padding:'5px 10px', borderRadius:6, border:`0.5px solid ${C.amberBdr}`, background:C.amberBg, color:C.amber, cursor:'pointer', letterSpacing:0.5 }}>
+          Install
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Pull to Refresh ──────────────────────────────────────────────────────────
+function PullToRefresh({ onRefresh, loading }) {
+  const startY = useRef(0)
+  const [pullDist, setPullDist] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+  const THRESHOLD = 64
+
+  useEffect(() => {
+    const onTouchStart = (e) => {
+      if (window.scrollY > 5) return
+      startY.current = e.touches[0].clientY
+    }
+    const onTouchMove = (e) => {
+      if (window.scrollY > 5) return
+      const dist = Math.max(0, Math.min(THRESHOLD + 20, e.touches[0].clientY - startY.current))
+      if (dist > 8) setPullDist(dist)
+    }
+    const onTouchEnd = async () => {
+      if (pullDist >= THRESHOLD && !loading) {
+        setRefreshing(true)
+        await onRefresh()
+        setRefreshing(false)
+      }
+      setPullDist(0)
+    }
+    window.addEventListener('touchstart', onTouchStart, { passive:true })
+    window.addEventListener('touchmove',  onTouchMove,  { passive:true })
+    window.addEventListener('touchend',   onTouchEnd)
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchmove',  onTouchMove)
+      window.removeEventListener('touchend',   onTouchEnd)
+    }
+  }, [pullDist, loading, onRefresh])
+
+  const progress = Math.min(1, pullDist / THRESHOLD)
+  const triggered = pullDist >= THRESHOLD
+
+  if (pullDist < 2 && !refreshing) return null
+
+  return (
+    <div style={{
+      position:'fixed', top:54, left:0, right:0, zIndex:190,
+      display:'flex', alignItems:'center', justifyContent:'center',
+      height: refreshing ? 44 : Math.min(44, pullDist * 0.65),
+      overflow:'hidden',
+      background:'rgba(0,0,0,0.60)',
+      backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
+      borderBottom:`0.5px solid ${triggered ? C.amberBdr : 'rgba(255,255,255,0.08)'}`,
+      transition: pullDist === 0 ? 'height 0.3s ease' : 'border-color 0.15s ease',
+    }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <i className="ti ti-refresh" style={{
+          fontSize:16,
+          color: triggered ? C.amber : 'rgba(255,255,255,0.40)',
+          transform:`rotate(${progress * 180}deg)`,
+          animation: refreshing ? 'spin 0.8s linear infinite' : 'none',
+          transition:'color 0.2s, transform 0.05s',
+        }} />
+        <span style={{ fontFamily:MONO, fontSize:9, letterSpacing:1, color: triggered ? C.amber : 'rgba(255,255,255,0.40)', fontWeight:700, textTransform:'uppercase', transition:'color 0.2s' }}>
+          {refreshing ? 'Refreshing...' : triggered ? 'Release to refresh' : 'Pull to refresh'}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 // ─── Ticker ───────────────────────────────────────────────────────────────────
 function Ticker({ sessions, movieMap }) {
   const byDate = groupByDateAndHall(sessions, movieMap)
@@ -187,7 +377,7 @@ function CinemaPicker({ value, onChange }) {
           display:'flex', alignItems:'center', gap:6,
           background:'var(--surface-1, #2A2B25)', border:'0.5px solid var(--border-strong)',
           borderRadius:20, padding:'6px 12px', cursor:'pointer',
-          fontFamily:SANS, fontSize:12, fontWeight:500, color:'var(--text-secondary, #C4C0D4)', fontFamily:SANS,
+          fontFamily:SANS, fontSize:12, fontWeight:500, color:'var(--text-secondary, #C4C0D4)',
           transition:'border-color .15s',
         }}
         onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-stronger, rgba(255,255,255,0.28))'}
@@ -240,7 +430,6 @@ function CinemaPicker({ value, onChange }) {
 }
 
 // ─── Hall Card ────────────────────────────────────────────────────────────────
-
 function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   delay = delay || 0
   cinemaId = cinemaId || 'EGDENS'
@@ -280,7 +469,6 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   const isSameMovie   = currentSess && currentSess.movie === last.movie
   const posterSess    = currentSess || last
 
-
   return (
     <div className="fade-up" style={{ animationDelay: delay + 'ms', marginBottom: 8 }}>
       <div
@@ -296,14 +484,9 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
           transition: 'border-color .15s',
         }}
       >
-
-        {/* Poster as right-side background fade */}
         <CardPoster movieName={posterSess.movie} movieId={posterSess.movieId} />
 
-        {/* Card content - full width, no left poster strip */}
         <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '12px 14px' }}>
-
-          {/* Hall name + badge + dots + chevron */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 4 }}>{hallName}</div>
@@ -536,9 +719,9 @@ function DateTabs({ dates, selected, onSelect }) {
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({ label, value, color }) {
   return (
-    <div style={{ flex:1, background:'var(--surface-1, #2A2B25)', borderRadius:10, padding:'10px 12px', border:'0.5px solid var(--border)' }}>
+    <div className="stat-card" style={{ flex:1, background:'var(--surface-1, #2A2B25)', borderRadius:10, padding:'10px 12px', border:'0.5px solid var(--border)' }}>
       <div style={{ fontFamily:MONO, fontSize:10, letterSpacing:1.2, textTransform:'uppercase', color:'rgba(255,255,255,0.40)', fontWeight:400, marginBottom:4 }}>{label}</div>
-      <div style={{ fontFamily:BEBAS, fontSize:'clamp(24px,5vw,30px)', color: color || 'var(--text-primary)', letterSpacing:'2px', lineHeight:1 }}>{value}</div>
+      <div className="stat-value" style={{ fontFamily:BEBAS, fontSize:'clamp(24px,5vw,30px)', color: color || 'var(--text-primary)', letterSpacing:'2px', lineHeight:1 }}>{value}</div>
     </div>
   )
 }
@@ -547,14 +730,14 @@ function StatCard({ label, value, color }) {
 function SkeletonGrid() {
   return (
     <div>
-      {['DBOX','XTREME','IMAX','VMAX','LUX','GOLD','STANDARD'].map(t => (
-        <div key={t} style={{ marginBottom:24 }}>
+      {['DBOX','XTREME','IMAX','VMAX','LUX','GOLD','STANDARD'].map((t, gi) => (
+        <div key={t} style={{ marginBottom:24, animation:`fadeUpIn 0.4s ease ${gi * 60}ms both` }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12, paddingBottom:10, borderBottom:'0.5px solid var(--border, rgba(255,255,255,0.10))' }}>
             <div className="skeleton" style={{ width:3, height:18, borderRadius:2 }} />
             <div className="skeleton" style={{ width:80, height:14, borderRadius:6 }} />
           </div>
           {[1,2].map(i => (
-            <div key={i} className="skeleton" style={{ height:148, borderRadius:12, marginBottom:8 }} />
+            <div key={i} className="skeleton" style={{ height:110, borderRadius:12, marginBottom:8, animationDelay:`${gi * 60 + i * 80}ms` }} />
           ))}
         </div>
       ))}
@@ -562,13 +745,20 @@ function SkeletonGrid() {
   )
 }
 
-// ─── Empty & Error ────────────────────────────────────────────────────────────
+// ─── Empty States ─────────────────────────────────────────────────────────────
 function EmptyState({ icon, title, sub }) {
+  const icons = {
+    film:    <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="4" y="10" width="40" height="28" rx="5" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3"/><rect x="4" y="17" width="40" height="2" fill="currentColor" fillOpacity="0.15"/><rect x="4" y="29" width="40" height="2" fill="currentColor" fillOpacity="0.15"/><rect x="11" y="10" width="2" height="7" fill="currentColor" fillOpacity="0.2"/><rect x="35" y="10" width="2" height="7" fill="currentColor" fillOpacity="0.2"/><rect x="11" y="31" width="2" height="7" fill="currentColor" fillOpacity="0.2"/><rect x="35" y="31" width="2" height="7" fill="currentColor" fillOpacity="0.2"/></svg>,
+    cal:     <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="6" y="10" width="36" height="30" rx="5" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3"/><line x1="6" y1="20" x2="42" y2="20" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.2"/><rect x="15" y="6" width="3" height="8" rx="1.5" fill="currentColor" fillOpacity="0.3"/><rect x="30" y="6" width="3" height="8" rx="1.5" fill="currentColor" fillOpacity="0.3"/><circle cx="16" cy="28" r="2" fill="currentColor" fillOpacity="0.25"/><circle cx="24" cy="28" r="2" fill="currentColor" fillOpacity="0.25"/><circle cx="32" cy="28" r="2" fill="currentColor" fillOpacity="0.25"/></svg>,
+    night:   <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M24 8C15.2 8 8 15.2 8 24s7.2 16 16 16 16-7.2 16-16" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3" strokeLinecap="round"/><path d="M32 8a16 16 0 0 1-16 16" stroke="currentColor" strokeWidth="2" strokeOpacity="0.2" strokeLinecap="round"/></svg>,
+    default: <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25"/><path d="M24 16v8l5 5" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3" strokeLinecap="round"/></svg>,
+  }
+  const svgIcon = icons[icon] || icons.default
   return (
-    <div style={{ textAlign:'center', padding:'60px 20px' }}>
-      <div style={{ fontSize:40, marginBottom:14, opacity:.3 }}>{icon || '[movie]'}</div>
-      <div style={{ fontFamily:BEBAS, fontSize:22, color:'var(--text-secondary, #C4C0D4)', letterSpacing:'2px', marginBottom:6 }}>{title}</div>
-      <div style={{ fontSize:13, color:'rgba(255,255,255,0.35)', lineHeight:1.7, maxWidth:280, margin:'0 auto' }}>{sub}</div>
+    <div style={{ textAlign:'center', padding:'64px 20px' }}>
+      <div style={{ color:'rgba(255,255,255,0.20)', marginBottom:16, display:'flex', justifyContent:'center' }}>{svgIcon}</div>
+      <div style={{ fontFamily:BEBAS, fontSize:22, color:'var(--text-secondary, #C4C0D4)', letterSpacing:'2px', marginBottom:8 }}>{title}</div>
+      <div style={{ fontSize:13, color:'rgba(255,255,255,0.30)', lineHeight:1.8, maxWidth:260, margin:'0 auto' }}>{sub}</div>
     </div>
   )
 }
@@ -587,7 +777,7 @@ function ErrorState({ msg, onRetry }) {
   )
 }
 
-// ─── Settings Row ─────────────────────────────────────────────────────────────
+// ─── Settings helpers ─────────────────────────────────────────────────────────
 function SettingsSection({ label, children }) {
   return (
     <div style={{ marginBottom:20 }}>
@@ -614,23 +804,39 @@ function BottomNav({ view, setView }) {
     { id:'closing',  label:'Closing',  icon:'ti-clock-off' },
     { id:'settings', label:'Settings', icon:'ti-settings' },
   ]
+  const activeIdx = tabs.findIndex(t => t.id === view)
+
   return (
-    <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:100, background:'var(--surface-2, #313229)', borderTop:'0.5px solid var(--border)', backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)' }}>
-      <div style={{ maxWidth:600, margin:'0 auto', display:'flex', height:58 }}>
-        {tabs.map(t => {
+    <div style={{
+      position:'fixed', bottom:0, left:0, right:0, zIndex:100,
+      background:'rgba(20,21,16,0.75)',
+      backdropFilter:'blur(24px) saturate(180%)',
+      WebkitBackdropFilter:'blur(24px) saturate(180%)',
+      borderTop:'0.5px solid rgba(255,255,255,0.10)',
+    }}>
+      <div style={{ maxWidth:600, margin:'0 auto', display:'flex', height:60, position:'relative' }}>
+        {/* Sliding pill indicator */}
+        <div style={{
+          position:'absolute', top:8,
+          left:`calc(${activeIdx * 25}% + 8px)`,
+          width:'calc(25% - 16px)',
+          height:44,
+          background:'rgba(255,255,255,0.07)',
+          borderRadius:12,
+          transition:'left 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+          pointerEvents:'none',
+        }} />
+        {tabs.map((t, i) => {
           const active = view === t.id
           return (
             <button key={t.id} onClick={() => setView(t.id)} style={{
               flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3,
-              background:'transparent', border:'none', cursor:'pointer', transition:'color .15s',
+              background:'transparent', border:'none', cursor:'pointer', transition:'color 0.2s',
               color: active ? C.amberTxt : 'var(--text-muted, #7A7690)',
               fontFamily:MONO, fontSize:8.5, fontWeight: active ? 700 : 400, letterSpacing:1, textTransform:'uppercase',
-              position:'relative',
+              position:'relative', zIndex:1,
             }}>
-              {active && (
-                <div style={{ position:'absolute', top:0, left:'28%', right:'28%', height:2, background:C.amber, borderRadius:'0 0 2px 2px' }} />
-              )}
-              <i className={`ti ${t.icon}`} aria-hidden="true" style={{ fontSize:20 }} />
+              <i className={`ti ${t.icon}`} aria-hidden="true" style={{ fontSize:20, transition:'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)', transform: active ? 'scale(1.15)' : 'scale(1)' }} />
               {t.label}
             </button>
           )
@@ -643,9 +849,14 @@ function BottomNav({ view, setView }) {
 // ─── Header ───────────────────────────────────────────────────────────────────
 function Header({ cinemaId, setCinemaId, loading, lastFetched, onRefresh }) {
   return (
-    <div style={{ position:'sticky', top:0, zIndex:50, background:'var(--surface-2, #313229)', borderBottom:'0.5px solid var(--border, rgba(255,255,255,0.10))', backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)' }}>
+    <div style={{
+      position:'sticky', top:0, zIndex:50,
+      background:'rgba(20,21,16,0.80)',
+      backdropFilter:'blur(24px) saturate(180%)',
+      WebkitBackdropFilter:'blur(24px) saturate(180%)',
+      borderBottom:'0.5px solid rgba(255,255,255,0.08)',
+    }}>
       <div style={{ maxWidth:900, margin:'0 auto', padding:'0 16px', display:'flex', alignItems:'center', justifyContent:'space-between', height:54, gap:12 }}>
-        {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
           <div style={{ width:28, height:28, background:C.amber, borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
@@ -655,11 +866,10 @@ function Header({ cinemaId, setCinemaId, loading, lastFetched, onRefresh }) {
           </div>
           <div>
             <div style={{ fontFamily:BEBAS, fontSize:17, color:'#FFFFFF', letterSpacing:'1px', lineHeight:1 }}>Last Session</div>
-            <div style={{ fontFamily:SANS, fontFamily:MONO, fontSize:8.5, letterSpacing:2, color:C.amber, textTransform:'uppercase', marginTop:1 }}>HOYTS Tracker</div>
+            <div style={{ fontFamily:MONO, fontSize:8.5, letterSpacing:2, color:C.amber, textTransform:'uppercase', marginTop:1 }}>HOYTS Tracker</div>
           </div>
         </div>
 
-        {/* Right: refresh + cinema picker */}
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           {lastFetched && (
             <span style={{ fontFamily:MONO, fontSize:10, color:'rgba(255,255,255,0.35)' }}>
@@ -700,7 +910,7 @@ export default function App() {
   const [cinemaId,      setCinemaId]      = useState('EGDENS')
   const [sessions,      setSessions]      = useState([])
   const [movieMap,      setMovieMap]      = useState({})
-  const [loading,       setLoading]       = useState(false)
+  const [loading,       setLoading]       = useState(true)
   const [error,         setError]         = useState('')
   const [selectedDate,  setSelectedDate]  = useState(todayKey())
   const [expandedHalls, setExpandedHalls] = useState({})
@@ -710,10 +920,8 @@ export default function App() {
   const cinema       = CINEMAS.find(c => c.id === cinemaId)
   const mergedMovies = { ...KNOWN_MOVIES, ...movieMap }
 
-  // Clear old caches on init
   useEffect(() => { clearOldCaches() }, [])
 
-  // Restore saved state
   useEffect(() => {
     const saved = localStorage.getItem('hoyts-cinema')
     if (saved) setCinemaId(saved)
@@ -733,7 +941,6 @@ export default function App() {
       const arr  = Array.isArray(data) ? data : []
       setSessions(arr)
       setLastFetched(new Date())
-      // Auto-fetch movie details for any ID without a name yet
       const ids = [...new Set(arr.map(s => s.movieId).filter(Boolean))]
       const missing = ids.filter(mid => {
         const m = { ...KNOWN_MOVIES, ...movieMap }[mid]
@@ -764,7 +971,6 @@ export default function App() {
     setSelectedDate(todayKey())
   }, [cinemaId])
 
-  // Auto-refresh every 5 min
   useEffect(() => {
     const t = setInterval(() => fetchSessions(cinemaId), 5 * 60 * 1000)
     return () => clearInterval(t)
@@ -776,7 +982,6 @@ export default function App() {
   const selHalls   = byDate[selectedDate] || {}
   const toggleHall = key => setExpandedHalls(p => ({ ...p, [key]: !p[key] }))
 
-  // Sort and group by type
   const ALL_TYPES = ['DBOX','XTREME','IMAX','VMAX','LUX','GOLD','STANDARD']
 
   const groupByType = (halls) => {
@@ -796,10 +1001,15 @@ export default function App() {
     ? fmtTime(Math.max(...allSorted.map(([, h]) => h.sessions[h.sessions.length - 1].startMin)))
     : '--'
 
-  const wrap = { maxWidth:900, margin:'0 auto', padding:'20px 16px 0' }
+  const wrap = { maxWidth:900, margin:'0 auto', padding:'20px 16px 0', position:'relative', zIndex:1 }
 
   return (
-    <div style={{ minHeight:'100vh', paddingBottom:70, background:'var(--surface-0, #1E1F1A)' }}>
+    <div style={{ minHeight:'100vh', paddingBottom:70, background:'var(--surface-base, #141510)' }}>
+      <AmbientBlobs view={view} />
+      <OfflineBanner />
+      <PullToRefresh onRefresh={() => fetchSessions(cinemaId)} loading={loading} />
+      <PWAInstallBanner />
+
       <Header cinemaId={cinemaId} setCinemaId={setCinemaId} loading={loading} lastFetched={lastFetched} onRefresh={() => fetchSessions(cinemaId)} />
 
       {/* ── TONIGHT ── */}
@@ -807,7 +1017,6 @@ export default function App() {
         <div style={wrap} className="fade-up">
           <PageTitle eyebrow="Final sessions tonight" title={cinema?.name || 'Select a cinema'} />
 
-          {/* Live pill + date */}
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
             <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:C.amberBg, border:`0.5px solid ${C.amberBdr}`, borderRadius:20, padding:'4px 10px' }}>
               <div style={{ width:6, height:6, borderRadius:'50%', background:C.amberDim, animation:'pulse 2s ease-in-out infinite' }} />
@@ -820,7 +1029,7 @@ export default function App() {
           {!loading && error && <ErrorState msg={error} onRetry={() => fetchSessions(cinemaId)} />}
 
           {!loading && !error && sessions.length === 0 && (
-            <EmptyState title="No data yet" sub="Sessions load automatically. If nothing appears, check the Settings tab to verify the cinema is correct." />
+            <EmptyState icon="film" title="No data yet" sub="Sessions load automatically. Check Settings to verify your cinema." />
           )}
 
           {!loading && !error && sessions.length > 0 && Object.keys(todayHalls).length === 0 && (
@@ -829,7 +1038,6 @@ export default function App() {
 
           {!loading && !error && Object.keys(todayHalls).length > 0 && (
             <>
-              {/* Stats */}
               <div style={{ display:'flex', gap:8, marginBottom:24 }}>
                 <StatCard label="Halls" value={allSorted.length} />
                 <StatCard label="Total shows" value={totalShows} />
@@ -873,44 +1081,48 @@ export default function App() {
 
       {/* ── CLOSING BOARD ── */}
       {view === 'closing' && (
-        <div className="fade-in">
+        <div style={{ ...wrap }} className="fade-up">
           <PageTitle eyebrow="Tonight" title="Closing Times" />
-          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-            {sortHalls(todayHalls).map(([name, hall], i) => {
-              const last = hall.sessions[hall.sessions.length - 1]
-              const col  = typeColor[hall.typeId] || C.rec
-              const status = getHallStatus(hall.sessions)
-              const currentSess = getCurrentSession(hall.sessions)
-              const nowMins = getNowMins()
-              const minsLeft = currentSess ? currentSess.endMin - nowMins : null
-              return (
-                <div key={name} style={{
-                  display:'flex', alignItems:'center', gap:14,
-                  background:'rgba(0,0,0,0.25)', border:`1px solid ${status==='playing'?col+'40':'rgba(255,255,255,0.08)'}`,
-                  borderLeft:`3px solid ${status==='done'?'rgba(255,255,255,0.15)':col}`,
-                  borderRadius:10, padding:'12px 16px',
-                  opacity: status === 'done' ? 0.45 : 1,
-                }}>
-                  <MoviePoster movieName={last.movie} movieId={last.movieId} size="sm" />
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontFamily:MONO, fontSize:9, color:'rgba(255,255,255,0.40)', letterSpacing:1, textTransform:'uppercase', marginBottom:2 }}>{name}</div>
-                    <div style={{ fontFamily:SANS, fontSize:13, fontWeight:600, color:'#FFFFFF', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{last.movie}</div>
-                  </div>
-                  <div style={{ textAlign:'right', flexShrink:0 }}>
-                    <div style={{ fontFamily:BEBAS, fontSize:22, color: status==='done'?'rgba(255,255,255,0.25)':col, letterSpacing:1, lineHeight:1 }}>
-                      ~{fmtTime(last.endMin)}
+          {Object.keys(todayHalls).length === 0 && !loading && (
+            <EmptyState icon="night" title="No sessions today" sub="Switch cinema or check Schedule tab." />
+          )}
+          {loading && <SkeletonGrid />}
+          {!loading && (
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {sortHalls(todayHalls).map(([name, hall], i) => {
+                const last = hall.sessions[hall.sessions.length - 1]
+                const col  = typeColor[hall.typeId] || C.rec
+                const status = getHallStatus(hall.sessions)
+                const currentSess = getCurrentSession(hall.sessions)
+                const nowMins = getNowMins()
+                const minsLeft = currentSess ? currentSess.endMin - nowMins : null
+                return (
+                  <div key={name} className="fade-up" style={{
+                    animationDelay: i * 30 + 'ms',
+                    display:'flex', alignItems:'center', gap:14,
+                    background:'rgba(0,0,0,0.25)', border:`1px solid ${status==='playing'?col+'40':'rgba(255,255,255,0.08)'}`,
+                    borderLeft:`3px solid ${status==='done'?'rgba(255,255,255,0.15)':col}`,
+                    borderRadius:10, padding:'12px 16px',
+                    opacity: status === 'done' ? 0.45 : 1,
+                  }}>
+                    <MoviePoster movieName={last.movie} movieId={last.movieId} size="sm" />
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontFamily:MONO, fontSize:9, color:'rgba(255,255,255,0.40)', letterSpacing:1, textTransform:'uppercase', marginBottom:2 }}>{name}</div>
+                      <div style={{ fontFamily:SANS, fontSize:13, fontWeight:600, color:'#FFFFFF', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{last.movie}</div>
                     </div>
-                    <div style={{ fontFamily:MONO, fontSize:9, letterSpacing:.5, marginTop:2,
-                      color: status==='playing'?'#00D4A8': status==='done'?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.40)' }}>
-                      {status==='playing' ? `ends in ${minsToHuman(minsLeft)}` : status==='done' ? 'CLOSED' : `last @ ${fmtTime(last.startMin)}`}
+                    <div style={{ textAlign:'right', flexShrink:0 }}>
+                      <div style={{ fontFamily:BEBAS, fontSize:22, color: status==='done'?'rgba(255,255,255,0.25)':col, letterSpacing:1, lineHeight:1 }}>
+                        {'~'}{fmtTime(last.endMin)}
+                      </div>
+                      <div style={{ fontFamily:MONO, fontSize:9, letterSpacing:.5, marginTop:2,
+                        color: status==='playing'?'#00D4A8': status==='done'?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.40)' }}>
+                        {status==='playing' ? `ends in ${minsToHuman(minsLeft)}` : status==='done' ? 'CLOSED' : `last @ ${fmtTime(last.startMin)}`}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-          {Object.keys(todayHalls).length === 0 && (
-            <EmptyState title="No sessions today" sub="Switch cinema or check Schedule tab." />
+                )
+              })}
+            </div>
           )}
         </div>
       )}
@@ -948,20 +1160,11 @@ export default function App() {
                 setSessions([])
                 fetchSessions(cinemaId)
               }} style={{ fontFamily:SANS, fontWeight:600, fontSize:13, padding:'9px 14px', borderRadius:8,
-                border:'0.5px solid rgba(255,87,87,0.30)', background:'transparent',
+                border:`0.5px solid ${C.errBdr}`, background:'transparent',
                 color:'#FF5757', cursor:'pointer' }}>
                 Clear Cache
               </button>
             </div>
-            <button style={{ display:'none' }}
-              onClick={() => fetchSessions(cinemaId)}
-              disabled={loading}
-              style={{ marginTop:12, fontFamily:SANS, fontWeight:600, fontSize:13, padding:'9px 14px', borderRadius:8, border:'0.5px solid var(--border-strong)', background:'var(--surface-1, #2A2B25)', color:'var(--text-primary, #F5F3FF)', cursor:'pointer', transition:'background .15s' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-0, #1E1F1A)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-1, #2A2B25)'}
-            >
-              {loading ? 'Refreshing...' : 'Refresh now'}
-            </button>
           </SettingsSection>
 
           <SettingsSection label="Movie details">
