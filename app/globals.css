@@ -103,14 +103,20 @@ input[type="number"] { -moz-appearance: textfield; }
   .runtime-box { display: none; }
 }
 
-/* ── Responsive poster layout ───────────────────────── */
 
-/* Desktop: show left poster strip, hide mobile banner */
-.poster-mobile-banner { display: none; }
 .poster-desktop-strip { display: block; }
 
 /* Mobile: hide top banner, show narrow left strip */
 @media (max-width: 600px) {
   .poster-mobile-banner { display: block; }
   .poster-desktop-strip { display: none; }
+}
+
+/* ── Responsive poster layout ───────────────────────── */
+.poster-desktop-strip { display: block; }
+.poster-mobile-strip  { display: none;  }
+
+@media (max-width: 600px) {
+  .poster-desktop-strip { display: none;  }
+  .poster-mobile-strip  { display: block; }
 }
