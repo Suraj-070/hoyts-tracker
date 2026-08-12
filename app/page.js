@@ -7,7 +7,7 @@ import {
   groupByDateAndHall, sortHalls, getUniqueDates
 } from '../lib/utils'
 import SeatMap from '../components/SeatMap'
-import MoviePoster from '../components/MoviePoster'
+import MoviePoster, { PosterDesktop, PosterMobile } from '../components/MoviePoster'
 
 // ─── Session cache helpers ────────────────────────────────────────────────────
 const CACHE_KEY = (id) => `hoyts-sessions-${id}`
@@ -299,10 +299,25 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
         }}
       >
 
-        <div style={{ display: 'flex', alignItems: 'stretch' }}>
-          <MoviePoster movieName={posterSess.movie} movieId={posterSess.movieId} size="full" />
-          <div style={{ flex: 1, minWidth: 0, padding: '10px 12px', overflow: 'hidden' }}>
+        {/* RESPONSIVE LAYOUT */}
 
+        {/* Mobile: top banner poster (hidden on desktop via max-width) */}
+        <div className="poster-mobile-banner">
+          <PosterMobile movieName={posterSess.movie} movieId={posterSess.movieId} />
+        </div>
+
+        {/* Desktop: left poster + right content row */}
+        <div style={{ display: 'flex', alignItems: 'stretch' }}>
+
+          {/* Desktop poster - hidden on mobile */}
+          <div className="poster-desktop-strip">
+            <PosterDesktop movieName={posterSess.movie} movieId={posterSess.movieId} />
+          </div>
+
+          {/* Content */}
+          <div style={{ flex: 1, minWidth: 0, padding: '10px 12px' }}>
+
+            {/* Hall name + badge + dots + chevron */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1, textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 3 }}>{hallName}</div>
@@ -315,6 +330,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
               </div>
             </div>
 
+            {/* NOW PLAYING - only when NOT last session */}
             {currentSess && hallStatus === 'playing' && !isLastSession && (
               <div style={{ marginBottom: 5, padding: '7px 10px', background: 'rgba(0,212,168,0.08)', border: '1px solid rgba(0,212,168,0.18)', borderRadius: 7 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
@@ -322,13 +338,14 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                     <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#00D4A8', animation: 'blip 1.2s ease-in-out infinite' }} />
                     <span style={{ fontFamily: MONO, fontSize: 8, fontWeight: 700, color: '#00D4A8', letterSpacing: 0.8 }}>NOW PLAYING</span>
                   </div>
-                  <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(0,212,168,0.60)' }}>ends in {minsToHuman(minsLeft)}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(0,212,168,0.60)', whiteSpace: 'nowrap' }}>ends in {minsToHuman(minsLeft)}</span>
                 </div>
                 <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 700, color: '#fff', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentSess.movie}</div>
                 <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(0,212,168,0.70)' }}>{fmtTime(currentSess.startMin)}{currentSess.runtime > 0 ? ' - ' + fmtTime(currentSess.endMin) : ''}</div>
               </div>
             )}
 
+            {/* Status: FINAL SHOW / DONE / LAST SESSION */}
             {isLastSession ? (
               <div style={{ padding: '7px 10px', background: 'rgba(240,165,0,0.08)', border: '1px solid rgba(240,165,0,0.22)', borderRadius: 7 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -367,7 +384,6 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
 
           </div>
         </div>
-
         {expanded && (
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.20)' }}>
             <div style={{ padding: '8px 14px 4px', fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.40)', fontWeight: 400 }}>
