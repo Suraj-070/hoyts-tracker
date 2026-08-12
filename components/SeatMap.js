@@ -27,7 +27,7 @@ export default function SeatMap({ sessionId, cinemaId, typeColor }) {
 
   if (!open) {
     return (
-      <button onClick={e => { e.stopPropagation(); setOpen(true) }}
+      <button className="view-seats-btn" onClick={e => { e.stopPropagation(); setOpen(true) }}
         style={{ fontFamily:MONO, fontSize:9, fontWeight:700, letterSpacing:1, padding:'4px 10px',
           borderRadius:6, cursor:'pointer', marginTop:4, background:'rgba(255,255,255,0.08)',
           color:'rgba(255,255,255,0.65)', border:'1px solid rgba(255,255,255,0.18)',
@@ -53,7 +53,7 @@ export default function SeatMap({ sessionId, cinemaId, typeColor }) {
 
       {data && !loading && <SeatMapContent data={data} col={col} />}
 
-      <button onClick={e => { e.stopPropagation(); setOpen(false) }}
+      <button className="close-btn" onClick={e => { e.stopPropagation(); setOpen(false) }}
         style={{ marginTop:12, fontFamily:MONO, fontSize:8.5, letterSpacing:1, padding:'3px 10px',
           borderRadius:6, cursor:'pointer', background:'rgba(255,255,255,0.06)',
           color:'rgba(255,255,255,0.40)', border:'1px solid rgba(255,255,255,0.12)' }}>
@@ -106,7 +106,7 @@ function SeatMapContent({ data, col }) {
         </div>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <span style={{ fontFamily:MONO, fontSize:8.5, color:'rgba(255,255,255,0.35)', letterSpacing:1 }}>OCCUPANCY</span>
-          <span style={{ fontFamily:MONO, fontSize:9.5, fontWeight:700, color:barColor, letterSpacing:.5,
+          <span className="occ-badge" style={{ fontFamily:MONO, fontSize:9.5, fontWeight:700, color:barColor, letterSpacing:.5,
             padding:'2px 8px', borderRadius:20, background:`${barColor}18`, border:`0.5px solid ${barColor}40` }}>
             {summary.status} · {pct}%
           </span>
@@ -126,8 +126,8 @@ function SeatMapContent({ data, col }) {
 
             {/* Rows */}
             <div style={{ display:'flex', flexDirection:'column', gap:4, alignItems:'center', padding:'0 4px' }}>
-              {[...rows].reverse().map(row => (
-                <div key={row.name} style={{ display:'flex', alignItems:'center', gap:3 }}>
+              {[...rows].reverse().map((row, rowIdx) => (
+                <div key={row.name} style={{ display:'flex', alignItems:'center', gap:3, animation:'rowFadeIn 0.2s ease ' + (rowIdx * 20) + 'ms both' }}>
                   <span style={{ fontFamily:MONO, fontSize:9, color:'rgba(255,255,255,0.35)',
                     width:14, textAlign:'right', flexShrink:0 }}>{row.name}</span>
                   <div style={{ display:'flex', gap:3 }}>
@@ -195,7 +195,7 @@ function SeatDot({ seat }) {
   const bg     = seat.sold ? 'rgba(255,107,53,0.80)' : seat.unavailable ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.20)'
   const border = seat.sold ? '#FF6B35'                : seat.unavailable ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.28)'
   return (
-    <div title={`${seat.name}${seat.sold?' (Sold)':seat.unavailable?' (Unavailable)':' (Available)'}`}
+    <div className="seat-dot" title={`${seat.name}${seat.sold?' (Sold)':seat.unavailable?' (Unavailable)':' (Available)'}`}
       style={{ width:15, height:15, borderRadius:3, background:bg, border:`0.5px solid ${border}`,
           transition:'transform 0.15s ease, opacity 0.15s ease' }} />
   )
