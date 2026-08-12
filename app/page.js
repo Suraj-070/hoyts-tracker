@@ -285,7 +285,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
     <div className="fade-up" style={{ animationDelay: delay + 'ms', marginBottom: 8 }}>
       <div
         onClick={onToggle}
-        className="hall-card"
+        className={'hall-card' + (isLastSession ? ' is-final' : hallStatus === 'playing' ? ' is-playing' : hallStatus === 'done' ? ' is-done' : '')}
         style={{
           background: 'rgba(0,0,0,0.25)',
           border: '1px solid ' + (expanded ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.10)'),
@@ -306,7 +306,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
           {/* Hall name + badge + dots + chevron */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.50)', marginBottom: 4 }}>{hallName}</div>
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 4 }}>{hallName}</div>
               <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 8, background: bg, color: txt, border: '0.5px solid ' + bdr }}>{lbl}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
@@ -326,7 +326,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                 </div>
                 <span style={{ fontFamily: MONO, fontSize: 8.5, color: 'rgba(0,212,168,0.70)' }}>ends in {minsToHuman(minsLeft)}</span>
               </div>
-              <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentSess.movie}</div>
+              <div style={{ fontFamily: SANS, fontSize: 'var(--text-md)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentSess.movie}</div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(0,212,168,0.20)' }}>
                   <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(0,212,168,0.55)', letterSpacing: 1, marginBottom: 2 }}>START</div>
@@ -352,7 +352,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                 </div>
                 <span style={{ fontFamily: MONO, fontSize: 8.5, color: 'rgba(240,165,0,0.70)' }}>ends in {minsToHuman(minsLeft)}</span>
               </div>
-              <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>
+              <div style={{ fontFamily: SANS, fontSize: 'var(--text-md)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(240,165,0,0.20)' }}>
                   <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(240,165,0,0.55)', letterSpacing: 1, marginBottom: 2 }}>START</div>
@@ -398,7 +398,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                 <span style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: 1, color: 'rgba(255,255,255,0.40)', textTransform: 'uppercase' }}>Last Session</span>
                 {nextSess && nextSess.startMin === last.startMin && minsToNext > 0 && <span style={{ fontFamily: MONO, fontSize: 8.5, color: col }}>in {minsToHuman(minsToNext)}</span>}
               </div>
-              {!isSameMovie && <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>}
+              {!isSameMovie && <div style={{ fontFamily: SANS, fontSize: 'var(--text-md)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>}
               <div style={{ display: 'flex', gap: 6 }}>
                 <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(255,255,255,0.12)' }}>
                   <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 2 }}>LAST</div>
@@ -422,7 +422,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
 
         </div>
         {expanded && (
-          <div className="expanded-panel" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.20)' }}>
+          <div className="expanded-panel" style={{ borderTop: '1px solid var(--border-0)', background: 'var(--surface-2)' }}>
             <div style={{ padding: '8px 14px 4px', fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.40)', fontWeight: 400 }}>
               All sessions
             </div>
@@ -490,7 +490,7 @@ function TypeSection({ typeId, halls, expandedHalls, toggleHall, prefix, cinemaI
     <div style={{ marginBottom:24 }}>
       <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12, paddingBottom:10, borderBottom:'0.5px solid var(--border, rgba(255,255,255,0.10))' }}>
         <div style={{ width:3, height:18, borderRadius:2, background:col, flexShrink:0 }} />
-        <span style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,20px)', color:col, letterSpacing:'2px' }}>{lbl}</span>
+        <span style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,22px)', color:col, letterSpacing:'3px' }}>{lbl}</span>
         <span style={{ fontFamily:MONO, fontSize:10, color:'rgba(255,255,255,0.40)', fontWeight:400, marginLeft:'auto' }}>
           {halls.length} hall{halls.length !== 1 ? 's' : ''}
         </span>
@@ -538,7 +538,7 @@ function StatCard({ label, value, color }) {
   return (
     <div style={{ flex:1, background:'var(--surface-1, #2A2B25)', borderRadius:10, padding:'10px 12px', border:'0.5px solid var(--border)' }}>
       <div style={{ fontFamily:MONO, fontSize:10, letterSpacing:1.2, textTransform:'uppercase', color:'rgba(255,255,255,0.40)', fontWeight:400, marginBottom:4 }}>{label}</div>
-      <div style={{ fontFamily:BEBAS, fontSize:'clamp(24px,5vw,30px)', color: color || '#FFFFFF', letterSpacing:'1px', lineHeight:1 }}>{value}</div>
+      <div style={{ fontFamily:BEBAS, fontSize:'clamp(24px,5vw,30px)', color: color || 'var(--text-primary)', letterSpacing:'2px', lineHeight:1 }}>{value}</div>
     </div>
   )
 }
@@ -687,7 +687,7 @@ function Header({ cinemaId, setCinemaId, loading, lastFetched, onRefresh }) {
 function PageTitle({ eyebrow, title }) {
   return (
     <div style={{ marginBottom:18 }}>
-      <div style={{ fontFamily:MONO, fontSize:11, letterSpacing:2, color:'rgba(255,255,255,0.45)', textTransform:'uppercase', fontWeight:400, marginBottom:6 }}>{eyebrow}</div>
+      <div style={{ fontFamily:MONO, fontSize:'var(--text-sm)', letterSpacing:3, color:'var(--text-muted)', textTransform:'uppercase', fontWeight:500, marginBottom:8 }}>{eyebrow}</div>
       <div style={{ fontFamily:BEBAS, fontSize:'clamp(28px,6vw,40px)', color:'#FFFFFF', letterSpacing:'2px', lineHeight:1 }}>{title}</div>
     </div>
   )
