@@ -486,3 +486,35 @@ input:focus {
 
 /* ── AMBIENT BLOBS TRANSITION ── */
 .ambient-blob { transition: background 1s ease, opacity 1s ease; }
+
+/* ── MOBILE: prevent iOS input zoom (font < 16px triggers zoom) ── */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ── MOBILE: prevent horizontal scroll bleed ── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* ── MOBILE: tighter card padding on very small screens ── */
+@media (max-width: 360px) {
+  .hall-card > div { padding: 10px 10px !important; }
+  .stat-card-label { font-size: 8px !important; }
+}
+
+/* ── iOS safe area: header clearance ── */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .sticky-header {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* ── Touch: larger tap area for expand chevron ── */
+@media (hover: none) and (pointer: coarse) {
+  .hall-card { min-height: 80px; }
+  .bottom-nav-item { min-height: 44px; }
+}
