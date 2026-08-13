@@ -494,11 +494,7 @@ input:focus {
   }
 }
 
-/* ── MOBILE: prevent horizontal scroll bleed ── */
-html, body {
-  overflow-x: hidden;
-  max-width: 100vw;
-}
+/* ── MOBILE: horizontal scroll prevention via wrapper only (not html/body — breaks mobile scroll) ── */
 
 /* ── MOBILE: tighter card padding on very small screens ── */
 @media (max-width: 360px) {
