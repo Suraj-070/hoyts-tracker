@@ -965,9 +965,11 @@ export default function App() {
     setLoading(false)
   }, [movieMap])
 
-  // Auto-expand playing/final halls after load
+  // Auto-expand playing/final halls — FIRST LOAD ONLY
+  const autoExpandedRef = useRef(false)
   useEffect(() => {
-    if (loading || sessions.length === 0) return
+    if (loading || sessions.length === 0 || autoExpandedRef.current) return
+    autoExpandedRef.current = true
     const byDate = groupByDateAndHall(sessions, mergedMovies)
     const todayH = byDate[todayKey()] || {}
     const newExpanded = {}
@@ -981,7 +983,7 @@ export default function App() {
       }
     })
     if (Object.keys(newExpanded).length > 0) {
-      setExpandedHalls(prev => ({ ...newExpanded, ...prev }))
+      setExpandedHalls(newExpanded)
     }
   }, [loading, sessions.length])
 
