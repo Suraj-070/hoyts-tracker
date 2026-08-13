@@ -472,7 +472,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   return (
     <div className="fade-up" style={{ animationDelay: delay + 'ms', marginBottom: 8 }}>
       <div
-        onClick={onToggle}
+        onClick={() => { if (navigator.vibrate) navigator.vibrate(8); onToggle() }}
         className={'hall-card' + (isLastSession ? ' is-final' : hallStatus === 'playing' ? ' is-playing' : hallStatus === 'done' ? ' is-done' : '')}
         style={{
           background: 'rgba(0,0,0,0.25)',
@@ -512,12 +512,12 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
               <div style={{ fontFamily: SANS, fontSize: 'var(--text-md)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentSess.movie}</div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(0,212,168,0.20)' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(0,212,168,0.55)', letterSpacing: 1, marginBottom: 2 }}>START</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(0,212,168,0.55)', letterSpacing: 1, marginBottom: 2 }}>START</div>
                   <div style={{ fontFamily: BEBAS, fontSize: 18, color: 'rgba(0,212,168,0.90)', lineHeight: 1 }}>{fmtTime(currentSess.startMin)}</div>
                 </div>
                 {currentSess.runtime > 0 && (
                   <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(0,212,168,0.20)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(0,212,168,0.55)', letterSpacing: 1, marginBottom: 2 }}>ENDS</div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(0,212,168,0.55)', letterSpacing: 1, marginBottom: 2 }}>ENDS</div>
                     <div style={{ fontFamily: BEBAS, fontSize: 18, color: 'rgba(255,255,255,0.65)', lineHeight: 1 }}>{'~'}{fmtTime(currentSess.endMin)}</div>
                   </div>
                 )}
@@ -538,18 +538,18 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
               <div style={{ fontFamily: SANS, fontSize: 'var(--text-md)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(240,165,0,0.20)' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(240,165,0,0.55)', letterSpacing: 1, marginBottom: 2 }}>START</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(240,165,0,0.55)', letterSpacing: 1, marginBottom: 2 }}>START</div>
                   <div style={{ fontFamily: BEBAS, fontSize: 18, color: '#F0A500', lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
                 </div>
                 {last.runtime > 0 && (
                   <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(240,165,0,0.20)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(240,165,0,0.55)', letterSpacing: 1, marginBottom: 2 }}>ENDS</div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(240,165,0,0.55)', letterSpacing: 1, marginBottom: 2 }}>ENDS</div>
                     <div style={{ fontFamily: BEBAS, fontSize: 18, color: 'rgba(255,255,255,0.65)', lineHeight: 1 }}>{'~'}{fmtTime(last.endMin)}</div>
                   </div>
                 )}
                 {last.runtime > 0 && (
                   <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(240,165,0,0.20)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(240,165,0,0.55)', letterSpacing: 1, marginBottom: 2 }}>RUNTIME</div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(240,165,0,0.55)', letterSpacing: 1, marginBottom: 2 }}>RUNTIME</div>
                     <div style={{ fontFamily: BEBAS, fontSize: 18, color: 'rgba(255,255,255,0.45)', lineHeight: 1 }}>{last.runtime}m</div>
                   </div>
                 )}
@@ -564,12 +564,12 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
               {!isSameMovie && <div style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(255,255,255,0.40)', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>}
               <div style={{ display: 'flex', gap: 6 }}>
                 <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginBottom: 2 }}>LAST</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginBottom: 2 }}>LAST</div>
                   <div style={{ fontFamily: BEBAS, fontSize: 18, color: 'rgba(255,255,255,0.30)', lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
                 </div>
                 {last.runtime > 0 && (
                   <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginBottom: 2 }}>ENDED</div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginBottom: 2 }}>ENDED</div>
                     <div style={{ fontFamily: BEBAS, fontSize: 18, color: 'rgba(255,87,87,0.50)', lineHeight: 1 }}>{'~'}{fmtTime(last.endMin)}</div>
                   </div>
                 )}
@@ -584,18 +584,18 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
               {!isSameMovie && <div style={{ fontFamily: SANS, fontSize: 'var(--text-md)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>}
               <div style={{ display: 'flex', gap: 6 }}>
                 <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(255,255,255,0.12)' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 2 }}>LAST</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 2 }}>LAST</div>
                   <div style={{ fontFamily: BEBAS, fontSize: 'clamp(20px,5vw,26px)', color: col, lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
                 </div>
                 {last.runtime > 0 && (
                   <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(255,255,255,0.12)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 2 }}>ENDS</div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 2 }}>ENDS</div>
                     <div style={{ fontFamily: BEBAS, fontSize: 'clamp(18px,4vw,22px)', color: 'rgba(255,255,255,0.55)', lineHeight: 1 }}>{'~'}{fmtTime(last.endMin)}</div>
                   </div>
                 )}
                 {last.runtime > 0 && (
                   <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(255,255,255,0.12)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 2 }}>RUNTIME</div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 2 }}>RUNTIME</div>
                     <div style={{ fontFamily: BEBAS, fontSize: 'clamp(16px,3.5vw,20px)', color: 'rgba(255,255,255,0.40)', lineHeight: 1 }}>{last.runtime}m</div>
                   </div>
                 )}
@@ -813,6 +813,7 @@ function BottomNav({ view, setView }) {
       backdropFilter:'blur(24px) saturate(180%)',
       WebkitBackdropFilter:'blur(24px) saturate(180%)',
       borderTop:'0.5px solid rgba(255,255,255,0.10)',
+      paddingBottom:'env(safe-area-inset-bottom)',
     }}>
       <div style={{ maxWidth:600, margin:'0 auto', display:'flex', height:60, position:'relative' }}>
         {/* Sliding pill indicator */}
@@ -829,7 +830,7 @@ function BottomNav({ view, setView }) {
         {tabs.map((t, i) => {
           const active = view === t.id
           return (
-            <button key={t.id} onClick={() => setView(t.id)} style={{
+            <button key={t.id} onClick={() => { setView(t.id); window.scrollTo({ top: 0, behavior: 'smooth' }) }} style={{
               flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3,
               background:'transparent', border:'none', cursor:'pointer', transition:'color 0.2s',
               color: active ? C.amberTxt : 'var(--text-muted, #7A7690)',
@@ -873,7 +874,7 @@ function Header({ cinemaId, setCinemaId, loading, lastFetched, onRefresh }) {
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           {lastFetched && (
             <span style={{ fontFamily:MONO, fontSize:10, color:'rgba(255,255,255,0.35)' }}>
-              {lastFetched.toLocaleTimeString('en-AU', { hour:'2-digit', minute:'2-digit' })}
+              {(() => { const diff = Math.floor((Date.now() - lastFetched) / 60000); return diff < 1 ? 'just now' : diff < 60 ? diff + 'm ago' : Math.floor(diff/60) + 'h ago' })()}
             </span>
           )}
           <button
@@ -964,6 +965,26 @@ export default function App() {
     setLoading(false)
   }, [movieMap])
 
+  // Auto-expand playing/final halls after load
+  useEffect(() => {
+    if (loading || sessions.length === 0) return
+    const byDate = groupByDateAndHall(sessions, mergedMovies)
+    const todayH = byDate[todayKey()] || {}
+    const newExpanded = {}
+    Object.entries(todayH).forEach(([name, hall]) => {
+      const status = getHallStatus(hall.sessions)
+      const cur = getCurrentSession(hall.sessions)
+      const last = hall.sessions[hall.sessions.length - 1]
+      const isFinal = cur && cur.startMin === last.startMin
+      if (status === 'playing' || isFinal) {
+        newExpanded['tonight-' + name] = true
+      }
+    })
+    if (Object.keys(newExpanded).length > 0) {
+      setExpandedHalls(prev => ({ ...newExpanded, ...prev }))
+    }
+  }, [loading, sessions.length])
+
   useEffect(() => {
     localStorage.setItem('hoyts-cinema', cinemaId)
     fetchSessions(cinemaId)
@@ -1001,10 +1022,10 @@ export default function App() {
     ? fmtTime(Math.max(...allSorted.map(([, h]) => h.sessions[h.sessions.length - 1].startMin)))
     : '--'
 
-  const wrap = { maxWidth:900, margin:'0 auto', padding:'20px 16px 0', position:'relative', zIndex:1 }
+  const wrap = { maxWidth:900, margin:'0 auto', padding:'20px 16px 0', position:'relative', zIndex:1, overflowX:'hidden' }
 
   return (
-    <div style={{ minHeight:'100vh', paddingBottom:70, background:'var(--surface-base, #141510)' }}>
+    <div style={{ minHeight:'100vh', paddingBottom:'calc(70px + env(safe-area-inset-bottom))', background:'var(--surface-base, #141510)', overflowX:'hidden' }}>
       <AmbientBlobs view={view} />
       <OfflineBanner />
       <PullToRefresh onRefresh={() => fetchSessions(cinemaId)} loading={loading} />
@@ -1038,7 +1059,7 @@ export default function App() {
 
           {!loading && !error && Object.keys(todayHalls).length > 0 && (
             <>
-              <div style={{ display:'flex', gap:8, marginBottom:24 }}>
+              <div style={{ display:'flex', gap:8, marginBottom:24, flexWrap:'wrap' }}>
                 <StatCard label="Halls" value={allSorted.length} />
                 <StatCard label="Total shows" value={totalShows} />
                 <StatCard label="Latest start" value={latestStart} color={C.amberTxt} />
