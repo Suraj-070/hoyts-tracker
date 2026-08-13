@@ -160,7 +160,7 @@ function OfflineBanner() {
 
   useEffect(() => {
     const setOff = () => { setOffline(true); setShow(true) }
-    const setOn  = () => { setShow(true); setTimeout(() => setOffline(false), 2000) }
+    const setOn  = () => { setShow(true); setOffline(false); setTimeout(() => setShow(false), 2500) }
     window.addEventListener('offline', setOff)
     window.addEventListener('online',  setOn)
     if (!navigator.onLine) { setOffline(true); setShow(true) }
@@ -252,27 +252,35 @@ function PWAInstallBanner() {
 
 // ─── Pull to Refresh ──────────────────────────────────────────────────────────
 function PullToRefresh({ onRefresh, loading }) {
-  const startY = useRef(0)
+  const startY     = useRef(0)
+  const distRef    = useRef(0)
+  const loadingRef = useRef(loading)
   const [pullDist, setPullDist] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
   const THRESHOLD = 64
+
+  useEffect(() => { loadingRef.current = loading }, [loading])
 
   useEffect(() => {
     const onTouchStart = (e) => {
       if (window.scrollY > 5) return
       startY.current = e.touches[0].clientY
+      distRef.current = 0
     }
     const onTouchMove = (e) => {
       if (window.scrollY > 5) return
       const dist = Math.max(0, Math.min(THRESHOLD + 20, e.touches[0].clientY - startY.current))
+      distRef.current = dist
       if (dist > 8) setPullDist(dist)
     }
     const onTouchEnd = async () => {
-      if (pullDist >= THRESHOLD && !loading) {
+      const dist = distRef.current
+      if (dist >= THRESHOLD && !loadingRef.current) {
         setRefreshing(true)
         await onRefresh()
         setRefreshing(false)
       }
+      distRef.current = 0
       setPullDist(0)
     }
     window.addEventListener('touchstart', onTouchStart, { passive:true })
@@ -283,7 +291,7 @@ function PullToRefresh({ onRefresh, loading }) {
       window.removeEventListener('touchmove',  onTouchMove)
       window.removeEventListener('touchend',   onTouchEnd)
     }
-  }, [pullDist, loading, onRefresh])
+  }, [onRefresh])
 
   const progress = Math.min(1, pullDist / THRESHOLD)
   const triggered = pullDist >= THRESHOLD
@@ -359,7 +367,11 @@ function CinemaPicker({ value, onChange }) {
   useEffect(() => {
     const fn = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
     document.addEventListener('mousedown', fn)
-    return () => document.removeEventListener('mousedown', fn)
+    document.addEventListener('touchstart', fn, { passive: true })
+    return () => {
+      document.removeEventListener('mousedown', fn)
+      document.removeEventListener('touchstart', fn)
+    }
   }, [])
 
   const grouped = CINEMAS.reduce((acc, c) => {
@@ -782,7 +794,7 @@ function SettingsSection({ label, children }) {
   return (
     <div style={{ marginBottom:20 }}>
       <div style={{ fontFamily:MONO, fontSize:9, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.40)', fontWeight:400, marginBottom:8 }}>{label}</div>
-      <div style={{ background:'var(--surface-2, #313229)', border:'0.5px solid var(--border)', borderRadius:12, padding:'16px' }}>{children}</div>
+      <div style={{ background:'var(--surface-2, #313229)', border:'0.5px solid var(--border)', borderRadius:12, padding:'16px', overflow:'visible' }}>{children}</div>
     </div>
   )
 }
@@ -849,6 +861,11 @@ function BottomNav({ view, setView }) {
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 function Header({ cinemaId, setCinemaId, loading, lastFetched, onRefresh }) {
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setTick(n => n + 1), 60000)
+    return () => clearInterval(t)
+  }, [])
   return (
     <div style={{
       position:'sticky', top:0, zIndex:50,
@@ -932,6 +949,9 @@ export default function App() {
     } catch (e) {}
   }, [])
 
+  const movieMapRef = useRef(movieMap)
+  useEffect(() => { movieMapRef.current = movieMap }, [movieMap])
+
   const fetchSessions = useCallback(async (id) => {
     setLoading(true); setError('')
     try {
@@ -942,16 +962,17 @@ export default function App() {
       const arr  = Array.isArray(data) ? data : []
       setSessions(arr)
       setLastFetched(new Date())
+      saveSessionCache(id, arr)
       const ids = [...new Set(arr.map(s => s.movieId).filter(Boolean))]
       const missing = ids.filter(mid => {
-        const m = { ...KNOWN_MOVIES, ...movieMap }[mid]
+        const m = { ...KNOWN_MOVIES, ...movieMapRef.current }[mid]
         return !m || !m.name
       })
       if (missing.length > 0) {
         fetch(`/api/hoyts/films?ids=${missing.join(',')}`)
           .then(r => r.json())
           .then(map => {
-            const merged = { ...movieMap }
+            const merged = { ...movieMapRef.current }
             Object.entries(map).forEach(([id, film]) => {
               if (film && (film.name || film.runtime)) {
                 merged[id] = { ...(merged[id] || {}), ...film }
@@ -963,7 +984,7 @@ export default function App() {
       }
     } catch (e) { setError(e.message) }
     setLoading(false)
-  }, [movieMap])
+  }, [])
 
   // Auto-expand playing/final halls — FIRST LOAD ONLY
   const autoExpandedRef = useRef(false)
@@ -989,6 +1010,7 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('hoyts-cinema', cinemaId)
+    autoExpandedRef.current = false
     fetchSessions(cinemaId)
     setExpandedHalls({})
     setSelectedDate(todayKey())
@@ -1034,6 +1056,7 @@ export default function App() {
       <PWAInstallBanner />
 
       <Header cinemaId={cinemaId} setCinemaId={setCinemaId} loading={loading} lastFetched={lastFetched} onRefresh={() => fetchSessions(cinemaId)} />
+      {sessions.length > 0 && <Ticker sessions={sessions} movieMap={mergedMovies} />}
 
       {/* ── TONIGHT ── */}
       {view === 'tonight' && (
