@@ -392,12 +392,12 @@ function CinemaPicker({ value, onChange }) {
         <div style={{
           position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:300,
           background:'var(--surface-2, #313229)', border:'0.5px solid var(--border-strong)',
-          borderRadius:12, width:260, maxHeight:380, overflowY:'auto',
+          borderRadius:12, width:'min(260px, calc(100vw - 32px))', maxHeight:380, overflowY:'auto',
           boxShadow:'var(--shadow-popover)',
         }}>
           <div style={{ padding:'10px 12px', borderBottom:'0.5px solid var(--border, rgba(255,255,255,0.10))', position:'sticky', top:0, background:'var(--surface-2, #313229)' }}>
             <input
-              autoFocus value={search} onChange={e => setSearch(e.target.value)}
+              value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search cinemas..."
               style={{ width:'100%', fontFamily:SANS, fontSize:13 }}
             />
@@ -605,7 +605,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
 
         </div>
         {expanded && (
-          <div className="expanded-panel" style={{ borderTop: '1px solid var(--border-0)', background: 'var(--surface-2)' }}>
+          <div className="expanded-panel" style={{ borderTop: '1px solid var(--border-0)', background: 'var(--surface-2)', maxHeight:'70vh', overflowY:'auto' }}>
             <div style={{ padding: '8px 14px 4px', fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.40)', fontWeight: 400 }}>
               All sessions
             </div>
@@ -696,12 +696,12 @@ function TypeSection({ typeId, halls, expandedHalls, toggleHall, prefix, cinemaI
 // ─── Date Tabs ────────────────────────────────────────────────────────────────
 function DateTabs({ dates, selected, onSelect }) {
   return (
-    <div style={{ display:'flex', gap:6, overflowX:'auto', scrollbarWidth:'none', paddingBottom:2 }}>
+    <div style={{ display:'flex', gap:6, overflowX:'auto', scrollbarWidth:'none', paddingBottom:2, scrollSnapType:'x mandatory', WebkitOverflowScrolling:'touch' }}>
       {dates.map(d => {
         const active = d === selected
         return (
           <button key={d} onClick={() => onSelect(d)} style={{
-            flexShrink:0, fontFamily:SANS, fontSize:12, fontWeight: active ? 600 : 500,
+            flexShrink:0, scrollSnapAlign:'start', fontFamily:SANS, fontSize:12, fontWeight: active ? 600 : 500,
             padding:'7px 14px', borderRadius:20, cursor:'pointer', transition:'all .15s',
             border:`0.5px solid ${active ? C.amberDim : 'var(--border-strong, rgba(255,255,255,0.18))'}`,
             background: active ? C.amberBg : 'transparent',
@@ -1022,10 +1022,10 @@ export default function App() {
     ? fmtTime(Math.max(...allSorted.map(([, h]) => h.sessions[h.sessions.length - 1].startMin)))
     : '--'
 
-  const wrap = { maxWidth:900, margin:'0 auto', padding:'20px 16px 0', position:'relative', zIndex:1, overflowX:'hidden' }
+  const wrap = { maxWidth:900, margin:'0 auto', padding:'20px 16px 0', position:'relative', zIndex:1 }
 
   return (
-    <div style={{ minHeight:'100vh', paddingBottom:'calc(70px + env(safe-area-inset-bottom))', background:'var(--surface-base, #141510)', overflowX:'hidden' }}>
+    <div style={{ minHeight:'100vh', paddingBottom:'calc(70px + env(safe-area-inset-bottom))', background:'var(--surface-base, #141510)' }}>
       <AmbientBlobs view={view} />
       <OfflineBanner />
       <PullToRefresh onRefresh={() => fetchSessions(cinemaId)} loading={loading} />
@@ -1195,8 +1195,8 @@ export default function App() {
             {[...new Set(sessions.map(s => s.movieId).filter(Boolean))].map(mid => {
               const m = mergedMovies[mid] || {}
               return (
-                <div key={mid} style={{ display:'flex', gap:8, marginBottom:8, alignItems:'center', flexWrap:'wrap' }}>
-                  <span style={{ fontFamily:SANS, fontSize:10, color:'var(--text-muted, #7A7690)', width:110, flexShrink:0, letterSpacing:.3 }}>{mid}</span>
+                <div key={mid} style={{ display:'flex', gap:8, marginBottom:8, alignItems:'center', flexWrap:'wrap', flexDirection:'row' }}>
+                  <span style={{ fontFamily:SANS, fontSize:10, color:'var(--text-muted, #7A7690)', width:90, flexShrink:0, letterSpacing:.3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{mid}</span>
                   <input
                     defaultValue={m.name || ''} placeholder="Movie name"
                     onChange={e => { const nm = { ...movieMap, [mid]: { ...(movieMap[mid]||{}), name:e.target.value } }; setMovieMap(nm); localStorage.setItem('hoyts-movies', JSON.stringify(nm)) }}
