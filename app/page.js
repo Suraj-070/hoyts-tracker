@@ -1054,7 +1054,7 @@ export default function App() {
   const dates      = getUniqueDates(sessions)
   const todayHalls = byDate[todayKey()]   || {}
   const selHalls   = byDate[selectedDate] || {}
-  const toggleHall = key => setExpandedHalls(p => ({ ...p, [key]: !p[key] }))
+  const toggleHall = key => setExpandedHalls(p => ({ [key]: !p[key] }))
 
   const ALL_TYPES = ['DBOX','XTREME','IMAX','VMAX','LUX','GOLD','STANDARD']
 
