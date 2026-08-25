@@ -508,7 +508,6 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   const last = sess[sess.length - 1]
 
   const [occupancy, setOccupancy] = useState(null)
-  const [seatOpen, setSeatOpen] = useState(false)
   const [selectedSessId, setSelectedSessId] = useState(null)
   useEffect(() => {
     if (!last.sessionId) return
@@ -671,74 +670,44 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
           )}
 
         </div>
-        {/* View Seats button */}
-        {sess.some(s => s.sessionId) && (
-          <div style={{ padding: '0 14px 12px' }} onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => {
-                if (navigator.vibrate) navigator.vibrate(6)
-                setSeatOpen(o => !o)
-                if (!selectedSessId) setSelectedSessId(last.sessionId)
-              }}
-              className="view-seats-btn"
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                padding: '9px 14px', borderRadius: 10, cursor: 'pointer',
-                background: seatOpen ? (typeBg[hall.typeId] || C.recBg) : 'rgba(255,255,255,0.06)',
-                border: '0.5px solid ' + (seatOpen ? (typeBdr[hall.typeId] || C.recBdr) : 'rgba(255,255,255,0.12)'),
-                color: seatOpen ? col : 'rgba(255,255,255,0.55)',
-                fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: 1,
-                transition: 'all 0.15s', WebkitTapHighlightColor: 'transparent',
-              }}
-            >
-              <i className="ti ti-armchair" style={{ fontSize: 14 }} />
-              {seatOpen ? 'HIDE SEATS' : 'VIEW SEATS'}
-            </button>
-
-            {seatOpen && (
-              <div style={{ marginTop: 10, animation: 'expandDown 0.25s cubic-bezier(0.16,1,0.3,1)' }}>
-                {/* Showtime pill strip */}
-                {sess.length > 1 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
-                    {sess.map((s, i) => {
-                      if (!s.sessionId) return null
-                      const nowM   = getNowMins()
-                      const isPast = nowM > s.endMin
-                      const isNow  = s.startMin <= nowM && nowM < s.endMin
-                      const isLast = i === sess.length - 1
-                      const active = selectedSessId === s.sessionId
-                      const pillCol = active ? col : isNow ? col : isLast ? C.amber : isPast ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.55)'
-                      return (
-                        <button key={i}
-                          onClick={() => setSelectedSessId(s.sessionId)}
-                          style={{
-                            fontFamily: BEBAS, fontSize: 17, letterSpacing: 1,
-                            padding: '5px 11px', borderRadius: 8, cursor: 'pointer',
-                            background: active ? (typeBg[hall.typeId] || C.recBg) : 'rgba(255,255,255,0.05)',
-                            border: '0.5px solid ' + (active ? (typeBdr[hall.typeId] || C.recBdr) : 'rgba(255,255,255,0.10)'),
-                            color: pillCol,
-                            opacity: isPast && !active ? 0.5 : 1,
-                            transition: 'all 0.15s',
-                            WebkitTapHighlightColor: 'transparent',
-                          }}
-                        >
-                          {fmtTime(s.startMin)}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-                {/* Seat map for selected session */}
-                {selectedSessId && (
-                  <SeatMap
-                    key={selectedSessId}
-                    sessionId={String(selectedSessId)}
-                    cinemaId={sess.find(s => s.sessionId === selectedSessId)?.cinemaId || cinemaId}
-                    typeColor={col}
-                  />
-                )}
+        {/* Seats: shown automatically when card is expanded */}
+        {expanded && sess.some(s => s.sessionId) && (
+          <div style={{ padding: '0 14px 14px' }} onClick={e => e.stopPropagation()}>
+            {sess.length > 1 && (
+              <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:10 }}>
+                {sess.map((s, i) => {
+                  if (!s.sessionId) return null
+                  const nowM   = getNowMins()
+                  const isPast = nowM > s.endMin
+                  const isLast = i === sess.length - 1
+                  const active = selectedSessId === s.sessionId
+                  const pillCol = active ? col : isLast ? C.amber : isPast ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.55)'
+                  return (
+                    <button key={i}
+                      onClick={() => setSelectedSessId(s.sessionId)}
+                      style={{
+                        fontFamily:BEBAS, fontSize:17, letterSpacing:1,
+                        padding:'5px 11px', borderRadius:8, cursor:'pointer',
+                        background: active ? (typeBg[hall.typeId]||C.recBg) : 'rgba(255,255,255,0.05)',
+                        border:'0.5px solid ' + (active ? (typeBdr[hall.typeId]||C.recBdr) : 'rgba(255,255,255,0.10)'),
+                        color: pillCol,
+                        opacity: isPast && !active ? 0.5 : 1,
+                        transition:'all 0.15s',
+                        WebkitTapHighlightColor:'transparent',
+                      }}
+                    >
+                      {fmtTime(s.startMin)}
+                    </button>
+                  )
+                })}
               </div>
             )}
+            <SeatMap
+              key={selectedSessId}
+              sessionId={String(selectedSessId || last.sessionId)}
+              cinemaId={sess.find(s => s.sessionId === selectedSessId)?.cinemaId || last.cinemaId || cinemaId}
+              typeColor={col}
+            />
           </div>
         )}
 
