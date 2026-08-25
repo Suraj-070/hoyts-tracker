@@ -331,28 +331,22 @@ function Ticker({ sessions, movieMap }) {
   const halls  = byDate[todayKey()] || {}
   const sorted = sortHalls(halls)
 
-  const placeholder = Array.from({ length: 6 }, (_, i) => (
-    <span key={i} style={{ fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1.5, color:'#3a2800', padding:'0 24px', flexShrink:0 }}>
-      {'HOYTS LAST SESSION TRACKER | LOAD YOUR CINEMA TO BEGIN'}
-    </span>
-  ))
+  const spanStyle = { fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1.5, color:'#3a2800', padding:'0 24px', flexShrink:0 }
 
-  const items = sorted.length
-    ? [...sorted].map(([name, hall], i) => {
+  const makeItems = (prefix) => sorted.length
+    ? sorted.map(([name, hall], i) => {
         const last = hall.sessions[hall.sessions.length - 1]
-        return (
-          <span key={i} style={{ fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1.5, color:'#3a2800', padding:'0 24px', flexShrink:0 }}>
-            {name + ' -- ' + last.movie + ' | LAST ' + fmtTime(last.startMin)}
-          </span>
-        )
+        return <span key={prefix + i} style={spanStyle}>{name + ' -- ' + last.movie + ' | LAST ' + fmtTime(last.startMin)}</span>
       })
-    : placeholder
+    : Array.from({ length: 5 }, (_, i) => (
+        <span key={prefix + i} style={spanStyle}>HOYTS LAST SESSION TRACKER | LOAD YOUR CINEMA TO BEGIN</span>
+      ))
 
   return (
-    <div style={{ background: C.amber, height:26, overflow:'hidden', display:'flex', alignItems:'center' }}>
-      <div style={{ display:'flex', gap:0, whiteSpace:'nowrap', animation:'ticker 50s linear infinite', willChange:'transform' }}>
-        {items}
-        {items}
+    <div style={{ background:C.amber, height:26, overflow:'hidden', display:'flex', alignItems:'center' }}>
+      <div style={{ display:'flex', whiteSpace:'nowrap', animation:'ticker 40s linear infinite', willChange:'transform' }}>
+        {makeItems('a')}
+        {makeItems('b')}
       </div>
     </div>
   )
@@ -897,9 +891,9 @@ function BottomNav({ view, setView }) {
             <button key={t.id} onClick={() => { setView(t.id); window.scrollTo({ top: 0, behavior: 'smooth' }) }} style={{
               flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3,
               background:'transparent', border:'none', cursor:'pointer', transition:'color 0.2s',
-              color: active ? C.amberTxt : 'var(--text-muted, #7A7690)',
+              color: active ? C.amberTxt : 'rgba(255,255,255,0.35)',
               fontFamily:MONO, fontSize:8.5, fontWeight: active ? 700 : 400, letterSpacing:1, textTransform:'uppercase',
-              position:'relative', zIndex:1,
+              position:'relative', zIndex:1, WebkitTapHighlightColor:'transparent',
             }}>
               <i className={`ti ${t.icon}`} aria-hidden="true" style={{ fontSize:20, transition:'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)', transform: active ? 'scale(1.15)' : 'scale(1)' }} />
               {t.label}
