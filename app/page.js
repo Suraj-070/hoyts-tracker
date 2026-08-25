@@ -353,146 +353,131 @@ function Ticker({ sessions, movieMap }) {
 }
 
 // ─── Cinema Picker ────────────────────────────────────────────────────────────
-function CinemaPicker({ value, onChange }) {
-  const [open, setOpen] = useState(false)
+function CinemaSheet({ value, onChange, open, onClose }) {
   const [search, setSearch] = useState('')
-  const current = CINEMAS.find(c => c.id === value)
   const inputRef = useRef(null)
 
-  const close = () => { setOpen(false); setSearch('') }
-
-  // lock body scroll when sheet open
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
-      // focus search after sheet animates in
-      setTimeout(() => inputRef.current && inputRef.current.focus(), 200)
+      setTimeout(() => inputRef.current && inputRef.current.focus(), 250)
     } else {
       document.body.style.overflow = ''
+      setSearch('')
     }
     return () => { document.body.style.overflow = '' }
   }, [open])
 
-  const grouped = CINEMAS.reduce((acc, c) => {
-    if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return acc
-    if (!acc[c.state]) acc[c.state] = []
-    acc[c.state].push(c)
+  const grouped = CINEMAS.reduce((acc, cin) => {
+    if (search && !cin.name.toLowerCase().includes(search.toLowerCase())) return acc
+    if (!acc[cin.state]) acc[cin.state] = []
+    acc[cin.state].push(cin)
     return acc
   }, {})
 
   const totalResults = Object.values(grouped).reduce((a, arr) => a + arr.length, 0)
 
-  return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        style={{
-          display:'flex', alignItems:'center', gap:6,
-          background:'#252720', border:'0.5px solid rgba(255,255,255,0.18)',
-          borderRadius:20, padding:'6px 12px', cursor:'pointer',
-          fontFamily:SANS, fontSize:12, fontWeight:500,
-          transition:'all .15s', WebkitTapHighlightColor:'transparent',
-          color:'#F0EDE6', outline:'none',
-        }}
-      >
-        <span style={{ fontSize:13, color:C.amber, lineHeight:1 }}>📍</span>
-        <span style={{ color:'#F0EDE6', fontWeight:600, maxWidth:130, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontFamily:SANS, fontSize:12 }}>
-          {current?.name || 'Select cinema'}
-        </span>
-        <span style={{ fontSize:10, color:'rgba(255,255,255,0.40)', lineHeight:1 }}>▾</span>
-      </button>
+  if (!open) return null
 
-      {open && (
-        <div style={{ position:'fixed', inset:0, zIndex:400, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
-          {/* Backdrop */}
-          <div
-            onClick={close}
-            style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.65)', backdropFilter:'blur(4px)', WebkitBackdropFilter:'blur(4px)' }}
-          />
-          {/* Sheet */}
-          <div style={{
-            position:'relative', zIndex:1,
-            background:'#1E201B',
-            borderRadius:'20px 20px 0 0',
-            border:'0.5px solid rgba(255,255,255,0.12)',
-            borderBottom:'none',
-            maxHeight:'85vh',
-            minHeight:'40vh',
-            display:'flex', flexDirection:'column',
-            boxShadow:'0 -8px 40px rgba(0,0,0,0.60)',
-            animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)',
-          }}>
-            {/* Handle */}
-            <div style={{ display:'flex', justifyContent:'center', padding:'10px 0 4px' }}>
-              <div style={{ width:36, height:4, borderRadius:2, background:'rgba(255,255,255,0.20)' }} />
-            </div>
-            {/* Header */}
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 18px 12px' }}>
-              <span style={{ fontFamily:BEBAS, fontSize:22, color:'#fff', letterSpacing:2 }}>Select Cinema</span>
-              <button onClick={close} style={{ width:30, height:30, borderRadius:8, border:'0.5px solid rgba(255,255,255,0.12)', background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.60)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14 }}>
-                ✕
-              </button>
-            </div>
-            {/* Search */}
-            <div style={{ padding:'0 16px 12px' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(0,0,0,0.30)', border:'0.5px solid rgba(255,255,255,0.12)', borderRadius:12, padding:'10px 12px' }}>
-                <span style={{ fontSize:14, color:'rgba(255,255,255,0.35)', flexShrink:0, lineHeight:1 }}>🔍</span>
-                <input
-                  ref={inputRef}
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="Search by name or state..."
-                  style={{ flex:1, background:'transparent', border:'none', outline:'none', fontFamily:SANS, fontSize:15, color:'#fff', caretColor:C.amber }}
-                />
-                {search.length > 0 && (
-                  <button onClick={() => setSearch('')} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.40)', padding:0, lineHeight:1, fontSize:13 }}>
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-            {/* List */}
-            <div style={{ overflowY:'auto', flex:1, WebkitOverflowScrolling:'touch', paddingBottom:'calc(env(safe-area-inset-bottom, 0px) + 20px)' }}>
-              {totalResults === 0 && (
-                <div style={{ textAlign:'center', padding:'40px 20px', color:'rgba(255,255,255,0.30)', fontFamily:SANS, fontSize:13 }}>
-                  No cinemas match "{search}"
-                </div>
-              )}
-              {Object.entries(grouped).map(([state, cinemas]) => (
-                <div key={state}>
-                  <div style={{ fontFamily:MONO, fontSize:9, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.30)', padding:'10px 18px 4px', fontWeight:400 }}>{state}</div>
-                  {cinemas.map(cinema => {
-                    const active = cinema.id === value
-                    return (
-                      <button key={cinema.id}
-                        onClick={() => { onChange(cinema.id); close() }}
-                        style={{
-                          display:'flex', alignItems:'center', gap:12,
-                          width:'100%', textAlign:'left', padding:'15px 18px', minHeight:52,
-                          background: active ? C.amberBg : 'transparent',
-                          border:'none', borderBottom:'0.5px solid rgba(255,255,255,0.05)',
-                          cursor:'pointer', WebkitTapHighlightColor:'transparent',
-                        }}
-                      >
-                        <span style={{ fontSize:14, color: active ? C.amber : 'rgba(255,255,255,0.25)', flexShrink:0, lineHeight:1 }}>🏢</span>
-                        <span style={{ fontFamily:SANS, fontSize:15, fontWeight: active ? 600 : 400, color: active ? C.amber : '#fff', flex:1 }}>
-                          {cinema.name}
-                        </span>
-                        {active && <span style={{ fontSize:14, color:C.amber, flexShrink:0, lineHeight:1 }}>✓</span>}
-                      </button>
-                    )
-                  })}
-                </div>
-              ))}
-            </div>
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:9999, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
+      <div onClick={onClose} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.70)' }} />
+      <div style={{
+        position:'relative', zIndex:1,
+        background:'#1E201B',
+        borderRadius:'20px 20px 0 0',
+        border:'0.5px solid rgba(255,255,255,0.15)',
+        borderBottom:'none',
+        maxHeight:'85vh', minHeight:'40vh',
+        display:'flex', flexDirection:'column',
+        boxShadow:'0 -12px 48px rgba(0,0,0,0.70)',
+        animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)',
+      }}>
+        <div style={{ display:'flex', justifyContent:'center', padding:'12px 0 4px' }}>
+          <div style={{ width:40, height:4, borderRadius:2, background:'rgba(255,255,255,0.25)' }} />
+        </div>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 18px 12px' }}>
+          <span style={{ fontFamily:BEBAS, fontSize:24, color:'#fff', letterSpacing:2 }}>Select Cinema</span>
+          <button onClick={onClose} style={{ width:32, height:32, borderRadius:8, border:'0.5px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.08)', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontFamily:SANS }}>
+            ✕
+          </button>
+        </div>
+        <div style={{ padding:'0 16px 12px' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(0,0,0,0.35)', border:'0.5px solid rgba(255,255,255,0.15)', borderRadius:12, padding:'10px 14px' }}>
+            <span style={{ fontSize:14, flexShrink:0 }}>🔍</span>
+            <input
+              ref={inputRef}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search cinemas..."
+              style={{ flex:1, background:'transparent', border:'none', outline:'none', fontFamily:SANS, fontSize:16, color:'#fff', caretColor:'#F0A500' }}
+            />
+            {search.length > 0 && (
+              <button onClick={() => setSearch('')} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.50)', fontSize:16, padding:0, lineHeight:1 }}>✕</button>
+            )}
           </div>
         </div>
-      )}
-    </>
+        <div style={{ overflowY:'auto', flex:1, WebkitOverflowScrolling:'touch', paddingBottom:'calc(env(safe-area-inset-bottom, 0px) + 24px)' }}>
+          {totalResults === 0 && (
+            <div style={{ textAlign:'center', padding:'48px 20px', color:'rgba(255,255,255,0.35)', fontFamily:SANS, fontSize:14 }}>
+              No cinemas match "{search}"
+            </div>
+          )}
+          {Object.entries(grouped).map(([state, cinemas]) => (
+            <div key={state}>
+              <div style={{ fontFamily:MONO, fontSize:9, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.30)', padding:'12px 18px 4px' }}>{state}</div>
+              {cinemas.map(cinema => {
+                const active = cinema.id === value
+                return (
+                  <button key={cinema.id}
+                    onClick={() => { onChange(cinema.id); onClose() }}
+                    style={{
+                      display:'flex', alignItems:'center', gap:12,
+                      width:'100%', textAlign:'left', padding:'14px 18px', minHeight:52,
+                      background: active ? 'rgba(240,165,0,0.12)' : 'transparent',
+                      border:'none', borderBottom:'0.5px solid rgba(255,255,255,0.06)',
+                      cursor:'pointer', WebkitTapHighlightColor:'transparent',
+                    }}
+                  >
+                    <span style={{ fontSize:16, flexShrink:0 }}>🏢</span>
+                    <span style={{ fontFamily:SANS, fontSize:15, fontWeight: active ? 600 : 400, color: active ? '#F0A500' : '#fff', flex:1 }}>
+                      {cinema.name}
+                    </span>
+                    {active && <span style={{ color:'#F0A500', fontSize:16 }}>✓</span>}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 
-// ─── Hall Card ────────────────────────────────────────────────────────────────
+function CinemaPicker({ value, onOpen }) {
+  const current = CINEMAS.find(c => c.id === value)
+  return (
+    <button
+      onClick={onOpen}
+      style={{
+        display:'flex', alignItems:'center', gap:6,
+        background:'#252720', border:'0.5px solid rgba(255,255,255,0.20)',
+        borderRadius:20, padding:'6px 12px', cursor:'pointer',
+        WebkitTapHighlightColor:'transparent', outline:'none',
+        fontFamily:SANS, fontSize:12, fontWeight:500, color:'#F0EDE6',
+      }}
+    >
+      <span style={{ color:'#F0A500', fontSize:13 }}>📍</span>
+      <span style={{ fontWeight:600, maxWidth:130, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+        {current?.name || 'Select cinema'}
+      </span>
+      <span style={{ color:'rgba(255,255,255,0.40)', fontSize:10 }}>▾</span>
+    </button>
+  )
+}
+
+
 function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   delay = delay || 0
   cinemaId = cinemaId || 'EGDENS'
@@ -907,7 +892,7 @@ function BottomNav({ view, setView }) {
 }
 
 // ─── Header ───────────────────────────────────────────────────────────────────
-function Header({ cinemaId, setCinemaId, loading, lastFetched, onRefresh }) {
+function Header({ cinemaId, loading, lastFetched, onRefresh, onOpenPicker }) {
   const [, setTick] = useState(0)
   useEffect(() => {
     const t = setInterval(() => setTick(n => n + 1), 60000)
@@ -951,7 +936,7 @@ function Header({ cinemaId, setCinemaId, loading, lastFetched, onRefresh }) {
           >
             <i className="ti ti-refresh" aria-hidden="true" style={{ fontSize:15, animation: loading ? 'spin 1s linear infinite' : 'none' }} />
           </button>
-          <CinemaPicker value={cinemaId} onChange={setCinemaId} />
+          <CinemaPicker value={cinemaId} onOpen={onOpenPicker} />
         </div>
       </div>
     </div>
@@ -981,6 +966,7 @@ export default function App() {
   const [expandedHalls, setExpandedHalls] = useState({})
   const [lastFetched,   setLastFetched]   = useState(null)
   const [view,          setView]          = useState('tonight')
+  const [pickerOpen,    setPickerOpen]    = useState(false)
 
   const cinema       = CINEMAS.find(c => c.id === cinemaId)
   const mergedMovies = { ...KNOWN_MOVIES, ...movieMap }
@@ -1081,7 +1067,7 @@ export default function App() {
       <PullToRefresh onRefresh={() => fetchSessions(cinemaId)} loading={loading} />
       <PWAInstallBanner />
 
-      <Header cinemaId={cinemaId} setCinemaId={setCinemaId} loading={loading} lastFetched={lastFetched} onRefresh={() => fetchSessions(cinemaId)} />
+      <Header cinemaId={cinemaId} loading={loading} lastFetched={lastFetched} onRefresh={() => fetchSessions(cinemaId)} onOpenPicker={() => setPickerOpen(true)} />
       {sessions.length > 0 && <Ticker sessions={sessions} movieMap={mergedMovies} />}
 
       {/* ── TONIGHT ── */}
@@ -1208,7 +1194,7 @@ export default function App() {
             <label style={{ display:'block', fontFamily:MONO, fontSize:9, letterSpacing:1.5, textTransform:'uppercase', color:'var(--text-muted, #7A7690)', fontWeight:400, marginBottom:8 }}>
               Your cinema
             </label>
-            <CinemaPicker value={cinemaId} onChange={setCinemaId} />
+            <CinemaPicker value={cinemaId} onOpen={onOpenPicker} />
           </SettingsSection>
 
           <SettingsSection label="Status">
@@ -1275,6 +1261,7 @@ export default function App() {
       )}
 
       <BottomNav view={view} setView={setView} />
+      <CinemaSheet value={cinemaId} onChange={setCinemaId} open={pickerOpen} onClose={() => setPickerOpen(false)} />
     </div>
   )
 }
