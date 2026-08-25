@@ -508,6 +508,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   const last = sess[sess.length - 1]
 
   const [occupancy, setOccupancy] = useState(null)
+  const [openSeatId, setOpenSeatId] = useState(null)
   useEffect(() => {
     if (!last.sessionId) return
     fetch('/api/hoyts/seats?sessionId=' + last.sessionId + '&cinemaId=' + (last.cinemaId || cinemaId))
@@ -684,7 +685,8 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                 const rowBg  = isNow ? (typeBg[hall.typeId] || C.recBg) : isLast ? 'rgba(240,165,0,0.08)' : 'transparent'
                 const rowBdr = isNow ? (typeBdr[hall.typeId] || C.recBdr) : isLast ? 'rgba(240,165,0,0.20)' : 'rgba(255,255,255,0.06)'
                 return (
-                  <div key={i} onClick={function(e) { e.stopPropagation() }} style={{
+                  <div key={i}>
+                  <div onClick={function(e) { e.stopPropagation() }} style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '8px 10px', borderRadius: 8,
                     background: rowBg, border: '0.5px solid ' + rowBdr,
@@ -704,25 +706,43 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                         <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: 0.5 }}>ends {fmtTime(s.endMin)}</span>
                       )}
                     </div>
-                    {s.link && !s.disabled && !isPast && (
-                      <a
-                        href={'https://hoyts.com.au' + s.link}
-                        target="_blank" rel="noopener"
-                        onClick={function(e) { e.stopPropagation() }}
-                        style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: .5, padding: '4px 10px', borderRadius: 6, background: 'rgba(240,165,0,0.12)', color: '#F0A500', border: '0.5px solid rgba(240,165,0,0.30)', textDecoration: 'none', flexShrink: 0 }}
-                      >
-                        Book
-                      </a>
-                    )}
+                    <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+                      {s.sessionId && (
+                        <button
+                          onClick={function(e) { e.stopPropagation(); setOpenSeatId(openSeatId === s.sessionId ? null : s.sessionId) }}
+                          style={{
+                            fontFamily:MONO, fontSize:9, fontWeight:700, letterSpacing:.5,
+                            padding:'4px 8px', borderRadius:6, cursor:'pointer', flexShrink:0,
+                            border:'0.5px solid ' + (openSeatId === s.sessionId ? col + '60' : 'rgba(255,255,255,0.15)'),
+                            background: openSeatId === s.sessionId ? (typeBg[hall.typeId]||C.recBg) : 'rgba(255,255,255,0.06)',
+                            color: openSeatId === s.sessionId ? col : 'rgba(255,255,255,0.50)',
+                            transition:'all 0.15s',
+                          }}
+                        >
+                          <i className="ti ti-armchair" style={{ fontSize:11 }} />
+                        </button>
+                      )}
+                      {s.link && !s.disabled && !isPast && (
+                        <a
+                          href={'https://hoyts.com.au' + s.link}
+                          target="_blank" rel="noopener"
+                          onClick={function(e) { e.stopPropagation() }}
+                          style={{ fontFamily:MONO, fontSize:9, fontWeight:700, letterSpacing:.5, padding:'4px 10px', borderRadius:6, background:'rgba(240,165,0,0.12)', color:'#F0A500', border:'0.5px solid rgba(240,165,0,0.30)', textDecoration:'none', flexShrink:0, display:'flex', alignItems:'center' }}
+                        >
+                          Book
+                        </a>
+                      )}
+                    </div>
                   </div>
-                )
+                  {openSeatId === s.sessionId && s.sessionId && (
+                    <div style={{ padding:'0 0 8px', animation:'expandDown 0.2s ease' }} onClick={function(e){e.stopPropagation()}}>
+                      <SeatMap sessionId={String(s.sessionId)} cinemaId={s.cinemaId || cinemaId} typeColor={col} />
+                    </div>
+                  )}
+                  </div>
+              )
               })}
             </div>
-            {sess.some(function(s) { return s.sessionId }) && (
-              <div style={{ padding: '0 14px 14px' }}>
-                <SeatMap sessionId={String(sess[sess.length-1].sessionId)} cinemaId={sess[sess.length-1].cinemaId || cinemaId} typeColor={col} />
-              </div>
-            )}
           </div>
         )}
       </div>
