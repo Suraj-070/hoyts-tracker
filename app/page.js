@@ -672,75 +672,43 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
         </div>
         {expanded && (
           <div className="expanded-panel" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.20)' }}>
-            <div style={{ padding: '10px 14px 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)', fontWeight: 400 }}>
-              All Showtimes
+            <div style={{ padding: '10px 14px 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)' }}>
+              Showtimes — tap to view seats
             </div>
-            <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ padding: '6px 14px 14px', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {sess.map(function(s, i) {
                 const nowM   = getNowMins()
                 const isPast = nowM > s.endMin
                 const isNow  = s.startMin <= nowM && nowM < s.endMin
                 const isLast = i === sess.length - 1
-                const rowCol = isNow ? col : isLast ? C.amber : isPast ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.55)'
-                const rowBg  = isNow ? (typeBg[hall.typeId] || C.recBg) : isLast ? 'rgba(240,165,0,0.08)' : 'transparent'
-                const rowBdr = isNow ? (typeBdr[hall.typeId] || C.recBdr) : isLast ? 'rgba(240,165,0,0.20)' : 'rgba(255,255,255,0.06)'
+                const active = openSeatId === s.sessionId
+                const pillCol = isNow ? col : isLast ? C.amber : isPast ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.55)'
+                const pillBg  = active ? (typeBg[hall.typeId] || C.recBg) : isPast ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.06)'
+                const pillBdr = active ? (typeBdr[hall.typeId] || C.recBdr) : isNow ? col + '50' : isLast ? 'rgba(240,165,0,0.30)' : 'rgba(255,255,255,0.10)'
                 return (
                   <div key={i}>
-                  <div onClick={function(e) { e.stopPropagation() }} style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '8px 10px', borderRadius: 8,
-                    background: rowBg, border: '0.5px solid ' + rowBdr,
-                    opacity: isPast ? 0.4 : 1,
-                    transition: 'opacity 0.2s',
-                  }}>
-                    <div style={{ fontFamily: BEBAS, fontSize: 20, color: rowCol, lineHeight: 1, minWidth: 58, letterSpacing: 1 }}>
+                    <button
+                      onClick={function(e) { e.stopPropagation(); setOpenSeatId(active ? null : s.sessionId) }}
+                      style={{
+                        fontFamily: BEBAS, fontSize: 18, letterSpacing: 1,
+                        padding: '6px 12px', borderRadius: 8, cursor: 'pointer',
+                        background: pillBg,
+                        border: '0.5px solid ' + pillBdr,
+                        color: pillCol,
+                        opacity: isPast ? 0.5 : 1,
+                        transition: 'all 0.15s',
+                        WebkitTapHighlightColor: 'transparent',
+                      }}
+                    >
                       {fmtTime(s.startMin)}
-                    </div>
-                    <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
-                      {isNow  && <MicroBadge label="NOW" bg={typeBg[hall.typeId]||C.recBg} color={col} border={typeBdr[hall.typeId]||C.recBdr} />}
-                      {isLast && !isNow && <MicroBadge label="LAST" bg="rgba(240,165,0,0.10)" color={C.amber} border="rgba(240,165,0,0.25)" />}
-                      {isPast && <MicroBadge label="DONE" bg="rgba(255,255,255,0.05)" color="rgba(255,255,255,0.25)" border="rgba(255,255,255,0.08)" />}
-                      {s.soldOut && <MicroBadge label="SOLD OUT" bg={C.errBg} color={C.err} border={C.errBdr} />}
-                      {s.sellingFast && !s.soldOut && <MicroBadge label="FAST" bg={C.amberBg} color={C.amberTxt} border={C.amberBdr} />}
-                      {s.runtime > 0 && !isPast && (
-                        <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: 0.5 }}>ends {fmtTime(s.endMin)}</span>
-                      )}
-                    </div>
-                    <div style={{ display:'flex', gap:4, flexShrink:0 }}>
-                      {s.sessionId && (
-                        <button
-                          onClick={function(e) { e.stopPropagation(); setOpenSeatId(openSeatId === s.sessionId ? null : s.sessionId) }}
-                          style={{
-                            fontFamily:MONO, fontSize:9, fontWeight:700, letterSpacing:.5,
-                            padding:'4px 8px', borderRadius:6, cursor:'pointer', flexShrink:0,
-                            border:'0.5px solid ' + (openSeatId === s.sessionId ? col + '60' : 'rgba(255,255,255,0.15)'),
-                            background: openSeatId === s.sessionId ? (typeBg[hall.typeId]||C.recBg) : 'rgba(255,255,255,0.06)',
-                            color: openSeatId === s.sessionId ? col : 'rgba(255,255,255,0.50)',
-                            transition:'all 0.15s',
-                          }}
-                        >
-                          <i className="ti ti-armchair" style={{ fontSize:11 }} />
-                        </button>
-                      )}
-                      {s.link && !s.disabled && !isPast && (
-                        <a
-                          href={'https://hoyts.com.au' + s.link}
-                          target="_blank" rel="noopener"
-                          onClick={function(e) { e.stopPropagation() }}
-                          style={{ fontFamily:MONO, fontSize:9, fontWeight:700, letterSpacing:.5, padding:'4px 10px', borderRadius:6, background:'rgba(240,165,0,0.12)', color:'#F0A500', border:'0.5px solid rgba(240,165,0,0.30)', textDecoration:'none', flexShrink:0, display:'flex', alignItems:'center' }}
-                        >
-                          Book
-                        </a>
-                      )}
-                    </div>
+                    </button>
+                    {active && s.sessionId && (
+                      <div style={{ marginTop: 8, animation: 'expandDown 0.2s ease' }} onClick={function(e) { e.stopPropagation() }}>
+                        <SeatMap sessionId={String(s.sessionId)} cinemaId={s.cinemaId || cinemaId} typeColor={col} />
+                      </div>
+                    )}
                   </div>
-                  {openSeatId === s.sessionId && s.sessionId && (
-                    <div style={{ padding:'0 0 8px', animation:'expandDown 0.2s ease' }} onClick={function(e){e.stopPropagation()}}>
-                      <SeatMap sessionId={String(s.sessionId)} cinemaId={s.cinemaId || cinemaId} typeColor={col} />
-                    </div>
-                  )}
-                  </div>
-              )
+                )
               })}
             </div>
           </div>
