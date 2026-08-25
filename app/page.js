@@ -388,17 +388,18 @@ function CinemaPicker({ value, onChange }) {
         onClick={() => setOpen(true)}
         style={{
           display:'flex', alignItems:'center', gap:6,
-          background:'var(--surface-1, #2A2B25)', border:'0.5px solid rgba(255,255,255,0.18)',
+          background:'#252720', border:'0.5px solid rgba(255,255,255,0.18)',
           borderRadius:20, padding:'6px 12px', cursor:'pointer',
           fontFamily:SANS, fontSize:12, fontWeight:500,
-          transition:'border-color .15s', WebkitTapHighlightColor:'transparent',
+          transition:'all .15s', WebkitTapHighlightColor:'transparent',
+          color:'#F0EDE6', outline:'none',
         }}
       >
-        <i className="ti ti-map-pin" style={{ fontSize:13, color:C.amber }} aria-hidden="true" />
-        <span style={{ color:'var(--text-primary, #F5F3FF)', fontWeight:600, maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+        <span style={{ fontSize:13, color:C.amber, lineHeight:1 }}>📍</span>
+        <span style={{ color:'#F0EDE6', fontWeight:600, maxWidth:130, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontFamily:SANS, fontSize:12 }}>
           {current?.name || 'Select cinema'}
         </span>
-        <i className="ti ti-chevron-down" style={{ fontSize:11, color:'rgba(255,255,255,0.40)' }} aria-hidden="true" />
+        <span style={{ fontSize:10, color:'rgba(255,255,255,0.40)', lineHeight:1 }}>▾</span>
       </button>
 
       {open && (
@@ -428,14 +429,14 @@ function CinemaPicker({ value, onChange }) {
             {/* Header */}
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 18px 12px' }}>
               <span style={{ fontFamily:BEBAS, fontSize:22, color:'#fff', letterSpacing:2 }}>Select Cinema</span>
-              <button onClick={close} style={{ width:30, height:30, borderRadius:8, border:'0.5px solid rgba(255,255,255,0.12)', background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.60)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <i className="ti ti-x" style={{ fontSize:14 }} />
+              <button onClick={close} style={{ width:30, height:30, borderRadius:8, border:'0.5px solid rgba(255,255,255,0.12)', background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.60)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14 }}>
+                ✕
               </button>
             </div>
             {/* Search */}
             <div style={{ padding:'0 16px 12px' }}>
               <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(0,0,0,0.30)', border:'0.5px solid rgba(255,255,255,0.12)', borderRadius:12, padding:'10px 12px' }}>
-                <i className="ti ti-search" style={{ fontSize:15, color:'rgba(255,255,255,0.35)', flexShrink:0 }} />
+                <span style={{ fontSize:14, color:'rgba(255,255,255,0.35)', flexShrink:0, lineHeight:1 }}>🔍</span>
                 <input
                   ref={inputRef}
                   value={search}
@@ -444,8 +445,8 @@ function CinemaPicker({ value, onChange }) {
                   style={{ flex:1, background:'transparent', border:'none', outline:'none', fontFamily:SANS, fontSize:15, color:'#fff', caretColor:C.amber }}
                 />
                 {search.length > 0 && (
-                  <button onClick={() => setSearch('')} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.40)', padding:0, lineHeight:1 }}>
-                    <i className="ti ti-x" style={{ fontSize:13 }} />
+                  <button onClick={() => setSearch('')} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.40)', padding:0, lineHeight:1, fontSize:13 }}>
+                    ✕
                   </button>
                 )}
               </div>
@@ -473,11 +474,11 @@ function CinemaPicker({ value, onChange }) {
                           cursor:'pointer', WebkitTapHighlightColor:'transparent',
                         }}
                       >
-                        <i className="ti ti-building" style={{ fontSize:16, color: active ? C.amber : 'rgba(255,255,255,0.25)', flexShrink:0 }} />
+                        <span style={{ fontSize:14, color: active ? C.amber : 'rgba(255,255,255,0.25)', flexShrink:0, lineHeight:1 }}>🏢</span>
                         <span style={{ fontFamily:SANS, fontSize:15, fontWeight: active ? 600 : 400, color: active ? C.amber : '#fff', flex:1 }}>
                           {cinema.name}
                         </span>
-                        {active && <i className="ti ti-check" style={{ fontSize:15, color:C.amber, flexShrink:0 }} />}
+                        {active && <span style={{ fontSize:14, color:C.amber, flexShrink:0, lineHeight:1 }}>✓</span>}
                       </button>
                     )
                   })}
