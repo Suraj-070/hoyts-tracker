@@ -1194,7 +1194,7 @@ export default function App() {
             <label style={{ display:'block', fontFamily:MONO, fontSize:9, letterSpacing:1.5, textTransform:'uppercase', color:'var(--text-muted, #7A7690)', fontWeight:400, marginBottom:8 }}>
               Your cinema
             </label>
-            <CinemaPicker value={cinemaId} onOpen={onOpenPicker} />
+            <CinemaPicker value={cinemaId} onOpen={() => setPickerOpen(true)} />
           </SettingsSection>
 
           <SettingsSection label="Status">
