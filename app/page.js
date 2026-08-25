@@ -554,10 +554,10 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
         <CardPoster movieName={posterSess.movie} movieId={posterSess.movieId} />
 
         <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '12px 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 4 }}>{hallName}</div>
-              <span style={{ fontFamily: SANS, fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 8, background: bg, color: txt, border: '0.5px solid ' + bdr }}>{lbl}</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+              <div style={{ fontFamily: BEBAS, fontSize: 26, letterSpacing: 2, color: '#fff', lineHeight: 1, whiteSpace: 'nowrap' }}>{hallName}</div>
+              <span style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: bg, color: txt, border: '0.5px solid ' + bdr, letterSpacing: 0.5, flexShrink: 0 }}>{lbl}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
               {statusDot && <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusDot, boxShadow: hallStatus === 'playing' ? '0 0 6px ' + statusDot : 'none', animation: hallStatus === 'playing' ? 'blip 1.2s ease-in-out infinite' : 'none' }} />}
