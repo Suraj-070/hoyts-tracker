@@ -338,7 +338,7 @@ function Ticker({ sessions, movieMap }) {
   ))
 
   const items = sorted.length
-    ? [...sorted, ...sorted, ...sorted].map(([name, hall], i) => {
+    ? [...sorted].map(([name, hall], i) => {
         const last = hall.sessions[hall.sessions.length - 1]
         return (
           <span key={i} style={{ fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1.5, color:'#3a2800', padding:'0 24px', flexShrink:0 }}>
@@ -350,7 +350,8 @@ function Ticker({ sessions, movieMap }) {
 
   return (
     <div style={{ background: C.amber, height:26, overflow:'hidden', display:'flex', alignItems:'center' }}>
-      <div style={{ display:'flex', gap:0, whiteSpace:'nowrap', animation:'ticker 50s linear infinite' }}>
+      <div style={{ display:'flex', gap:0, whiteSpace:'nowrap', animation:'ticker 50s linear infinite', willChange:'transform' }}>
+        {items}
         {items}
       </div>
     </div>
@@ -881,12 +882,12 @@ function BottomNav({ view, setView }) {
       <div style={{ maxWidth:600, margin:'0 auto', display:'flex', height:60, position:'relative' }}>
         {/* Sliding pill indicator */}
         <div style={{
-          position:'absolute', top:8,
-          left:`calc(${activeIdx * 25}% + 8px)`,
-          width:'calc(25% - 16px)',
-          height:44,
-          background:'rgba(255,255,255,0.07)',
-          borderRadius:12,
+          position:'absolute', bottom:6,
+          left:`calc(${activeIdx * 25}% + 10px)`,
+          width:'calc(25% - 20px)',
+          height:3,
+          background:'#F0A500',
+          borderRadius:2,
           transition:'left 0.3s cubic-bezier(0.34,1.56,0.64,1)',
           pointerEvents:'none',
         }} />
