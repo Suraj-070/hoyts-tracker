@@ -359,20 +359,24 @@ function Ticker({ sessions, movieMap }) {
 
 // ─── Cinema Picker ────────────────────────────────────────────────────────────
 function CinemaPicker({ value, onChange }) {
-  const [open, setOpen]     = useState(false)
+  const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
-  const ref = useRef(null)
   const current = CINEMAS.find(c => c.id === value)
+  const inputRef = useRef(null)
 
+  const close = () => { setOpen(false); setSearch('') }
+
+  // lock body scroll when sheet open
   useEffect(() => {
-    const fn = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    document.addEventListener('mousedown', fn)
-    document.addEventListener('touchstart', fn, { passive: true })
-    return () => {
-      document.removeEventListener('mousedown', fn)
-      document.removeEventListener('touchstart', fn)
+    if (open) {
+      document.body.style.overflow = 'hidden'
+      // focus search after sheet animates in
+      setTimeout(() => inputRef.current && inputRef.current.focus(), 200)
+    } else {
+      document.body.style.overflow = ''
     }
-  }, [])
+    return () => { document.body.style.overflow = '' }
+  }, [open])
 
   const grouped = CINEMAS.reduce((acc, c) => {
     if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return acc
@@ -381,63 +385,112 @@ function CinemaPicker({ value, onChange }) {
     return acc
   }, {})
 
+  const totalResults = Object.values(grouped).reduce((a, arr) => a + arr.length, 0)
+
   return (
-    <div ref={ref} style={{ position:'relative' }}>
+    <>
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen(true)}
         style={{
           display:'flex', alignItems:'center', gap:6,
-          background:'var(--surface-1, #2A2B25)', border:'0.5px solid var(--border-strong)',
+          background:'var(--surface-1, #2A2B25)', border:'0.5px solid rgba(255,255,255,0.18)',
           borderRadius:20, padding:'6px 12px', cursor:'pointer',
-          fontFamily:SANS, fontSize:12, fontWeight:500, color:'var(--text-secondary, #C4C0D4)',
-          transition:'border-color .15s',
+          fontFamily:SANS, fontSize:12, fontWeight:500,
+          transition:'border-color .15s', WebkitTapHighlightColor:'transparent',
         }}
-        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-stronger, rgba(255,255,255,0.28))'}
-        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-strong, rgba(255,255,255,0.18))'}
       >
         <i className="ti ti-map-pin" style={{ fontSize:13, color:C.amber }} aria-hidden="true" />
-        <span style={{ color:'var(--text-primary, #F5F3FF)', fontWeight:600 }}>{current?.name || 'Select cinema'}</span>
-        <i className="ti ti-chevron-down" style={{ fontSize:11, color:'var(--text-muted, #7A7690)', transition:'.15s', transform: open ? 'rotate(180deg)' : 'none' }} aria-hidden="true" />
+        <span style={{ color:'var(--text-primary, #F5F3FF)', fontWeight:600, maxWidth:120, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+          {current?.name || 'Select cinema'}
+        </span>
+        <i className="ti ti-chevron-down" style={{ fontSize:11, color:'rgba(255,255,255,0.40)' }} aria-hidden="true" />
       </button>
 
       {open && (
-        <div style={{
-          position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:300,
-          background:'var(--surface-2, #313229)', border:'0.5px solid var(--border-strong)',
-          borderRadius:12, width:'min(260px, calc(100vw - 32px))', maxHeight:380, overflowY:'auto',
-          boxShadow:'var(--shadow-popover)',
-        }}>
-          <div style={{ padding:'10px 12px', borderBottom:'0.5px solid var(--border, rgba(255,255,255,0.10))', position:'sticky', top:0, background:'var(--surface-2, #313229)' }}>
-            <input
-              value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search cinemas..."
-              style={{ width:'100%', fontFamily:SANS, fontSize:13 }}
-            />
-          </div>
-          {Object.entries(grouped).map(([state, cinemas]) => (
-            <div key={state}>
-              <div style={{ fontFamily:MONO, fontSize:8.5, letterSpacing:2, textTransform:'uppercase', color:'var(--text-muted, #7A7690)', padding:'8px 14px 3px', fontWeight:400 }}>{state}</div>
-              {cinemas.map(c => (
-                <button key={c.id}
-                  onClick={() => { onChange(c.id); setOpen(false); setSearch('') }}
-                  style={{
-                    display:'block', width:'100%', textAlign:'left', padding:'9px 14px',
-                    background: c.id === value ? C.amberBg : 'transparent',
-                    color: c.id === value ? C.amber : 'var(--text-primary, #F5F3FF)',
-                    border:'none', cursor:'pointer', fontFamily:SANS, fontSize:13,
-                    fontWeight: c.id === value ? 600 : 400, transition:'background .1s',
-                  }}
-                  onMouseEnter={e => { if (c.id !== value) e.currentTarget.style.background = 'var(--surface-1, #2A2B25)' }}
-                  onMouseLeave={e => { if (c.id !== value) e.currentTarget.style.background = 'transparent' }}
-                >
-                  {c.name}
-                </button>
+        <div style={{ position:'fixed', inset:0, zIndex:400, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
+          {/* Backdrop */}
+          <div
+            onClick={close}
+            style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.65)', backdropFilter:'blur(4px)', WebkitBackdropFilter:'blur(4px)' }}
+          />
+          {/* Sheet */}
+          <div style={{
+            position:'relative', zIndex:1,
+            background:'#1E201B',
+            borderRadius:'20px 20px 0 0',
+            border:'0.5px solid rgba(255,255,255,0.12)',
+            borderBottom:'none',
+            maxHeight:'82vh',
+            display:'flex', flexDirection:'column',
+            animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)',
+          }}>
+            {/* Handle */}
+            <div style={{ display:'flex', justifyContent:'center', padding:'10px 0 4px' }}>
+              <div style={{ width:36, height:4, borderRadius:2, background:'rgba(255,255,255,0.20)' }} />
+            </div>
+            {/* Header */}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 18px 12px' }}>
+              <span style={{ fontFamily:BEBAS, fontSize:22, color:'#fff', letterSpacing:2 }}>Select Cinema</span>
+              <button onClick={close} style={{ width:30, height:30, borderRadius:8, border:'0.5px solid rgba(255,255,255,0.12)', background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.60)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <i className="ti ti-x" style={{ fontSize:14 }} />
+              </button>
+            </div>
+            {/* Search */}
+            <div style={{ padding:'0 16px 12px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(0,0,0,0.30)', border:'0.5px solid rgba(255,255,255,0.12)', borderRadius:12, padding:'10px 12px' }}>
+                <i className="ti ti-search" style={{ fontSize:15, color:'rgba(255,255,255,0.35)', flexShrink:0 }} />
+                <input
+                  ref={inputRef}
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search by name or state..."
+                  style={{ flex:1, background:'transparent', border:'none', outline:'none', fontFamily:SANS, fontSize:15, color:'#fff', caretColor:C.amber }}
+                />
+                {search.length > 0 && (
+                  <button onClick={() => setSearch('')} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.40)', padding:0, lineHeight:1 }}>
+                    <i className="ti ti-x" style={{ fontSize:13 }} />
+                  </button>
+                )}
+              </div>
+            </div>
+            {/* List */}
+            <div style={{ overflowY:'auto', flex:1, paddingBottom:'env(safe-area-inset-bottom, 16px)' }}>
+              {totalResults === 0 && (
+                <div style={{ textAlign:'center', padding:'40px 20px', color:'rgba(255,255,255,0.30)', fontFamily:SANS, fontSize:13 }}>
+                  No cinemas match "{search}"
+                </div>
+              )}
+              {Object.entries(grouped).map(([state, cinemas]) => (
+                <div key={state}>
+                  <div style={{ fontFamily:MONO, fontSize:9, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.30)', padding:'10px 18px 4px', fontWeight:400 }}>{state}</div>
+                  {cinemas.map(cinema => {
+                    const active = cinema.id === value
+                    return (
+                      <button key={cinema.id}
+                        onClick={() => { onChange(cinema.id); close() }}
+                        style={{
+                          display:'flex', alignItems:'center', gap:12,
+                          width:'100%', textAlign:'left', padding:'13px 18px',
+                          background: active ? C.amberBg : 'transparent',
+                          border:'none', borderBottom:'0.5px solid rgba(255,255,255,0.05)',
+                          cursor:'pointer', WebkitTapHighlightColor:'transparent',
+                        }}
+                      >
+                        <i className="ti ti-building" style={{ fontSize:16, color: active ? C.amber : 'rgba(255,255,255,0.25)', flexShrink:0 }} />
+                        <span style={{ fontFamily:SANS, fontSize:15, fontWeight: active ? 600 : 400, color: active ? C.amber : '#fff', flex:1 }}>
+                          {cinema.name}
+                        </span>
+                        {active && <i className="ti ti-check" style={{ fontSize:15, color:C.amber, flexShrink:0 }} />}
+                      </button>
+                    )
+                  })}
+                </div>
               ))}
             </div>
-          ))}
+          </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
 
@@ -617,49 +670,59 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
 
         </div>
         {expanded && (
-          <div className="expanded-panel" style={{ borderTop: '1px solid var(--border-0)', background: 'var(--surface-2)', maxHeight:'70vh', overflowY:'auto' }}>
-            <div style={{ padding: '8px 14px 4px', fontFamily: MONO, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.40)', fontWeight: 400 }}>
-              All sessions
+          <div className="expanded-panel" style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.20)' }}>
+            <div style={{ padding: '10px 14px 6px', fontFamily: MONO, fontSize: 9, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.30)', fontWeight: 400 }}>
+              All Showtimes
             </div>
-            {sess.map(function(s, i) {
-              const isLast = i === sess.length - 1
-              return (
-                <div key={i} style={{ borderBottom: i < sess.length - 1 ? '0.5px solid rgba(255,255,255,0.08)' : 'none', background: isLast ? 'rgba(0,0,0,0.20)' : 'transparent' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 12, fontWeight: isLast ? 700 : 400, color: isLast ? '#FFFFFF' : 'rgba(255,255,255,0.55)', minWidth: 70 }}>
+            <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {sess.map(function(s, i) {
+                const nowM   = getNowMins()
+                const isPast = nowM > s.endMin
+                const isNow  = s.startMin <= nowM && nowM < s.endMin
+                const isLast = i === sess.length - 1
+                const rowCol = isNow ? col : isLast ? C.amber : isPast ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.55)'
+                const rowBg  = isNow ? (typeBg[hall.typeId] || C.recBg) : isLast ? 'rgba(240,165,0,0.08)' : 'transparent'
+                const rowBdr = isNow ? (typeBdr[hall.typeId] || C.recBdr) : isLast ? 'rgba(240,165,0,0.20)' : 'rgba(255,255,255,0.06)'
+                return (
+                  <div key={i} onClick={function(e) { e.stopPropagation() }} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '8px 10px', borderRadius: 8,
+                    background: rowBg, border: '0.5px solid ' + rowBdr,
+                    opacity: isPast ? 0.4 : 1,
+                    transition: 'opacity 0.2s',
+                  }}>
+                    <div style={{ fontFamily: BEBAS, fontSize: 20, color: rowCol, lineHeight: 1, minWidth: 58, letterSpacing: 1 }}>
                       {fmtTime(s.startMin)}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.70)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.movie}</div>
-                      {s.runtime > 0 && (
-                        <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>ends {fmtTime(s.endMin)} - {s.runtime}min</div>
+                    <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                      {isNow  && <MicroBadge label="NOW" bg={typeBg[hall.typeId]||C.recBg} color={col} border={typeBdr[hall.typeId]||C.recBdr} />}
+                      {isLast && !isNow && <MicroBadge label="LAST" bg="rgba(240,165,0,0.10)" color={C.amber} border="rgba(240,165,0,0.25)" />}
+                      {isPast && <MicroBadge label="DONE" bg="rgba(255,255,255,0.05)" color="rgba(255,255,255,0.25)" border="rgba(255,255,255,0.08)" />}
+                      {s.soldOut && <MicroBadge label="SOLD OUT" bg={C.errBg} color={C.err} border={C.errBdr} />}
+                      {s.sellingFast && !s.soldOut && <MicroBadge label="FAST" bg={C.amberBg} color={C.amberTxt} border={C.amberBdr} />}
+                      {s.runtime > 0 && !isPast && (
+                        <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.30)', letterSpacing: 0.5 }}>ends {fmtTime(s.endMin)}</span>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                      {s.soldOut && <MicroBadge label="Sold out" bg={C.errBg} color={C.err} border={C.errBdr} />}
-                      {s.sellingFast && !s.soldOut && <MicroBadge label="Fast" bg={C.amberBg} color={C.amberTxt} border={C.amberBdr} />}
-                      {isLast && <MicroBadge label="Last" bg={bg} color={txt} border={bdr} />}
-                      {s.link && !s.disabled && (
-                        <a
-                          href={'https://hoyts.com.au' + s.link}
-                          target="_blank"
-                          rel="noopener"
-                          onClick={function(e) { e.stopPropagation() }}
-                          style={{ fontFamily: MONO, fontSize: 8.5, fontWeight: 700, letterSpacing: .5, padding: '2px 7px', borderRadius: 6, background: 'rgba(240,165,0,0.12)', color: '#F0A500', border: '0.5px solid rgba(240,165,0,0.30)', textDecoration: 'none' }}
-                        >
-                          Book
-                        </a>
-                      )}
-                    </div>
+                    {s.link && !s.disabled && !isPast && (
+                      <a
+                        href={'https://hoyts.com.au' + s.link}
+                        target="_blank" rel="noopener"
+                        onClick={function(e) { e.stopPropagation() }}
+                        style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, letterSpacing: .5, padding: '4px 10px', borderRadius: 6, background: 'rgba(240,165,0,0.12)', color: '#F0A500', border: '0.5px solid rgba(240,165,0,0.30)', textDecoration: 'none', flexShrink: 0 }}
+                      >
+                        Book
+                      </a>
+                    )}
                   </div>
-                  {s.sessionId && (
-                    <div style={{ padding: '0 14px 10px' }}>
-                      <SeatMap sessionId={String(s.sessionId)} cinemaId={s.cinemaId || cinemaId} typeColor={col} />
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
+            {sess.some(function(s) { return s.sessionId }) && (
+              <div style={{ padding: '0 14px 14px' }}>
+                <SeatMap sessionId={String(sess[sess.length-1].sessionId)} cinemaId={sess[sess.length-1].cinemaId || cinemaId} typeColor={col} />
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -986,31 +1049,10 @@ export default function App() {
     setLoading(false)
   }, [])
 
-  // Auto-expand playing/final halls — FIRST LOAD ONLY
-  const autoExpandedRef = useRef(false)
-  useEffect(() => {
-    if (loading || sessions.length === 0 || autoExpandedRef.current) return
-    autoExpandedRef.current = true
-    const byDate = groupByDateAndHall(sessions, mergedMovies)
-    const todayH = byDate[todayKey()] || {}
-    const newExpanded = {}
-    Object.entries(todayH).forEach(([name, hall]) => {
-      const status = getHallStatus(hall.sessions)
-      const cur = getCurrentSession(hall.sessions)
-      const last = hall.sessions[hall.sessions.length - 1]
-      const isFinal = cur && cur.startMin === last.startMin
-      if (status === 'playing' || isFinal) {
-        newExpanded['tonight-' + name] = true
-      }
-    })
-    if (Object.keys(newExpanded).length > 0) {
-      setExpandedHalls(newExpanded)
-    }
-  }, [loading, sessions.length])
+  // No auto-expand — user taps to open
 
   useEffect(() => {
     localStorage.setItem('hoyts-cinema', cinemaId)
-    autoExpandedRef.current = false
     fetchSessions(cinemaId)
     setExpandedHalls({})
     setSelectedDate(todayKey())
