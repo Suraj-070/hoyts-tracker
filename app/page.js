@@ -509,6 +509,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
 
   const [occupancy, setOccupancy] = useState(null)
   const [selectedSessId, setSelectedSessId] = useState(null)
+  const [seatOpen, setSeatOpen] = useState(true)
   useEffect(() => {
     if (!last.sessionId) return
     fetch('/api/hoyts/seats?sessionId=' + last.sessionId + '&cinemaId=' + (last.cinemaId || cinemaId))
@@ -538,7 +539,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   return (
     <div className="fade-up" style={{ animationDelay: delay + 'ms', marginBottom: 8 }}>
       <div
-        onClick={() => { if (navigator.vibrate) navigator.vibrate(8); onToggle() }}
+        onClick={() => { if (navigator.vibrate) navigator.vibrate(8); if (!expanded) setSeatOpen(true); onToggle() }}
         className={'hall-card' + (isLastSession ? ' is-final' : hallStatus === 'playing' ? ' is-playing' : hallStatus === 'done' ? ' is-done' : '')}
         style={{
           background: 'rgba(0,0,0,0.25)',
@@ -671,7 +672,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
 
         </div>
         {/* Seats: shown automatically when card is expanded */}
-        {expanded && sess.some(s => s.sessionId) && (
+        {expanded && seatOpen && sess.some(s => s.sessionId) && (
           <div style={{ padding: '0 14px 14px' }} onClick={e => e.stopPropagation()}>
             {sess.length > 1 && (
               <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:10 }}>
@@ -684,7 +685,7 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
                   const pillCol = active ? col : isLast ? C.amber : isPast ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.55)'
                   return (
                     <button key={i}
-                      onClick={() => setSelectedSessId(s.sessionId)}
+                      onClick={e => { e.stopPropagation(); setSelectedSessId(s.sessionId) }}
                       style={{
                         fontFamily:BEBAS, fontSize:17, letterSpacing:1,
                         padding:'5px 11px', borderRadius:8, cursor:'pointer',
