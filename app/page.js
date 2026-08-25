@@ -420,8 +420,10 @@ function CinemaPicker({ value, onChange }) {
             borderRadius:'20px 20px 0 0',
             border:'0.5px solid rgba(255,255,255,0.12)',
             borderBottom:'none',
-            maxHeight:'82vh',
+            maxHeight:'85vh',
+            minHeight:'40vh',
             display:'flex', flexDirection:'column',
+            boxShadow:'0 -8px 40px rgba(0,0,0,0.60)',
             animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)',
           }}>
             {/* Handle */}
@@ -454,7 +456,7 @@ function CinemaPicker({ value, onChange }) {
               </div>
             </div>
             {/* List */}
-            <div style={{ overflowY:'auto', flex:1, paddingBottom:'env(safe-area-inset-bottom, 16px)' }}>
+            <div style={{ overflowY:'auto', flex:1, WebkitOverflowScrolling:'touch', paddingBottom:'calc(env(safe-area-inset-bottom, 0px) + 20px)' }}>
               {totalResults === 0 && (
                 <div style={{ textAlign:'center', padding:'40px 20px', color:'rgba(255,255,255,0.30)', fontFamily:SANS, fontSize:13 }}>
                   No cinemas match "{search}"
@@ -470,7 +472,7 @@ function CinemaPicker({ value, onChange }) {
                         onClick={() => { onChange(cinema.id); close() }}
                         style={{
                           display:'flex', alignItems:'center', gap:12,
-                          width:'100%', textAlign:'left', padding:'13px 18px',
+                          width:'100%', textAlign:'left', padding:'15px 18px', minHeight:52,
                           background: active ? C.amberBg : 'transparent',
                           border:'none', borderBottom:'0.5px solid rgba(255,255,255,0.05)',
                           cursor:'pointer', WebkitTapHighlightColor:'transparent',
