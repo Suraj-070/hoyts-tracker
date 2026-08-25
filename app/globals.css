@@ -247,9 +247,7 @@ body {
   border-radius: var(--radius-md);
   padding: 6px 12px;
 }
-.bottom-nav-item.active {
-  background: rgba(255,255,255,0.08);
-}
+.bottom-nav-item.active { /* active state handled by inline color only */ }
 .bottom-nav-item:active {
   transform: scale(0.88);
 }
