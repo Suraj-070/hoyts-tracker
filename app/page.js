@@ -9,441 +9,211 @@ import {
 import SeatMap from '../components/SeatMap'
 import MoviePoster, { CardPoster } from '../components/MoviePoster'
 
-// ─── Session cache helpers ────────────────────────────────────────────────────
+// ─── Cache ─────────────────────────────────────────────────────────────────
 const CACHE_KEY = (id) => `hoyts-sessions-${id}`
-const MAX_AGE_MS = 2 * 24 * 60 * 60 * 1000 // 2 days
+const MAX_AGE_MS = 2 * 24 * 60 * 60 * 1000
 
-function saveSessionCache(cinemaId, sessions) {
-  try {
-    localStorage.setItem(CACHE_KEY(cinemaId), JSON.stringify({ savedAt: Date.now(), sessions }))
-  } catch(e) {}
+function saveSessionCache(id, sessions) {
+  try { localStorage.setItem(CACHE_KEY(id), JSON.stringify({ savedAt: Date.now(), sessions })) } catch(e) {}
 }
-
-function loadSessionCache(cinemaId) {
+function loadSessionCache(id) {
   try {
-    const raw = localStorage.getItem(CACHE_KEY(cinemaId))
+    const raw = localStorage.getItem(CACHE_KEY(id))
     if (!raw) return null
     const { savedAt, sessions } = JSON.parse(raw)
-    if (Date.now() - savedAt > MAX_AGE_MS) {
-      localStorage.removeItem(CACHE_KEY(cinemaId))
-      return null
-    }
-    const cutoff = Date.now() - MAX_AGE_MS
-    return sessions.filter(s => new Date(s.date || '').getTime() > cutoff)
+    if (Date.now() - savedAt > MAX_AGE_MS) { localStorage.removeItem(CACHE_KEY(id)); return null }
+    return sessions.filter(s => new Date(s.date || '').getTime() > Date.now() - MAX_AGE_MS)
   } catch(e) { return null }
 }
-
 function clearOldCaches() {
   try {
-    Object.keys(localStorage)
-      .filter(k => k.startsWith('hoyts-sessions-'))
-      .forEach(key => {
-        try {
-          const { savedAt } = JSON.parse(localStorage.getItem(key))
-          if (Date.now() - savedAt > MAX_AGE_MS) localStorage.removeItem(key)
-        } catch(e) { localStorage.removeItem(key) }
-      })
+    Object.keys(localStorage).filter(k => k.startsWith('hoyts-sessions-')).forEach(key => {
+      try { const { savedAt } = JSON.parse(localStorage.getItem(key)); if (Date.now() - savedAt > MAX_AGE_MS) localStorage.removeItem(key) } catch(e) { localStorage.removeItem(key) }
+    })
   } catch(e) {}
 }
 
-// ─── Time helpers ─────────────────────────────────────────────────────────────
-function getNowMins() {
-  const now = new Date()
-  return now.getHours() * 60 + now.getMinutes()
-}
-
+// ─── Time ──────────────────────────────────────────────────────────────────
+function getNowMins() { const n = new Date(); return n.getHours() * 60 + n.getMinutes() }
 function getHallStatus(sessions) {
   const now = getNowMins()
-  for (const s of sessions) {
-    if (s.startMin <= now && now < s.endMin) return 'playing'
-  }
+  for (const s of sessions) { if (s.startMin <= now && now < s.endMin) return 'playing' }
   const last = sessions[sessions.length - 1]
-  if (now >= last.endMin) return 'done'
-  return 'upcoming'
+  return now >= last.endMin ? 'done' : 'upcoming'
 }
+function getCurrentSession(sessions) { const now = getNowMins(); return sessions.find(s => s.startMin <= now && now < s.endMin) || null }
+function getNextSession(sessions) { const now = getNowMins(); return sessions.find(s => s.startMin > now) || null }
+function minsToHuman(mins) { if (!mins || mins < 1) return 'now'; if (mins < 60) return `${mins}m`; return `${Math.floor(mins/60)}h ${mins%60}m` }
 
-function getCurrentSession(sessions) {
-  const now = getNowMins()
-  return sessions.find(s => s.startMin <= now && now < s.endMin) || null
-}
+// ─── Type colors ───────────────────────────────────────────────────────────
+const TYPE_COL = { DBOX:'var(--dbox)', XTREME:'var(--xtreme)', STANDARD:'var(--std)', IMAX:'var(--imax)', VMAX:'var(--vmax)', LUX:'var(--lux)', GOLD:'var(--gold-c)' }
+const TYPE_BG  = { DBOX:'var(--dbox-bg)', XTREME:'var(--xtreme-bg)', STANDARD:'var(--std-bg)', IMAX:'var(--imax-bg)', VMAX:'var(--vmax-bg)', LUX:'var(--lux-bg)', GOLD:'var(--gold-bg)' }
+const TYPE_BDR = { DBOX:'var(--dbox-bdr)', XTREME:'var(--xtreme-bdr)', STANDARD:'var(--std-bdr)', IMAX:'var(--imax-bdr)', VMAX:'var(--vmax-bdr)', LUX:'var(--lux-bdr)', GOLD:'var(--gold-bdr)' }
 
-function getNextSession(sessions) {
-  const now = getNowMins()
-  return sessions.find(s => s.startMin > now) || null
-}
-
-function minsToHuman(mins) {
-  if (!mins || mins < 1) return 'now'
-  if (mins < 60) return `${mins}m`
-  return `${Math.floor(mins / 60)}h ${mins % 60}m`
-}
-
-// ─── Design tokens ────────────────────────────────────────────────────────────
-const C = {
-  amber:    '#F0A500',
-  amberDim: '#EF9F27',
-  amberBg:  'rgba(240,165,0,0.12)',
-  amberTxt: '#F0A500',
-  amberBdr: 'rgba(240,165,0,0.30)',
-  dbox:     '#FF6B35',
-  dboxBg:   'rgba(255,107,53,0.12)',
-  dboxTxt:  '#FF6B35',
-  dboxBdr:  'rgba(255,107,53,0.30)',
-  xtreme:   '#00D4A8',
-  xtremeBg: 'rgba(0,212,168,0.10)',
-  xtremeTxt:'#00D4A8',
-  xtremeBdr:'rgba(0,212,168,0.28)',
-  rec:      '#A78BFA',
-  recBg:    'rgba(167,139,250,0.10)',
-  recTxt:   '#A78BFA',
-  recBdr:   'rgba(167,139,250,0.28)',
-  ok:       '#00D4A8',
-  err:      '#FF5757',
-  errBg:    'rgba(255,87,87,0.10)',
-  errBdr:   'rgba(255,87,87,0.28)',
-}
-
-const typeColor  = {
-  DBOX: C.dbox, XTREME: C.xtreme, STANDARD: C.rec,
-  IMAX: '#60A5FA', VMAX: '#818CF8', LUX: '#E879F9', GOLD: '#FBBF24',
-}
-const typeBg = {
-  DBOX: C.dboxBg, XTREME: C.xtremeBg, STANDARD: C.recBg,
-  IMAX: 'rgba(96,165,250,0.10)', VMAX: 'rgba(129,140,248,0.10)',
-  LUX:  'rgba(232,121,249,0.10)', GOLD: 'rgba(251,191,36,0.10)',
-}
-const typeTxt = {
-  DBOX: C.dboxTxt, XTREME: C.xtremeTxt, STANDARD: C.recTxt,
-  IMAX: '#60A5FA', VMAX: '#818CF8', LUX: '#E879F9', GOLD: '#FBBF24',
-}
-const typeBdr = {
-  DBOX: C.dboxBdr, XTREME: C.xtremeBdr, STANDARD: C.recBdr,
-  IMAX: 'rgba(96,165,250,0.28)', VMAX: 'rgba(129,140,248,0.28)',
-  LUX:  'rgba(232,121,249,0.28)', GOLD: 'rgba(251,191,36,0.28)',
-}
-
-const BEBAS = "'Bebas Neue',sans-serif"
-const SANS  = "'Inter',sans-serif"
-const MONO  = "'Space Mono',monospace"
-
-// ─── Ambient background blobs ─────────────────────────────────────────────────
+// ─── AmbientBlobs ──────────────────────────────────────────────────────────
 function AmbientBlobs({ view }) {
-  const colors = {
-    tonight:  ['rgba(240,165,0,0.06)', 'rgba(0,212,168,0.04)'],
-    schedule: ['rgba(129,140,248,0.06)', 'rgba(240,165,0,0.04)'],
-    closing:  ['rgba(224,85,85,0.05)', 'rgba(255,107,53,0.04)'],
-    settings: ['rgba(167,139,250,0.05)', 'rgba(0,212,168,0.03)'],
+  const c = {
+    tonight:  ['rgba(245,166,35,0.05)', 'rgba(0,229,160,0.03)'],
+    schedule: ['rgba(108,99,255,0.05)', 'rgba(245,166,35,0.03)'],
+    closing:  ['rgba(255,107,53,0.04)', 'rgba(245,166,35,0.03)'],
+    settings: ['rgba(176,96,255,0.04)', 'rgba(0,198,255,0.03)'],
   }
-  const [c1, c2] = colors[view] || colors.tonight
+  const [c1, c2] = c[view] || c.tonight
   return (
-    <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0, overflow:'hidden' }} aria-hidden="true">
-      <div style={{
-        position:'absolute', top:'-20%', left:'-15%',
-        width:'60vw', height:'60vw', maxWidth:500, maxHeight:500,
-        borderRadius:'50%', background:c1,
-        filter:'blur(80px)', transition:'background 1s ease',
-      }} />
-      <div style={{
-        position:'absolute', bottom:'-10%', right:'-20%',
-        width:'50vw', height:'50vw', maxWidth:420, maxHeight:420,
-        borderRadius:'50%', background:c2,
-        filter:'blur(100px)', transition:'background 1s ease',
-      }} />
+    <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0, overflow:'hidden' }} aria-hidden>
+      <div style={{ position:'absolute', top:'-30%', left:'-20%', width:'70vw', height:'70vw', maxWidth:560, maxHeight:560, borderRadius:'50%', background:c1, filter:'blur(100px)', transition:'background 1.2s ease' }} />
+      <div style={{ position:'absolute', bottom:'-15%', right:'-25%', width:'55vw', height:'55vw', maxWidth:440, maxHeight:440, borderRadius:'50%', background:c2, filter:'blur(120px)', transition:'background 1.2s ease' }} />
     </div>
   )
 }
 
-// ─── Offline Banner ───────────────────────────────────────────────────────────
+// ─── OfflineBanner ─────────────────────────────────────────────────────────
 function OfflineBanner() {
   const [offline, setOffline] = useState(false)
   const [show, setShow] = useState(false)
-
   useEffect(() => {
-    const setOff = () => { setOffline(true); setShow(true) }
-    const setOn  = () => { setShow(true); setOffline(false); setTimeout(() => setShow(false), 2500) }
-    window.addEventListener('offline', setOff)
-    window.addEventListener('online',  setOn)
+    const off = () => { setOffline(true); setShow(true) }
+    const on  = () => { setShow(true); setOffline(false); setTimeout(() => setShow(false), 2500) }
+    window.addEventListener('offline', off); window.addEventListener('online', on)
     if (!navigator.onLine) { setOffline(true); setShow(true) }
-    return () => {
-      window.removeEventListener('offline', setOff)
-      window.removeEventListener('online',  setOn)
-    }
+    return () => { window.removeEventListener('offline', off); window.removeEventListener('online', on) }
   }, [])
-
   if (!show) return null
-
   return (
-    <div style={{
-      position:'fixed', top:54, left:0, right:0, zIndex:200,
-      display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-      padding:'8px 16px',
-      background: offline ? 'rgba(224,85,85,0.92)' : 'rgba(0,212,168,0.92)',
-      backdropFilter:'blur(10px)', WebkitBackdropFilter:'blur(10px)',
-      borderBottom: `1px solid ${offline ? 'rgba(255,87,87,0.4)' : 'rgba(0,212,168,0.4)'}`,
-      transition:'background 0.4s ease',
-      animation:'slideDown 0.3s ease',
-    }}>
-      <i className={`ti ${offline ? 'ti-wifi-off' : 'ti-wifi'}`} style={{ fontSize:14, color:'#fff' }} />
-      <span style={{ fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1, color:'#fff', textTransform:'uppercase' }}>
-        {offline ? 'No connection -- showing cached data' : 'Back online'}
+    <div style={{ position:'fixed', top:54, left:0, right:0, zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'8px 16px', background: offline ? 'rgba(239,68,68,0.92)' : 'rgba(0,229,160,0.92)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', borderBottom:`1px solid ${offline ? 'rgba(239,68,68,0.4)' : 'rgba(0,229,160,0.4)'}`, animation:'slideDown 0.3s ease' }}>
+      <i className={`ti ${offline ? 'ti-wifi-off' : 'ti-wifi'}`} style={{ fontSize:13, color:'#fff' }} />
+      <span style={{ fontFamily:'var(--f-mono)', fontSize:9, fontWeight:700, letterSpacing:1.5, color:'#fff', textTransform:'uppercase' }}>
+        {offline ? 'No connection — showing cached data' : 'Back online'}
       </span>
     </div>
   )
 }
 
-// ─── PWA Install Prompt ───────────────────────────────────────────────────────
+// ─── PWAInstallBanner ──────────────────────────────────────────────────────
 function PWAInstallBanner() {
   const [prompt, setPrompt] = useState(null)
   const [dismissed, setDismissed] = useState(false)
-
   useEffect(() => {
-    const saved = localStorage.getItem('pwa-dismissed')
-    if (saved) { setDismissed(true); return }
-    const handler = (e) => { e.preventDefault(); setPrompt(e) }
-    window.addEventListener('beforeinstallprompt', handler)
-    return () => window.removeEventListener('beforeinstallprompt', handler)
+    if (localStorage.getItem('pwa-dismissed')) { setDismissed(true); return }
+    const h = (e) => { e.preventDefault(); setPrompt(e) }
+    window.addEventListener('beforeinstallprompt', h)
+    return () => window.removeEventListener('beforeinstallprompt', h)
   }, [])
-
   if (!prompt || dismissed) return null
-
-  const install = async () => {
-    prompt.prompt()
-    const { outcome } = await prompt.userChoice
-    if (outcome === 'accepted' || outcome === 'dismissed') {
-      setPrompt(null)
-      localStorage.setItem('pwa-dismissed', '1')
-    }
-  }
-
-  const dismiss = () => {
-    setPrompt(null)
-    setDismissed(true)
-    localStorage.setItem('pwa-dismissed', '1')
-  }
-
+  const install = async () => { prompt.prompt(); await prompt.userChoice; setPrompt(null); localStorage.setItem('pwa-dismissed','1') }
+  const dismiss = () => { setPrompt(null); setDismissed(true); localStorage.setItem('pwa-dismissed','1') }
   return (
-    <div style={{
-      position:'fixed', bottom:66, left:12, right:12, zIndex:150,
-      background:'var(--surface-2, #252720)',
-      border:`0.5px solid ${C.amberBdr}`,
-      borderRadius:14, padding:'12px 14px',
-      display:'flex', alignItems:'center', gap:12,
-      boxShadow:'0 8px 32px rgba(0,0,0,0.5)',
-      animation:'slideUp 0.35s cubic-bezier(0.16,1,0.3,1)',
-    }}>
-      <div style={{ width:36, height:36, background:C.amberBg, border:`0.5px solid ${C.amberBdr}`, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-        <i className="ti ti-device-mobile" style={{ fontSize:18, color:C.amber }} />
+    <div style={{ position:'fixed', bottom:76, left:12, right:12, zIndex:150, background:'var(--bg-2)', border:`1px solid var(--amber-bdr)`, borderRadius:16, padding:'14px 16px', display:'flex', alignItems:'center', gap:12, boxShadow:'0 16px 48px rgba(0,0,0,0.7)', animation:'slideUp 0.35s cubic-bezier(0.16,1,0.3,1)' }}>
+      <div style={{ width:38, height:38, background:'var(--amber-bg)', border:`1px solid var(--amber-bdr)`, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+        <i className="ti ti-device-mobile" style={{ fontSize:18, color:'var(--amber)' }} />
       </div>
       <div style={{ flex:1 }}>
-        <div style={{ fontFamily:SANS, fontSize:13, fontWeight:600, color:'var(--text-primary)', marginBottom:2 }}>Install Last Session</div>
-        <div style={{ fontFamily:SANS, fontSize:11, color:'rgba(255,255,255,0.50)' }}>Add to home screen for quick access</div>
+        <div style={{ fontFamily:'var(--f-body)', fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:2 }}>Install Last Session</div>
+        <div style={{ fontFamily:'var(--f-body)', fontSize:11, color:'var(--text-3)' }}>Add to home screen for quick access</div>
       </div>
       <div style={{ display:'flex', gap:6, flexShrink:0 }}>
-        <button onClick={dismiss} style={{ fontFamily:MONO, fontSize:9, padding:'5px 8px', borderRadius:6, border:'0.5px solid rgba(255,255,255,0.12)', background:'transparent', color:'rgba(255,255,255,0.45)', cursor:'pointer', letterSpacing:0.5 }}>
-          Skip
-        </button>
-        <button onClick={install} style={{ fontFamily:MONO, fontSize:9, fontWeight:700, padding:'5px 10px', borderRadius:6, border:`0.5px solid ${C.amberBdr}`, background:C.amberBg, color:C.amber, cursor:'pointer', letterSpacing:0.5 }}>
-          Install
-        </button>
+        <button onClick={dismiss} style={{ fontFamily:'var(--f-mono)', fontSize:9, padding:'6px 10px', borderRadius:8, border:'1px solid var(--border-1)', background:'transparent', color:'var(--text-3)', letterSpacing:0.5 }}>Skip</button>
+        <button onClick={install} style={{ fontFamily:'var(--f-mono)', fontSize:9, fontWeight:700, padding:'6px 12px', borderRadius:8, border:`1px solid var(--amber-bdr)`, background:'var(--amber-bg)', color:'var(--amber)', letterSpacing:0.5 }}>Install</button>
       </div>
     </div>
   )
 }
 
-// ─── Pull to Refresh ──────────────────────────────────────────────────────────
+// ─── PullToRefresh ─────────────────────────────────────────────────────────
 function PullToRefresh({ onRefresh, loading }) {
-  const startY     = useRef(0)
-  const distRef    = useRef(0)
-  const loadingRef = useRef(loading)
+  const startY = useRef(0), distRef = useRef(0), loadingRef = useRef(loading)
   const [pullDist, setPullDist] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
   const THRESHOLD = 64
-
   useEffect(() => { loadingRef.current = loading }, [loading])
-
   useEffect(() => {
-    const onTouchStart = (e) => {
-      if (window.scrollY > 5) return
-      startY.current = e.touches[0].clientY
-      distRef.current = 0
-    }
-    const onTouchMove = (e) => {
-      if (window.scrollY > 5) return
-      const dist = Math.max(0, Math.min(THRESHOLD + 20, e.touches[0].clientY - startY.current))
-      distRef.current = dist
-      if (dist > 8) setPullDist(dist)
-    }
-    const onTouchEnd = async () => {
-      const dist = distRef.current
-      if (dist >= THRESHOLD && !loadingRef.current) {
-        setRefreshing(true)
-        await onRefresh()
-        setRefreshing(false)
-      }
-      distRef.current = 0
-      setPullDist(0)
-    }
-    window.addEventListener('touchstart', onTouchStart, { passive:true })
-    window.addEventListener('touchmove',  onTouchMove,  { passive:true })
-    window.addEventListener('touchend',   onTouchEnd)
-    return () => {
-      window.removeEventListener('touchstart', onTouchStart)
-      window.removeEventListener('touchmove',  onTouchMove)
-      window.removeEventListener('touchend',   onTouchEnd)
-    }
+    const onTS = (e) => { if (window.scrollY > 5) return; startY.current = e.touches[0].clientY; distRef.current = 0 }
+    const onTM = (e) => { if (window.scrollY > 5) return; const d = Math.max(0, Math.min(THRESHOLD+20, e.touches[0].clientY - startY.current)); distRef.current = d; if (d > 8) setPullDist(d) }
+    const onTE = async () => { const d = distRef.current; if (d >= THRESHOLD && !loadingRef.current) { setRefreshing(true); await onRefresh(); setRefreshing(false) }; distRef.current = 0; setPullDist(0) }
+    window.addEventListener('touchstart', onTS, { passive:true })
+    window.addEventListener('touchmove',  onTM, { passive:true })
+    window.addEventListener('touchend',   onTE)
+    return () => { window.removeEventListener('touchstart', onTS); window.removeEventListener('touchmove', onTM); window.removeEventListener('touchend', onTE) }
   }, [onRefresh])
-
-  const progress = Math.min(1, pullDist / THRESHOLD)
   const triggered = pullDist >= THRESHOLD
-
   if (pullDist < 2 && !refreshing) return null
-
   return (
-    <div style={{
-      position:'fixed', top:54, left:0, right:0, zIndex:190,
-      display:'flex', alignItems:'center', justifyContent:'center',
-      height: refreshing ? 44 : Math.min(44, pullDist * 0.65),
-      overflow:'hidden',
-      background:'rgba(0,0,0,0.60)',
-      backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)',
-      borderBottom:`0.5px solid ${triggered ? C.amberBdr : 'rgba(255,255,255,0.08)'}`,
-      transition: pullDist === 0 ? 'height 0.3s ease' : 'border-color 0.15s ease',
-    }}>
+    <div style={{ position:'fixed', top:54, left:0, right:0, zIndex:190, display:'flex', alignItems:'center', justifyContent:'center', height: refreshing ? 44 : Math.min(44, pullDist * 0.65), overflow:'hidden', background:'rgba(0,0,0,0.75)', backdropFilter:'blur(12px)', WebkitBackdropFilter:'blur(12px)', borderBottom:`1px solid ${triggered ? 'var(--amber-bdr)' : 'var(--border-0)'}`, transition: pullDist === 0 ? 'height 0.3s ease' : 'border-color 0.15s ease' }}>
       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-        <i className="ti ti-refresh" style={{
-          fontSize:16,
-          color: triggered ? C.amber : 'rgba(255,255,255,0.40)',
-          transform:`rotate(${progress * 180}deg)`,
-          animation: refreshing ? 'spin 0.8s linear infinite' : 'none',
-          transition:'color 0.2s, transform 0.05s',
-        }} />
-        <span style={{ fontFamily:MONO, fontSize:9, letterSpacing:1, color: triggered ? C.amber : 'rgba(255,255,255,0.40)', fontWeight:700, textTransform:'uppercase', transition:'color 0.2s' }}>
-          {refreshing ? 'Refreshing...' : triggered ? 'Release to refresh' : 'Pull to refresh'}
+        <i className="ti ti-refresh" style={{ fontSize:15, color: triggered ? 'var(--amber)' : 'var(--text-3)', transform:`rotate(${(pullDist/THRESHOLD)*180}deg)`, animation: refreshing ? 'spin 0.8s linear infinite' : 'none', transition:'color 0.2s, transform 0.05s' }} />
+        <span style={{ fontFamily:'var(--f-mono)', fontSize:9, letterSpacing:1.5, color: triggered ? 'var(--amber)' : 'var(--text-3)', fontWeight:700, textTransform:'uppercase', transition:'color 0.2s' }}>
+          {refreshing ? 'Refreshing...' : triggered ? 'Release' : 'Pull to refresh'}
         </span>
       </div>
     </div>
   )
 }
 
-// ─── Ticker ───────────────────────────────────────────────────────────────────
+// ─── Ticker ────────────────────────────────────────────────────────────────
 function Ticker({ sessions, movieMap }) {
-  const byDate = groupByDateAndHall(sessions, movieMap)
-  const halls  = byDate[todayKey()] || {}
+  const halls = groupByDateAndHall(sessions, movieMap)[todayKey()] || {}
   const sorted = sortHalls(halls)
-
-  const spanStyle = { fontFamily:MONO, fontSize:10, fontWeight:700, letterSpacing:1.5, color:'#3a2800', padding:'0 24px', flexShrink:0 }
-
-  const makeItems = (prefix) => sorted.length
+  const items = (pfx) => sorted.length
     ? sorted.map(([name, hall], i) => {
         const last = hall.sessions[hall.sessions.length - 1]
-        return <span key={prefix + i} style={spanStyle}>{name + ' -- ' + last.movie + ' | LAST ' + fmtTime(last.startMin)}</span>
+        return <span key={pfx+i} style={{ fontFamily:'var(--f-mono)', fontSize:9, fontWeight:700, letterSpacing:2, color:'#000', padding:'0 28px', flexShrink:0 }}>{name} — {last.movie} · LAST {fmtTime(last.startMin)}</span>
       })
-    : Array.from({ length: 5 }, (_, i) => (
-        <span key={prefix + i} style={spanStyle}>HOYTS LAST SESSION TRACKER | LOAD YOUR CINEMA TO BEGIN</span>
-      ))
-
+    : Array.from({length:4},(_,i) => <span key={pfx+i} style={{ fontFamily:'var(--f-mono)', fontSize:9, fontWeight:700, letterSpacing:2, color:'#000', padding:'0 28px', flexShrink:0 }}>HOYTS LAST SESSION TRACKER · LOAD YOUR CINEMA TO BEGIN</span>)
   return (
-    <div style={{ background:C.amber, height:26, overflow:'hidden', display:'flex', alignItems:'center' }}>
-      <div style={{ display:'flex', whiteSpace:'nowrap', animation:'ticker 40s linear infinite', willChange:'transform' }}>
-        {makeItems('a')}
-        {makeItems('b')}
+    <div style={{ background:'var(--amber)', height:24, overflow:'hidden', display:'flex', alignItems:'center' }}>
+      <div style={{ display:'flex', whiteSpace:'nowrap', animation:'ticker 44s linear infinite', willChange:'transform' }}>
+        {items('a')}{items('b')}
       </div>
     </div>
   )
 }
 
-// ─── Cinema Picker ────────────────────────────────────────────────────────────
+// ─── CinemaSheet ───────────────────────────────────────────────────────────
 function CinemaSheet({ value, onChange, open, onClose }) {
   const [search, setSearch] = useState('')
   const inputRef = useRef(null)
-
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden'
-      setTimeout(() => inputRef.current && inputRef.current.focus(), 250)
-    } else {
-      document.body.style.overflow = ''
-      setSearch('')
-    }
+    if (open) { document.body.style.overflow = 'hidden'; setTimeout(() => inputRef.current?.focus(), 250) }
+    else { document.body.style.overflow = ''; setSearch('') }
     return () => { document.body.style.overflow = '' }
   }, [open])
-
-  const grouped = CINEMAS.reduce((acc, cin) => {
-    if (search && !cin.name.toLowerCase().includes(search.toLowerCase())) return acc
-    if (!acc[cin.state]) acc[cin.state] = []
-    acc[cin.state].push(cin)
-    return acc
+  const grouped = CINEMAS.reduce((acc, c) => {
+    if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return acc
+    if (!acc[c.state]) acc[c.state] = []
+    acc[c.state].push(c); return acc
   }, {})
-
-  const totalResults = Object.values(grouped).reduce((a, arr) => a + arr.length, 0)
-
+  const total = Object.values(grouped).reduce((a,arr) => a+arr.length, 0)
   if (!open) return null
-
   return (
     <div style={{ position:'fixed', inset:0, zIndex:9999, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
-      <div onClick={onClose} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.70)' }} />
-      <div style={{
-        position:'relative', zIndex:1,
-        background:'#1E201B',
-        borderRadius:'20px 20px 0 0',
-        border:'0.5px solid rgba(255,255,255,0.15)',
-        borderBottom:'none',
-        maxHeight:'85vh', minHeight:'40vh',
-        display:'flex', flexDirection:'column',
-        boxShadow:'0 -12px 48px rgba(0,0,0,0.70)',
-        animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)',
-      }}>
-        <div style={{ display:'flex', justifyContent:'center', padding:'12px 0 4px' }}>
-          <div style={{ width:40, height:4, borderRadius:2, background:'rgba(255,255,255,0.25)' }} />
+      <div onClick={onClose} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.80)' }} />
+      <div style={{ position:'relative', zIndex:1, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:`1px solid var(--border-2)`, borderBottom:'none', maxHeight:'88vh', minHeight:'40vh', display:'flex', flexDirection:'column', boxShadow:'0 -20px 60px rgba(0,0,0,0.8)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)' }}>
+        <div style={{ display:'flex', justifyContent:'center', padding:'14px 0 4px' }}>
+          <div style={{ width:36, height:4, borderRadius:2, background:'var(--border-3)' }} />
         </div>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 18px 12px' }}>
-          <span style={{ fontFamily:BEBAS, fontSize:24, color:'#fff', letterSpacing:2 }}>Select Cinema</span>
-          <button onClick={onClose} style={{ width:32, height:32, borderRadius:8, border:'0.5px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.08)', color:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontFamily:SANS }}>
-            ✕
-          </button>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 20px 14px' }}>
+          <span style={{ fontFamily:'var(--f-display)', fontSize:26, color:'var(--text-1)', letterSpacing:2 }}>Select Cinema</span>
+          <button onClick={onClose} style={{ width:32, height:32, borderRadius:8, border:`1px solid var(--border-2)`, background:'var(--bg-3)', color:'var(--text-2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:15 }}>✕</button>
         </div>
-        <div style={{ padding:'0 16px 12px' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(0,0,0,0.35)', border:'0.5px solid rgba(255,255,255,0.15)', borderRadius:12, padding:'10px 14px' }}>
-            <span style={{ fontSize:14, flexShrink:0 }}>🔍</span>
-            <input
-              ref={inputRef}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search cinemas..."
-              style={{ flex:1, background:'transparent', border:'none', outline:'none', fontFamily:SANS, fontSize:16, color:'#fff', caretColor:'#F0A500' }}
-            />
-            {search.length > 0 && (
-              <button onClick={() => setSearch('')} style={{ background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.50)', fontSize:16, padding:0, lineHeight:1 }}>✕</button>
-            )}
+        <div style={{ padding:'0 16px 14px' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, background:'var(--bg-1)', border:`1px solid var(--border-2)`, borderRadius:12, padding:'11px 14px' }}>
+            <i className="ti ti-search" style={{ fontSize:14, color:'var(--text-3)', flexShrink:0 }} />
+            <input ref={inputRef} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search cinemas..." style={{ flex:1, background:'transparent', border:'none', outline:'none', fontFamily:'var(--f-body)', fontSize:15, color:'var(--text-1)', caretColor:'var(--amber)' }} />
+            {search && <button onClick={()=>setSearch('')} style={{ background:'none', border:'none', color:'var(--text-3)', fontSize:14, padding:0 }}>✕</button>}
           </div>
         </div>
-        <div style={{ overflowY:'auto', flex:1, WebkitOverflowScrolling:'touch', paddingBottom:'calc(env(safe-area-inset-bottom, 0px) + 24px)' }}>
-          {totalResults === 0 && (
-            <div style={{ textAlign:'center', padding:'48px 20px', color:'rgba(255,255,255,0.35)', fontFamily:SANS, fontSize:14 }}>
-              No cinemas match "{search}"
-            </div>
-          )}
+        <div style={{ overflowY:'auto', flex:1, WebkitOverflowScrolling:'touch', paddingBottom:'calc(env(safe-area-inset-bottom, 0px) + 28px)' }}>
+          {total === 0 && <div style={{ textAlign:'center', padding:'48px 20px', color:'var(--text-3)', fontFamily:'var(--f-body)', fontSize:14 }}>No cinemas match "{search}"</div>}
           {Object.entries(grouped).map(([state, cinemas]) => (
             <div key={state}>
-              <div style={{ fontFamily:MONO, fontSize:9, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.30)', padding:'12px 18px 4px' }}>{state}</div>
+              <div style={{ fontFamily:'var(--f-mono)', fontSize:9, letterSpacing:2, textTransform:'uppercase', color:'var(--text-4)', padding:'10px 20px 4px' }}>{state}</div>
               {cinemas.map(cinema => {
                 const active = cinema.id === value
                 return (
-                  <button key={cinema.id}
-                    onClick={() => { onChange(cinema.id); onClose() }}
-                    style={{
-                      display:'flex', alignItems:'center', gap:12,
-                      width:'100%', textAlign:'left', padding:'14px 18px', minHeight:52,
-                      background: active ? 'rgba(240,165,0,0.12)' : 'transparent',
-                      border:'none', borderBottom:'0.5px solid rgba(255,255,255,0.06)',
-                      cursor:'pointer', WebkitTapHighlightColor:'transparent',
-                    }}
-                  >
-                    <span style={{ fontSize:16, flexShrink:0 }}>🏢</span>
-                    <span style={{ fontFamily:SANS, fontSize:15, fontWeight: active ? 600 : 400, color: active ? '#F0A500' : '#fff', flex:1 }}>
-                      {cinema.name}
-                    </span>
-                    {active && <span style={{ color:'#F0A500', fontSize:16 }}>✓</span>}
+                  <button key={cinema.id} onClick={() => { onChange(cinema.id); onClose() }} style={{ display:'flex', alignItems:'center', gap:12, width:'100%', textAlign:'left', padding:'15px 20px', minHeight:54, background: active ? 'var(--amber-bg)' : 'transparent', border:'none', borderBottom:`1px solid var(--border-0)`, WebkitTapHighlightColor:'transparent' }}>
+                    <i className="ti ti-building" style={{ fontSize:15, color: active ? 'var(--amber)' : 'var(--text-3)', flexShrink:0 }} />
+                    <span style={{ fontFamily:'var(--f-body)', fontSize:15, fontWeight: active ? 600 : 400, color: active ? 'var(--amber)' : 'var(--text-1)', flex:1 }}>{cinema.name}</span>
+                    {active && <i className="ti ti-check" style={{ fontSize:15, color:'var(--amber)', flexShrink:0 }} />}
                   </button>
                 )
               })}
@@ -458,34 +228,19 @@ function CinemaSheet({ value, onChange, open, onClose }) {
 function CinemaPicker({ value, onOpen }) {
   const current = CINEMAS.find(c => c.id === value)
   return (
-    <button
-      onClick={onOpen}
-      style={{
-        display:'flex', alignItems:'center', gap:6,
-        background:'#252720', border:'0.5px solid rgba(255,255,255,0.20)',
-        borderRadius:20, padding:'6px 12px', cursor:'pointer',
-        WebkitTapHighlightColor:'transparent', outline:'none',
-        fontFamily:SANS, fontSize:12, fontWeight:500, color:'#F0EDE6',
-      }}
-    >
-      <span style={{ color:'#F0A500', fontSize:13 }}>📍</span>
-      <span style={{ fontWeight:600, maxWidth:130, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-        {current?.name || 'Select cinema'}
-      </span>
-      <span style={{ color:'rgba(255,255,255,0.40)', fontSize:10 }}>▾</span>
+    <button onClick={onOpen} style={{ display:'flex', alignItems:'center', gap:6, background:'var(--bg-2)', border:`1px solid var(--border-2)`, borderRadius:20, padding:'7px 12px', fontFamily:'var(--f-body)', fontSize:12, fontWeight:500, color:'var(--text-1)' }}>
+      <i className="ti ti-map-pin" style={{ fontSize:13, color:'var(--amber)' }} />
+      <span style={{ fontWeight:600, maxWidth:130, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{current?.name || 'Select cinema'}</span>
+      <i className="ti ti-chevron-down" style={{ fontSize:11, color:'var(--text-3)' }} />
     </button>
   )
 }
 
-
+// ─── HallCard ──────────────────────────────────────────────────────────────
 function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
-  delay = delay || 0
-  cinemaId = cinemaId || 'EGDENS'
-
-  const col  = typeColor[hall.typeId] || C.rec
-  const bg   = typeBg[hall.typeId]   || C.recBg
-  const txt  = typeTxt[hall.typeId]  || C.recTxt
-  const bdr  = typeBdr[hall.typeId]  || C.recBdr
+  const col  = TYPE_COL[hall.typeId]  || 'var(--std)'
+  const bg   = TYPE_BG[hall.typeId]   || 'var(--std-bg)'
+  const bdr  = TYPE_BDR[hall.typeId]  || 'var(--std-bdr)'
   const lbl  = TYPE_LABEL[hall.typeId] || hall.typeId
   const sess = hall.sessions
   const last = sess[sess.length - 1]
@@ -495,240 +250,155 @@ function HallCard({ hallName, hall, expanded, onToggle, delay, cinemaId }) {
   useEffect(() => {
     if (!last.sessionId) return
     fetch('/api/hoyts/seats?sessionId=' + last.sessionId + '&cinemaId=' + (last.cinemaId || cinemaId))
-      .then(function(r) { return r.json() })
-      .then(function(d) { if (d.summary) setOccupancy(d.summary.occupancyPct) })
-      .catch(function() {})
+      .then(r => r.json()).then(d => { if (d.summary) setOccupancy(d.summary.occupancyPct) }).catch(() => {})
   }, [last.sessionId])
 
-  const blipColor = occupancy >= 95 ? '#FF3B3B' : occupancy >= 80 ? '#FF6B35' : null
+  const blipHigh = occupancy >= 95 ? '#FF3B3B' : occupancy >= 80 ? 'var(--dbox)' : null
 
   const [nowMins, setNowMins] = useState(getNowMins())
-  useEffect(() => {
-    const t = setInterval(function() { setNowMins(getNowMins()) }, 30000)
-    return function() { clearInterval(t) }
-  }, [])
+  useEffect(() => { const t = setInterval(() => setNowMins(getNowMins()), 30000); return () => clearInterval(t) }, [])
 
   const hallStatus  = getHallStatus(sess)
   const currentSess = getCurrentSession(sess)
   const nextSess    = getNextSession(sess)
   const minsLeft    = currentSess ? currentSess.endMin - nowMins : null
   const minsToNext  = nextSess ? nextSess.startMin - nowMins : null
-  const statusDot   = hallStatus === 'playing' ? '#00D4A8' : hallStatus === 'done' ? 'rgba(255,255,255,0.20)' : null
-  const isLastSession = currentSess && currentSess.startMin === last.startMin
-  const isSameMovie   = currentSess && currentSess.movie === last.movie
-  const posterSess    = currentSess || last
+  const isLastSess  = currentSess && currentSess.startMin === last.startMin
+  const isSameMovie = currentSess && currentSess.movie === last.movie
+  const posterSess  = currentSess || last
+
+  const cardClass = isLastSess ? 'hall-card is-final' : hallStatus === 'playing' ? 'hall-card is-playing' : hallStatus === 'done' ? 'hall-card is-done' : 'hall-card'
 
   return (
-    <div className="fade-up" style={{ animationDelay: delay + 'ms', marginBottom: 8 }}>
-      <div
-        onClick={() => { if (navigator.vibrate) navigator.vibrate(8); onToggle() }}
-        className={'hall-card' + (isLastSession ? ' is-final' : hallStatus === 'playing' ? ' is-playing' : hallStatus === 'done' ? ' is-done' : '')}
-        style={{
-          background: 'rgba(0,0,0,0.25)',
-          border: '1px solid ' + (expanded ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.10)'),
-          borderRadius: 12,
-          overflow: 'hidden',
-          cursor: 'pointer',
-          position: 'relative',
-          transition: 'border-color .15s',
-        }}
-      >
+    <div className="fade-up" style={{ animationDelay: delay + 'ms', marginBottom:8 }}>
+      <div onClick={() => { navigator.vibrate?.(6); onToggle() }} className={cardClass}>
         <CardPoster movieName={posterSess.movie} movieId={posterSess.movieId} />
-
-        <div style={{ position: 'relative', zIndex: 1, width: '100%', padding: '12px 14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-              <div style={{ fontFamily: BEBAS, fontSize: 26, letterSpacing: 2, color: '#fff', lineHeight: 1, whiteSpace: 'nowrap' }}>{hallName}</div>
-              <span style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: bg, color: txt, border: '0.5px solid ' + bdr, letterSpacing: 0.5, flexShrink: 0 }}>{lbl}</span>
+        <div style={{ position:'relative', zIndex:1, padding:'13px 15px' }}>
+          {/* Header row */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10, gap:8 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0, flex:1 }}>
+              <span style={{ fontFamily:'var(--f-display)', fontSize:28, letterSpacing:2, color:'var(--text-1)', lineHeight:1, whiteSpace:'nowrap' }}>{hallName}</span>
+              <span style={{ fontFamily:'var(--f-mono)', fontSize:8, fontWeight:700, padding:'3px 7px', borderRadius:99, background:bg, color:col, border:`1px solid ${bdr}`, letterSpacing:0.5, flexShrink:0 }}>{lbl}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-              {statusDot && <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusDot, boxShadow: hallStatus === 'playing' ? '0 0 6px ' + statusDot : 'none', animation: hallStatus === 'playing' ? 'blip 1.2s ease-in-out infinite' : 'none' }} />}
-              {blipColor && hallStatus !== 'done' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: blipColor, boxShadow: '0 0 6px ' + blipColor, animation: 'blip 1.2s ease-in-out infinite' }} />}
-              <i className="ti ti-chevron-down chevron" aria-hidden="true" style={{ fontSize: 16, color: 'rgba(255,255,255,0.35)', transform: expanded ? 'rotate(180deg)' : 'none' }} />
+            <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
+              {hallStatus === 'playing' && <div style={{ width:7, height:7, borderRadius:'50%', background:'var(--playing)', boxShadow:'0 0 8px var(--playing)', animation:'blip 1.2s ease-in-out infinite' }} />}
+              {blipHigh && hallStatus !== 'done' && <div style={{ width:7, height:7, borderRadius:'50%', background:blipHigh, boxShadow:`0 0 8px ${blipHigh}`, animation:'blip 1.2s ease-in-out infinite' }} />}
+              <i className="ti ti-chevron-down chevron" style={{ fontSize:16, color:'var(--text-3)', transform: expanded ? 'rotate(180deg)' : 'none' }} />
             </div>
           </div>
 
-          {/* NOW PLAYING */}
-          {currentSess && hallStatus === 'playing' && !isLastSession && (
-            <div style={{ marginBottom: 8, padding: '8px 10px', background: 'rgba(0,212,168,0.10)', border: '1px solid rgba(0,212,168,0.25)', borderRadius: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#00D4A8', animation: 'blip 1.2s ease-in-out infinite' }} />
-                  <span style={{ fontFamily: MONO, fontSize: 8.5, fontWeight: 700, color: '#00D4A8', letterSpacing: 1 }}>NOW PLAYING</span>
+          {/* NOW PLAYING (not last session) */}
+          {currentSess && hallStatus === 'playing' && !isLastSess && (
+            <div style={{ marginBottom:8, padding:'9px 11px', background:'var(--playing-bg)', border:`1px solid var(--playing-bdr)`, borderRadius:10 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:5 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+                  <div style={{ width:5, height:5, borderRadius:'50%', background:'var(--playing)', animation:'blip 1.2s ease-in-out infinite' }} />
+                  <span style={{ fontFamily:'var(--f-mono)', fontSize:8, fontWeight:700, color:'var(--playing)', letterSpacing:1.5 }}>NOW PLAYING</span>
                 </div>
-                <span style={{ fontFamily: MONO, fontSize: 8.5, color: 'rgba(0,212,168,0.70)' }}>ends in {minsToHuman(minsLeft)}</span>
+                <span style={{ fontFamily:'var(--f-mono)', fontSize:8, color:'rgba(0,229,160,0.6)' }}>ends in {minsToHuman(minsLeft)}</span>
               </div>
-              <div style={{ fontFamily: SANS, fontSize: 'var(--text-md)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentSess.movie}</div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(0,212,168,0.20)' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(0,212,168,0.55)', letterSpacing: 1, marginBottom: 2 }}>START</div>
-                  <div style={{ fontFamily: BEBAS, fontSize: 18, color: 'rgba(0,212,168,0.90)', lineHeight: 1 }}>{fmtTime(currentSess.startMin)}</div>
-                </div>
-                {currentSess.runtime > 0 && (
-                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(0,212,168,0.20)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(0,212,168,0.55)', letterSpacing: 1, marginBottom: 2 }}>ENDS</div>
-                    <div style={{ fontFamily: BEBAS, fontSize: 18, color: 'rgba(255,255,255,0.65)', lineHeight: 1 }}>{'~'}{fmtTime(currentSess.endMin)}</div>
-                  </div>
-                )}
-              </div>
+              <div style={{ fontFamily:'var(--f-body)', fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:6, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{currentSess.movie}</div>
+              <TimeBoxRow sess={currentSess} col='var(--playing)' dimCol='rgba(0,229,160,0.55)' bdrCol='rgba(0,229,160,0.18)' />
             </div>
           )}
 
-          {/* FINAL SHOW / DONE / LAST SESSION */}
-          {isLastSession ? (
-            <div style={{ padding: '8px 10px', background: 'rgba(240,165,0,0.10)', border: '1px solid rgba(240,165,0,0.28)', borderRadius: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#F0A500', animation: 'blip 1.2s ease-in-out infinite' }} />
-                  <span style={{ fontFamily: MONO, fontSize: 8.5, fontWeight: 700, color: '#F0A500', letterSpacing: 1 }}>FINAL SHOW</span>
+          {/* FINAL SHOW */}
+          {isLastSess ? (
+            <div style={{ padding:'9px 11px', background:'var(--amber-bg)', border:`1px solid var(--amber-bdr)`, borderRadius:10 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:5 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+                  <div style={{ width:5, height:5, borderRadius:'50%', background:'var(--amber)', animation:'blip 1.2s ease-in-out infinite' }} />
+                  <span style={{ fontFamily:'var(--f-mono)', fontSize:8, fontWeight:700, color:'var(--amber)', letterSpacing:1.5 }}>FINAL SHOW</span>
                 </div>
-                <span style={{ fontFamily: MONO, fontSize: 8.5, color: 'rgba(240,165,0,0.70)' }}>ends in {minsToHuman(minsLeft)}</span>
+                {minsLeft > 0 && <span style={{ fontFamily:'var(--f-mono)', fontSize:8, color:'rgba(245,166,35,0.65)' }}>ends in {minsToHuman(minsLeft)}</span>}
               </div>
-              <div style={{ fontFamily: SANS, fontSize: 'var(--text-md)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(240,165,0,0.20)' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(240,165,0,0.55)', letterSpacing: 1, marginBottom: 2 }}>START</div>
-                  <div style={{ fontFamily: BEBAS, fontSize: 18, color: '#F0A500', lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
-                </div>
-                {last.runtime > 0 && (
-                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(240,165,0,0.20)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(240,165,0,0.55)', letterSpacing: 1, marginBottom: 2 }}>ENDS</div>
-                    <div style={{ fontFamily: BEBAS, fontSize: 18, color: 'rgba(255,255,255,0.65)', lineHeight: 1 }}>{'~'}{fmtTime(last.endMin)}</div>
-                  </div>
-                )}
-                {last.runtime > 0 && (
-                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(240,165,0,0.20)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(240,165,0,0.55)', letterSpacing: 1, marginBottom: 2 }}>RUNTIME</div>
-                    <div style={{ fontFamily: BEBAS, fontSize: 18, color: 'rgba(255,255,255,0.45)', lineHeight: 1 }}>{last.runtime}m</div>
-                  </div>
-                )}
-              </div>
+              <div style={{ fontFamily:'var(--f-body)', fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:6, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{last.movie}</div>
+              <TimeBoxRow sess={last} col='var(--amber)' dimCol='rgba(245,166,35,0.55)' bdrCol='rgba(245,166,35,0.18)' />
             </div>
           ) : hallStatus === 'done' ? (
-            <div style={{ padding: '8px 10px', background: 'rgba(255,87,87,0.07)', border: '1px solid rgba(255,87,87,0.20)', borderRadius: 8, opacity: 0.80 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(255,87,87,0.60)' }} />
-                <span style={{ fontFamily: MONO, fontSize: 8.5, fontWeight: 700, color: 'rgba(255,87,87,0.80)', letterSpacing: 1 }}>DONE FOR THE DAY</span>
+            <div style={{ padding:'9px 11px', background:'var(--bg-2)', border:`1px solid var(--border-1)`, borderRadius:10, opacity:0.7 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:5 }}>
+                <div style={{ width:5, height:5, borderRadius:'50%', background:'var(--text-4)' }} />
+                <span style={{ fontFamily:'var(--f-mono)', fontSize:8, fontWeight:700, color:'var(--text-3)', letterSpacing:1.5 }}>DONE FOR THE DAY</span>
               </div>
-              {!isSameMovie && <div style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(255,255,255,0.40)', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>}
-              <div style={{ display: 'flex', gap: 6 }}>
-                <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginBottom: 2 }}>LAST</div>
-                  <div style={{ fontFamily: BEBAS, fontSize: 18, color: 'rgba(255,255,255,0.30)', lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
-                </div>
-                {last.runtime > 0 && (
-                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.25)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: 1, marginBottom: 2 }}>ENDED</div>
-                    <div style={{ fontFamily: BEBAS, fontSize: 18, color: 'rgba(255,87,87,0.50)', lineHeight: 1 }}>{'~'}{fmtTime(last.endMin)}</div>
-                  </div>
-                )}
-              </div>
+              {!isSameMovie && <div style={{ fontFamily:'var(--f-body)', fontSize:12, color:'var(--text-3)', marginBottom:5, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{last.movie}</div>}
+              <TimeBoxRow sess={last} col='var(--text-3)' dimCol='var(--text-4)' bdrCol='var(--border-0)' dim />
             </div>
           ) : (
-            <div style={{ padding: '8px 10px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: 1, color: 'rgba(255,255,255,0.40)', textTransform: 'uppercase' }}>Last Session</span>
-                {nextSess && nextSess.startMin === last.startMin && minsToNext > 0 && <span style={{ fontFamily: MONO, fontSize: 8.5, color: col }}>in {minsToHuman(minsToNext)}</span>}
+            <div style={{ padding:'9px 11px', background:'var(--bg-2)', border:`1px solid var(--border-1)`, borderRadius:10 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:5 }}>
+                <span style={{ fontFamily:'var(--f-mono)', fontSize:8, letterSpacing:1.5, color:'var(--text-3)', textTransform:'uppercase' }}>Last Session</span>
+                {nextSess && nextSess.startMin === last.startMin && minsToNext > 0 && <span style={{ fontFamily:'var(--f-mono)', fontSize:8, color:col }}>in {minsToHuman(minsToNext)}</span>}
               </div>
-              {!isSameMovie && <div style={{ fontFamily: SANS, fontSize: 'var(--text-md)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{last.movie}</div>}
-              <div style={{ display: 'flex', gap: 6 }}>
-                <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(255,255,255,0.12)' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 2 }}>LAST</div>
-                  <div style={{ fontFamily: BEBAS, fontSize: 'clamp(20px,5vw,26px)', color: col, lineHeight: 1 }}>{fmtTime(last.startMin)}</div>
-                </div>
-                {last.runtime > 0 && (
-                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(255,255,255,0.12)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 2 }}>ENDS</div>
-                    <div style={{ fontFamily: BEBAS, fontSize: 'clamp(18px,4vw,22px)', color: 'rgba(255,255,255,0.55)', lineHeight: 1 }}>{'~'}{fmtTime(last.endMin)}</div>
-                  </div>
-                )}
-                {last.runtime > 0 && (
-                  <div style={{ flex: 1, background: 'rgba(0,0,0,0.30)', borderRadius: 6, padding: '5px 8px', border: '1px solid rgba(255,255,255,0.12)' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: 1, marginBottom: 2 }}>RUNTIME</div>
-                    <div style={{ fontFamily: BEBAS, fontSize: 'clamp(16px,3.5vw,20px)', color: 'rgba(255,255,255,0.40)', lineHeight: 1 }}>{last.runtime}m</div>
-                  </div>
-                )}
-              </div>
+              {!isSameMovie && <div style={{ fontFamily:'var(--f-body)', fontSize:13, fontWeight:600, color:'var(--text-1)', marginBottom:6, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{last.movie}</div>}
+              <TimeBoxRow sess={last} col={col} dimCol='var(--text-3)' bdrCol='var(--border-1)' />
             </div>
           )}
-
         </div>
-        {/* Seats: shown automatically when card is expanded */}
+
+        {/* Seat map */}
         {expanded && sess.some(s => s.sessionId) && (
-          <div style={{ padding: '0 14px 14px' }} onClick={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
+          <div style={{ padding:'0 15px 15px' }} onClick={e=>e.stopPropagation()} onTouchEnd={e=>e.stopPropagation()}>
             {sess.length > 1 && (
-              <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:10 }}>
-                {sess.map((s, i) => {
+              <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginBottom:10 }}>
+                {sess.map((s,i) => {
                   if (!s.sessionId) return null
-                  const nowM   = getNowMins()
-                  const isPast = nowM > s.endMin
+                  const isPast = getNowMins() > s.endMin
                   const isLast = i === sess.length - 1
                   const active = selectedSessId === s.sessionId
-                  const pillCol = active ? col : isLast ? C.amber : isPast ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.55)'
                   return (
-                    <button key={i}
-                      onClick={e => { e.stopPropagation(); e.preventDefault(); setSelectedSessId(s.sessionId) }}
-                      style={{
-                        fontFamily:BEBAS, fontSize:17, letterSpacing:1,
-                        padding:'5px 11px', borderRadius:8, cursor:'pointer',
-                        background: active ? (typeBg[hall.typeId]||C.recBg) : 'rgba(255,255,255,0.05)',
-                        border:'0.5px solid ' + (active ? (typeBdr[hall.typeId]||C.recBdr) : 'rgba(255,255,255,0.10)'),
-                        color: pillCol,
-                        opacity: isPast && !active ? 0.5 : 1,
-                        transition:'all 0.15s',
-                        WebkitTapHighlightColor:'transparent',
-                      }}
-                    >
+                    <button key={i} onClick={e=>{e.stopPropagation();e.preventDefault();setSelectedSessId(s.sessionId)}} style={{ fontFamily:'var(--f-display)', fontSize:17, letterSpacing:1, padding:'5px 11px', borderRadius:8, background: active ? bg : 'var(--bg-3)', border:`1px solid ${active ? bdr : 'var(--border-1)'}`, color: active ? col : isPast ? 'var(--text-4)' : 'var(--text-2)', opacity: isPast && !active ? 0.55 : 1, transition:'all 0.15s', WebkitTapHighlightColor:'transparent' }}>
                       {fmtTime(s.startMin)}
                     </button>
                   )
                 })}
               </div>
             )}
-            <SeatMap
-              key={selectedSessId}
-              sessionId={String(selectedSessId || last.sessionId)}
-              cinemaId={sess.find(s => s.sessionId === selectedSessId)?.cinemaId || last.cinemaId || cinemaId}
-              typeColor={col}
-            />
+            <SeatMap key={selectedSessId} sessionId={String(selectedSessId || last.sessionId)} cinemaId={sess.find(s=>s.sessionId===selectedSessId)?.cinemaId || last.cinemaId || cinemaId} typeColor={col} />
           </div>
         )}
-
       </div>
     </div>
   )
 }
 
-function MicroBadge({ label, bg, color, border }) {
+function TimeBoxRow({ sess, col, dimCol, bdrCol, dim }) {
   return (
-    <span style={{ fontFamily:MONO, fontSize:8.5, fontWeight:700, letterSpacing:.5, padding:'2px 6px', borderRadius:6, background:bg, color, border:`0.5px solid ${border}` }}>
-      {label}
-    </span>
+    <div style={{ display:'flex', gap:5 }}>
+      <div style={{ flex:1, background:'var(--bg-1)', borderRadius:6, padding:'6px 9px', border:`1px solid ${bdrCol}` }}>
+        <div style={{ fontFamily:'var(--f-mono)', fontSize:8, color:dimCol, letterSpacing:1, marginBottom:2 }}>START</div>
+        <div style={{ fontFamily:'var(--f-display)', fontSize:'clamp(18px,4.5vw,24px)', color: dim ? dimCol : col, lineHeight:1 }}>{fmtTime(sess.startMin)}</div>
+      </div>
+      {sess.runtime > 0 && (
+        <div style={{ flex:1, background:'var(--bg-1)', borderRadius:6, padding:'6px 9px', border:`1px solid ${bdrCol}` }}>
+          <div style={{ fontFamily:'var(--f-mono)', fontSize:8, color:dimCol, letterSpacing:1, marginBottom:2 }}>ENDS</div>
+          <div style={{ fontFamily:'var(--f-display)', fontSize:'clamp(16px,4vw,22px)', color:'var(--text-3)', lineHeight:1 }}>~{fmtTime(sess.endMin)}</div>
+        </div>
+      )}
+      {sess.runtime > 0 && (
+        <div style={{ flex:1, background:'var(--bg-1)', borderRadius:6, padding:'6px 9px', border:`1px solid ${bdrCol}` }}>
+          <div style={{ fontFamily:'var(--f-mono)', fontSize:8, color:dimCol, letterSpacing:1, marginBottom:2 }}>RUN</div>
+          <div style={{ fontFamily:'var(--f-display)', fontSize:'clamp(15px,3.5vw,20px)', color:'var(--text-4)', lineHeight:1 }}>{sess.runtime}m</div>
+        </div>
+      )}
+    </div>
   )
 }
 
-// ─── Type Section ─────────────────────────────────────────────────────────────
+// ─── TypeSection ───────────────────────────────────────────────────────────
 function TypeSection({ typeId, halls, expandedHalls, toggleHall, prefix, cinemaId }) {
   if (!halls.length) return null
-  const col = typeColor[typeId] || C.rec
+  const col = TYPE_COL[typeId] || 'var(--std)'
   const lbl = TYPE_LABEL[typeId] || typeId
-
   return (
-    <div style={{ marginBottom:24 }}>
-      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12, paddingBottom:10, borderBottom:'0.5px solid var(--border, rgba(255,255,255,0.10))' }}>
-        <div style={{ width:3, height:18, borderRadius:2, background:col, flexShrink:0 }} />
-        <span style={{ fontFamily:BEBAS, fontSize:'clamp(16px,4vw,22px)', color:col, letterSpacing:'3px' }}>{lbl}</span>
-        <span style={{ fontFamily:MONO, fontSize:10, color:'rgba(255,255,255,0.40)', fontWeight:400, marginLeft:'auto' }}>
-          {halls.length} hall{halls.length !== 1 ? 's' : ''}
-        </span>
+    <div style={{ marginBottom:28 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12, paddingBottom:10, borderBottom:`1px solid var(--border-0)` }}>
+        <div style={{ width:2, height:16, borderRadius:1, background:col, flexShrink:0 }} />
+        <span style={{ fontFamily:'var(--f-display)', fontSize:'clamp(15px,3.8vw,20px)', color:col, letterSpacing:'3px' }}>{lbl}</span>
+        <span style={{ fontFamily:'var(--f-mono)', fontSize:9, color:'var(--text-4)', marginLeft:'auto' }}>{halls.length} hall{halls.length !== 1 ? 's':''}</span>
       </div>
       {halls.map(([name, hall], i) => (
-        <HallCard
-          key={name}
-          hallName={name}
-          hall={hall}
-          delay={i * 40}
-          cinemaId={cinemaId}
+        <HallCard key={name} hallName={name} hall={hall} delay={i*35} cinemaId={cinemaId}
           expanded={!!expandedHalls[`${prefix}-${name}`]}
           onToggle={() => toggleHall(`${prefix}-${name}`)}
         />
@@ -737,21 +407,14 @@ function TypeSection({ typeId, halls, expandedHalls, toggleHall, prefix, cinemaI
   )
 }
 
-// ─── Date Tabs ────────────────────────────────────────────────────────────────
+// ─── DateTabs ──────────────────────────────────────────────────────────────
 function DateTabs({ dates, selected, onSelect }) {
   return (
     <div style={{ display:'flex', gap:6, overflowX:'auto', scrollbarWidth:'none', paddingBottom:2, scrollSnapType:'x mandatory', WebkitOverflowScrolling:'touch' }}>
       {dates.map(d => {
         const active = d === selected
         return (
-          <button key={d} onClick={() => onSelect(d)} style={{
-            flexShrink:0, scrollSnapAlign:'start', fontFamily:SANS, fontSize:12, fontWeight: active ? 600 : 500,
-            padding:'7px 14px', borderRadius:20, cursor:'pointer', transition:'all .15s',
-            border:`0.5px solid ${active ? C.amberDim : 'var(--border-strong, rgba(255,255,255,0.18))'}`,
-            background: active ? C.amberBg : 'transparent',
-            color: active ? C.amberTxt : 'var(--text-secondary, #C4C0D4)',
-            whiteSpace:'nowrap',
-          }}>
+          <button key={d} onClick={() => onSelect(d)} style={{ flexShrink:0, scrollSnapAlign:'start', fontFamily:'var(--f-body)', fontSize:12, fontWeight: active ? 600 : 500, padding:'7px 15px', borderRadius:99, border:`1px solid ${active ? 'var(--amber-bdr)' : 'var(--border-2)'}`, background: active ? 'var(--amber-bg)' : 'transparent', color: active ? 'var(--amber)' : 'var(--text-2)', whiteSpace:'nowrap', transition:'all 0.15s' }}>
             {fmtDayLabel(d)}
           </button>
         )
@@ -760,87 +423,80 @@ function DateTabs({ dates, selected, onSelect }) {
   )
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
+// ─── StatCard ──────────────────────────────────────────────────────────────
 function StatCard({ label, value, color }) {
   return (
-    <div className="stat-card" style={{ flex:1, background:'var(--surface-1, #2A2B25)', borderRadius:10, padding:'10px 12px', border:'0.5px solid var(--border)' }}>
-      <div style={{ fontFamily:MONO, fontSize:10, letterSpacing:1.2, textTransform:'uppercase', color:'rgba(255,255,255,0.40)', fontWeight:400, marginBottom:4 }}>{label}</div>
-      <div className="stat-value" style={{ fontFamily:BEBAS, fontSize:'clamp(24px,5vw,30px)', color: color || 'var(--text-primary)', letterSpacing:'2px', lineHeight:1 }}>{value}</div>
+    <div className="stat-card" style={{ flex:1, background:'var(--bg-1)', borderRadius:12, padding:'11px 13px', border:`1px solid var(--border-1)` }}>
+      <div style={{ fontFamily:'var(--f-mono)', fontSize:9, letterSpacing:1.5, textTransform:'uppercase', color:'var(--text-4)', marginBottom:5 }}>{label}</div>
+      <div className="stat-value" style={{ fontFamily:'var(--f-display)', fontSize:'clamp(24px,5vw,32px)', color: color || 'var(--text-1)', letterSpacing:'2px', lineHeight:1 }}>{value}</div>
     </div>
   )
 }
 
-// ─── Loading Skeleton ─────────────────────────────────────────────────────────
+// ─── Skeletons ─────────────────────────────────────────────────────────────
 function SkeletonGrid() {
   return (
     <div>
-      {['DBOX','XTREME','IMAX','VMAX','LUX','GOLD','STANDARD'].map((t, gi) => (
-        <div key={t} style={{ marginBottom:24, animation:`fadeUpIn 0.4s ease ${gi * 60}ms both` }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12, paddingBottom:10, borderBottom:'0.5px solid var(--border, rgba(255,255,255,0.10))' }}>
-            <div className="skeleton" style={{ width:3, height:18, borderRadius:2 }} />
-            <div className="skeleton" style={{ width:80, height:14, borderRadius:6 }} />
+      {['DBOX','XTREME','IMAX','VMAX','LUX','GOLD','STANDARD'].map((t,gi) => (
+        <div key={t} style={{ marginBottom:28, animation:`fadeUp 0.4s ease ${gi*60}ms both` }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12, paddingBottom:10, borderBottom:`1px solid var(--border-0)` }}>
+            <div className="skeleton" style={{ width:2, height:16, borderRadius:1 }} />
+            <div className="skeleton" style={{ width:80, height:13, borderRadius:6 }} />
           </div>
-          {[1,2].map(i => (
-            <div key={i} className="skeleton" style={{ height:110, borderRadius:12, marginBottom:8, animationDelay:`${gi * 60 + i * 80}ms` }} />
-          ))}
+          {[1,2].map(i => <div key={i} className="skeleton" style={{ height:108, borderRadius:14, marginBottom:8, animationDelay:`${gi*60+i*80}ms` }} />)}
         </div>
       ))}
     </div>
   )
 }
 
-// ─── Empty States ─────────────────────────────────────────────────────────────
+// ─── Empty / Error States ──────────────────────────────────────────────────
 function EmptyState({ icon, title, sub }) {
   const icons = {
-    film:    <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="4" y="10" width="40" height="28" rx="5" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3"/><rect x="4" y="17" width="40" height="2" fill="currentColor" fillOpacity="0.15"/><rect x="4" y="29" width="40" height="2" fill="currentColor" fillOpacity="0.15"/><rect x="11" y="10" width="2" height="7" fill="currentColor" fillOpacity="0.2"/><rect x="35" y="10" width="2" height="7" fill="currentColor" fillOpacity="0.2"/><rect x="11" y="31" width="2" height="7" fill="currentColor" fillOpacity="0.2"/><rect x="35" y="31" width="2" height="7" fill="currentColor" fillOpacity="0.2"/></svg>,
-    cal:     <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="6" y="10" width="36" height="30" rx="5" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3"/><line x1="6" y1="20" x2="42" y2="20" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.2"/><rect x="15" y="6" width="3" height="8" rx="1.5" fill="currentColor" fillOpacity="0.3"/><rect x="30" y="6" width="3" height="8" rx="1.5" fill="currentColor" fillOpacity="0.3"/><circle cx="16" cy="28" r="2" fill="currentColor" fillOpacity="0.25"/><circle cx="24" cy="28" r="2" fill="currentColor" fillOpacity="0.25"/><circle cx="32" cy="28" r="2" fill="currentColor" fillOpacity="0.25"/></svg>,
-    night:   <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><path d="M24 8C15.2 8 8 15.2 8 24s7.2 16 16 16 16-7.2 16-16" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3" strokeLinecap="round"/><path d="M32 8a16 16 0 0 1-16 16" stroke="currentColor" strokeWidth="2" strokeOpacity="0.2" strokeLinecap="round"/></svg>,
-    default: <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="18" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25"/><path d="M24 16v8l5 5" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3" strokeLinecap="round"/></svg>,
+    film: <svg width="44" height="44" viewBox="0 0 48 48" fill="none"><rect x="4" y="10" width="40" height="28" rx="5" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".25"/><path d="M4 17h40M4 31h40M11 10v7M35 10v7M11 31v7M35 31v7" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".18" strokeLinecap="round"/></svg>,
+    cal:  <svg width="44" height="44" viewBox="0 0 48 48" fill="none"><rect x="6" y="10" width="36" height="30" rx="5" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".25"/><line x1="6" y1="20" x2="42" y2="20" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".18"/><rect x="15" y="6" width="3" height="8" rx="1.5" fill="currentColor" fillOpacity=".25"/><rect x="30" y="6" width="3" height="8" rx="1.5" fill="currentColor" fillOpacity=".25"/></svg>,
+    night:<svg width="44" height="44" viewBox="0 0 48 48" fill="none"><path d="M24 8C15.2 8 8 15.2 8 24s7.2 16 16 16 16-7.2 16-16" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".25" strokeLinecap="round"/><path d="M32 8a16 16 0 0 1-16 16" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".18" strokeLinecap="round"/></svg>,
   }
-  const svgIcon = icons[icon] || icons.default
   return (
-    <div style={{ textAlign:'center', padding:'64px 20px' }}>
-      <div style={{ color:'rgba(255,255,255,0.20)', marginBottom:16, display:'flex', justifyContent:'center' }}>{svgIcon}</div>
-      <div style={{ fontFamily:BEBAS, fontSize:22, color:'var(--text-secondary, #C4C0D4)', letterSpacing:'2px', marginBottom:8 }}>{title}</div>
-      <div style={{ fontSize:13, color:'rgba(255,255,255,0.30)', lineHeight:1.8, maxWidth:260, margin:'0 auto' }}>{sub}</div>
+    <div style={{ textAlign:'center', padding:'72px 20px' }}>
+      <div style={{ color:'var(--text-4)', marginBottom:16, display:'flex', justifyContent:'center' }}>{icons[icon] || icons.film}</div>
+      <div style={{ fontFamily:'var(--f-display)', fontSize:22, color:'var(--text-3)', letterSpacing:'2px', marginBottom:8 }}>{title}</div>
+      <div style={{ fontFamily:'var(--f-body)', fontSize:13, color:'var(--text-4)', lineHeight:1.8, maxWidth:260, margin:'0 auto' }}>{sub}</div>
     </div>
   )
 }
 
 function ErrorState({ msg, onRetry }) {
   return (
-    <div style={{ background:C.errBg, border:`0.5px solid ${C.errBdr}`, borderRadius:12, padding:'14px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:16 }}>
+    <div style={{ background:'rgba(239,68,68,0.07)', border:`1px solid rgba(239,68,68,0.22)`, borderRadius:12, padding:'14px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:16 }}>
       <div>
-        <div style={{ fontFamily:SANS, fontSize:12, fontWeight:600, color:C.err, marginBottom:3 }}>Couldn't load sessions</div>
-        <div style={{ fontSize:12, color:'var(--text-secondary, #C4C0D4)' }}>{msg}</div>
+        <div style={{ fontFamily:'var(--f-body)', fontSize:12, fontWeight:600, color:'#EF4444', marginBottom:3 }}>Couldn't load sessions</div>
+        <div style={{ fontFamily:'var(--f-body)', fontSize:12, color:'var(--text-3)' }}>{msg}</div>
       </div>
-      <button onClick={onRetry} style={{ fontFamily:SANS, fontWeight:600, fontSize:12, padding:'7px 12px', borderRadius:8, border:'0.5px solid var(--border-strong)', background:'var(--surface-2, #313229)', color:'var(--text-primary, #F5F3FF)', cursor:'pointer', flexShrink:0 }}>
-        Retry
-      </button>
+      <button onClick={onRetry} style={{ fontFamily:'var(--f-body)', fontWeight:600, fontSize:12, padding:'7px 12px', borderRadius:8, border:`1px solid var(--border-2)`, background:'var(--bg-2)', color:'var(--text-1)', flexShrink:0 }}>Retry</button>
     </div>
   )
 }
 
-// ─── Settings helpers ─────────────────────────────────────────────────────────
+// ─── Settings helpers ──────────────────────────────────────────────────────
 function SettingsSection({ label, children }) {
   return (
-    <div style={{ marginBottom:20 }}>
-      <div style={{ fontFamily:MONO, fontSize:9, letterSpacing:2, textTransform:'uppercase', color:'rgba(255,255,255,0.40)', fontWeight:400, marginBottom:8 }}>{label}</div>
-      <div style={{ background:'var(--surface-2, #313229)', border:'0.5px solid var(--border)', borderRadius:12, padding:'16px', overflow:'visible' }}>{children}</div>
+    <div style={{ marginBottom:22 }}>
+      <div style={{ fontFamily:'var(--f-mono)', fontSize:9, letterSpacing:2, textTransform:'uppercase', color:'var(--text-4)', marginBottom:8 }}>{label}</div>
+      <div style={{ background:'var(--bg-1)', border:`1px solid var(--border-1)`, borderRadius:14, padding:'16px', overflow:'visible' }}>{children}</div>
     </div>
   )
 }
-
 function SettingsRow({ label, value }) {
   return (
-    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'0.5px solid var(--border, rgba(255,255,255,0.10))' }}>
-      <span style={{ fontFamily:MONO, fontSize:11, color:'var(--text-secondary, #C4C0D4)' }}>{label}</span>
-      <span style={{ fontFamily:MONO, fontSize:11, fontWeight:700, color:'var(--text-primary, #F5F3FF)' }}>{value}</span>
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'9px 0', borderBottom:`1px solid var(--border-0)` }}>
+      <span style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--text-3)' }}>{label}</span>
+      <span style={{ fontFamily:'var(--f-mono)', fontSize:10, fontWeight:700, color:'var(--text-2)' }}>{value}</span>
     </div>
   )
 }
 
-// ─── Bottom Nav ───────────────────────────────────────────────────────────────
+// ─── BottomNav ─────────────────────────────────────────────────────────────
 function BottomNav({ view, setView }) {
   const tabs = [
     { id:'tonight',  label:'Tonight',  icon:'ti-moon' },
@@ -849,39 +505,15 @@ function BottomNav({ view, setView }) {
     { id:'settings', label:'Settings', icon:'ti-settings' },
   ]
   const activeIdx = tabs.findIndex(t => t.id === view)
-
   return (
-    <div style={{
-      position:'fixed', bottom:0, left:0, right:0, zIndex:100,
-      background:'rgba(20,21,16,0.75)',
-      backdropFilter:'blur(24px) saturate(180%)',
-      WebkitBackdropFilter:'blur(24px) saturate(180%)',
-      borderTop:'0.5px solid rgba(255,255,255,0.10)',
-      paddingBottom:'env(safe-area-inset-bottom)',
-    }}>
-      <div style={{ maxWidth:600, margin:'0 auto', display:'flex', height:60, position:'relative' }}>
-        {/* Sliding pill indicator */}
-        <div style={{
-          position:'absolute', bottom:6,
-          left:`calc(${activeIdx * 25}% + 10px)`,
-          width:'calc(25% - 20px)',
-          height:3,
-          background:'#F0A500',
-          borderRadius:2,
-          transition:'left 0.3s cubic-bezier(0.34,1.56,0.64,1)',
-          pointerEvents:'none',
-        }} />
-        {tabs.map((t, i) => {
+    <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:100, background:'rgba(0,0,0,0.82)', backdropFilter:'blur(28px) saturate(180%)', WebkitBackdropFilter:'blur(28px) saturate(180%)', borderTop:`1px solid var(--border-1)`, paddingBottom:'env(safe-area-inset-bottom)' }}>
+      <div style={{ maxWidth:600, margin:'0 auto', display:'flex', height:62, position:'relative' }}>
+        <div style={{ position:'absolute', bottom:8, left:`calc(${activeIdx*25}% + 12px)`, width:'calc(25% - 24px)', height:2, background:'var(--amber)', borderRadius:1, transition:'left 0.3s cubic-bezier(0.34,1.56,0.64,1)', pointerEvents:'none' }} />
+        {tabs.map((t,i) => {
           const active = view === t.id
           return (
-            <button key={t.id} onClick={() => { setView(t.id); window.scrollTo({ top: 0, behavior: 'smooth' }) }} style={{
-              flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3,
-              background:'transparent', border:'none', cursor:'pointer', transition:'color 0.2s',
-              color: active ? C.amberTxt : 'rgba(255,255,255,0.35)',
-              fontFamily:MONO, fontSize:8.5, fontWeight: active ? 700 : 400, letterSpacing:1, textTransform:'uppercase',
-              position:'relative', zIndex:1, WebkitTapHighlightColor:'transparent',
-            }}>
-              <i className={`ti ${t.icon}`} aria-hidden="true" style={{ fontSize:20, transition:'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)', transform: active ? 'scale(1.15)' : 'scale(1)' }} />
+            <button key={t.id} onClick={() => { setView(t.id); window.scrollTo({top:0, behavior:'smooth'}) }} className="nav-btn" style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3, background:'transparent', border:'none', color: active ? 'var(--amber)' : 'var(--text-4)', fontFamily:'var(--f-mono)', fontSize:8, fontWeight: active ? 700 : 400, letterSpacing:1, textTransform:'uppercase', position:'relative', zIndex:1, WebkitTapHighlightColor:'transparent', transition:'color 0.2s' }}>
+              <i className={`ti ${t.icon}`} style={{ fontSize:20, transition:'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)', transform: active ? 'scale(1.15)' : 'scale(1)' }} />
               {t.label}
             </button>
           )
@@ -891,50 +523,30 @@ function BottomNav({ view, setView }) {
   )
 }
 
-// ─── Header ───────────────────────────────────────────────────────────────────
+// ─── Header ────────────────────────────────────────────────────────────────
 function Header({ cinemaId, loading, lastFetched, onRefresh, onOpenPicker }) {
   const [, setTick] = useState(0)
-  useEffect(() => {
-    const t = setInterval(() => setTick(n => n + 1), 60000)
-    return () => clearInterval(t)
-  }, [])
+  useEffect(() => { const t = setInterval(() => setTick(n => n+1), 60000); return () => clearInterval(t) }, [])
+  const ageTxt = lastFetched ? (() => { const d = Math.floor((Date.now()-lastFetched)/60000); return d < 1 ? 'just now' : d < 60 ? `${d}m ago` : `${Math.floor(d/60)}h ago` })() : null
   return (
-    <div style={{
-      position:'sticky', top:0, zIndex:50,
-      background:'rgba(20,21,16,0.80)',
-      backdropFilter:'blur(24px) saturate(180%)',
-      WebkitBackdropFilter:'blur(24px) saturate(180%)',
-      borderBottom:'0.5px solid rgba(255,255,255,0.08)',
-    }}>
+    <div className="glass" style={{ position:'sticky', top:0, zIndex:50, background:'rgba(0,0,0,0.78)', backdropFilter:'blur(28px) saturate(180%)', WebkitBackdropFilter:'blur(28px) saturate(180%)', borderBottom:`1px solid var(--border-1)` }}>
       <div style={{ maxWidth:900, margin:'0 auto', padding:'0 16px', display:'flex', alignItems:'center', justifyContent:'space-between', height:54, gap:12 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
-          <div style={{ width:28, height:28, background:C.amber, borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <rect x="1" y="2" width="11" height="9" rx="2" fill="#3a2800"/>
-              <path d="M4 4.5L9 6.5L4 8.5V4.5Z" fill="#F0A500"/>
+        <div style={{ display:'flex', alignItems:'center', gap:9, flexShrink:0 }}>
+          <div style={{ width:30, height:30, background:'var(--amber)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <rect x="1" y="2" width="12" height="10" rx="2.5" fill="#000"/>
+              <path d="M4.5 4.5L10 7L4.5 9.5V4.5Z" fill="#F5A623"/>
             </svg>
           </div>
           <div>
-            <div style={{ fontFamily:BEBAS, fontSize:17, color:'#FFFFFF', letterSpacing:'1px', lineHeight:1 }}>Last Session</div>
-            <div style={{ fontFamily:MONO, fontSize:8.5, letterSpacing:2, color:C.amber, textTransform:'uppercase', marginTop:1 }}>HOYTS Tracker</div>
+            <div style={{ fontFamily:'var(--f-display)', fontSize:18, color:'var(--text-1)', letterSpacing:'1px', lineHeight:1 }}>Last Session</div>
+            <div style={{ fontFamily:'var(--f-mono)', fontSize:8, letterSpacing:2, color:'var(--amber)', textTransform:'uppercase', marginTop:1 }}>HOYTS Tracker</div>
           </div>
         </div>
-
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          {lastFetched && (
-            <span style={{ fontFamily:MONO, fontSize:10, color:'rgba(255,255,255,0.35)' }}>
-              {(() => { const diff = Math.floor((Date.now() - lastFetched) / 60000); return diff < 1 ? 'just now' : diff < 60 ? diff + 'm ago' : Math.floor(diff/60) + 'h ago' })()}
-            </span>
-          )}
-          <button
-            onClick={onRefresh}
-            disabled={loading}
-            title="Refresh sessions"
-            style={{ width:32, height:32, borderRadius:8, border:'0.5px solid var(--border-strong)', background:'transparent', color:'var(--text-muted, #7A7690)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'border-color .15s' }}
-            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-stronger, rgba(255,255,255,0.28))'}
-            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-strong, rgba(255,255,255,0.18))'}
-          >
-            <i className="ti ti-refresh" aria-hidden="true" style={{ fontSize:15, animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+          {ageTxt && <span style={{ fontFamily:'var(--f-mono)', fontSize:9, color:'var(--text-4)' }}>{ageTxt}</span>}
+          <button onClick={onRefresh} disabled={loading} style={{ width:32, height:32, borderRadius:8, border:`1px solid var(--border-2)`, background:'transparent', color:'var(--text-3)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <i className="ti ti-refresh" style={{ fontSize:15, animation: loading ? 'spin 1s linear infinite' : 'none' }} />
           </button>
           <CinemaPicker value={cinemaId} onOpen={onOpenPicker} />
         </div>
@@ -943,19 +555,20 @@ function Header({ cinemaId, loading, lastFetched, onRefresh, onOpenPicker }) {
   )
 }
 
-// ─── Page title ───────────────────────────────────────────────────────────────
 function PageTitle({ eyebrow, title }) {
   return (
-    <div style={{ marginBottom:18 }}>
-      <div style={{ fontFamily:MONO, fontSize:'var(--text-sm)', letterSpacing:3, color:'var(--text-muted)', textTransform:'uppercase', fontWeight:500, marginBottom:8 }}>{eyebrow}</div>
-      <div style={{ fontFamily:BEBAS, fontSize:'clamp(28px,6vw,40px)', color:'#FFFFFF', letterSpacing:'2px', lineHeight:1 }}>{title}</div>
+    <div style={{ marginBottom:20 }}>
+      <div style={{ fontFamily:'var(--f-mono)', fontSize:9, letterSpacing:3, color:'var(--text-4)', textTransform:'uppercase', marginBottom:8 }}>{eyebrow}</div>
+      <div style={{ fontFamily:'var(--f-display)', fontSize:'clamp(28px,6vw,42px)', color:'var(--text-1)', letterSpacing:'2px', lineHeight:1 }}>{title}</div>
     </div>
   )
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
 // MAIN APP
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+const ALL_TYPES = ['DBOX','XTREME','IMAX','VMAX','LUX','GOLD','STANDARD']
+
 export default function App() {
   const [cinemaId,      setCinemaId]      = useState('EGDENS')
   const [sessions,      setSessions]      = useState([])
@@ -972,14 +585,10 @@ export default function App() {
   const mergedMovies = { ...KNOWN_MOVIES, ...movieMap }
 
   useEffect(() => { clearOldCaches() }, [])
-
   useEffect(() => {
     const saved = localStorage.getItem('hoyts-cinema')
     if (saved) setCinemaId(saved)
-    try {
-      const sm = localStorage.getItem('hoyts-movies')
-      if (sm) setMovieMap(JSON.parse(sm))
-    } catch (e) {}
+    try { const sm = localStorage.getItem('hoyts-movies'); if (sm) setMovieMap(JSON.parse(sm)) } catch(e) {}
   }, [])
 
   const movieMapRef = useRef(movieMap)
@@ -992,81 +601,49 @@ export default function App() {
       if (!res.ok) throw new Error('HTTP ' + res.status)
       const data = await res.json()
       if (data.error) throw new Error(data.error)
-      const arr  = Array.isArray(data) ? data : []
-      setSessions(arr)
-      setLastFetched(new Date())
-      saveSessionCache(id, arr)
-      const ids = [...new Set(arr.map(s => s.movieId).filter(Boolean))]
-      const missing = ids.filter(mid => {
-        const m = { ...KNOWN_MOVIES, ...movieMapRef.current }[mid]
-        return !m || !m.name
-      })
-      if (missing.length > 0) {
+      const arr = Array.isArray(data) ? data : []
+      setSessions(arr); setLastFetched(new Date()); saveSessionCache(id, arr)
+      const missing = [...new Set(arr.map(s=>s.movieId).filter(Boolean))].filter(mid => { const m = {...KNOWN_MOVIES,...movieMapRef.current}[mid]; return !m || !m.name })
+      if (missing.length) {
         fetch(`/api/hoyts/films?ids=${missing.join(',')}`)
-          .then(r => r.json())
-          .then(map => {
-            const merged = { ...movieMapRef.current }
-            Object.entries(map).forEach(([id, film]) => {
-              if (film && (film.name || film.runtime)) {
-                merged[id] = { ...(merged[id] || {}), ...film }
-              }
-            })
-            setMovieMap(merged)
-            localStorage.setItem('hoyts-movies', JSON.stringify(merged))
-          }).catch(() => {})
+          .then(r=>r.json()).then(map => {
+            const merged = {...movieMapRef.current}
+            Object.entries(map).forEach(([id,film]) => { if (film && (film.name||film.runtime)) merged[id] = {...(merged[id]||{}),...film} })
+            setMovieMap(merged); localStorage.setItem('hoyts-movies', JSON.stringify(merged))
+          }).catch(()=>{})
       }
-    } catch (e) { setError(e.message) }
+    } catch(e) { setError(e.message) }
     setLoading(false)
   }, [])
 
-  // No auto-expand — user taps to open
+  useEffect(() => { localStorage.setItem('hoyts-cinema', cinemaId); fetchSessions(cinemaId); setExpandedHalls({}); setSelectedDate(todayKey()) }, [cinemaId])
+  useEffect(() => { const t = setInterval(() => fetchSessions(cinemaId), 5*60*1000); return () => clearInterval(t) }, [cinemaId, fetchSessions])
 
-  useEffect(() => {
-    localStorage.setItem('hoyts-cinema', cinemaId)
-    fetchSessions(cinemaId)
-    setExpandedHalls({})
-    setSelectedDate(todayKey())
-  }, [cinemaId])
+  const byDate      = groupByDateAndHall(sessions, mergedMovies)
+  const dates       = getUniqueDates(sessions)
+  const todayHalls  = byDate[todayKey()] || {}
+  const selHalls    = byDate[selectedDate] || {}
+  const toggleHall  = key => setExpandedHalls(p => ({ [key]: !p[key] }))
 
-  useEffect(() => {
-    const t = setInterval(() => fetchSessions(cinemaId), 5 * 60 * 1000)
-    return () => clearInterval(t)
-  }, [cinemaId, fetchSessions])
-
-  const byDate     = groupByDateAndHall(sessions, mergedMovies)
-  const dates      = getUniqueDates(sessions)
-  const todayHalls = byDate[todayKey()]   || {}
-  const selHalls   = byDate[selectedDate] || {}
-  const toggleHall = key => setExpandedHalls(p => ({ [key]: !p[key] }))
-
-  const ALL_TYPES = ['DBOX','XTREME','IMAX','VMAX','LUX','GOLD','STANDARD']
-
-  const groupByType = (halls) => {
-    const sorted = sortHalls(halls)
-    const result = {}
-    ALL_TYPES.forEach(t => {
-      result[t] = sorted.filter(([, h]) => h.typeId === t)
-    })
+  const groupByType = halls => {
+    const sorted = sortHalls(halls), result = {}
+    ALL_TYPES.forEach(t => { result[t] = sorted.filter(([,h]) => h.typeId === t) })
     return result
   }
-
   const todayGroups = groupByType(todayHalls)
   const selGroups   = groupByType(selHalls)
   const allSorted   = sortHalls(todayHalls)
-  const totalShows  = Object.values(todayHalls).reduce((a, h) => a + h.sessions.length, 0)
-  const latestStart = allSorted.length
-    ? fmtTime(Math.max(...allSorted.map(([, h]) => h.sessions[h.sessions.length - 1].startMin)))
-    : '--'
+  const totalShows  = Object.values(todayHalls).reduce((a,h) => a+h.sessions.length, 0)
+  const latestStart = allSorted.length ? fmtTime(Math.max(...allSorted.map(([,h]) => h.sessions[h.sessions.length-1].startMin))) : '--'
 
-  const wrap = { maxWidth:900, margin:'0 auto', padding:'20px 16px 0', position:'relative', zIndex:1 }
+  const wrap = { maxWidth:900, margin:'0 auto', padding:'22px 16px 0', position:'relative', zIndex:1 }
 
   return (
-    <div style={{ minHeight:'100vh', paddingBottom:'calc(70px + env(safe-area-inset-bottom))', background:'var(--surface-base, #141510)' }}>
+    <div style={{ minHeight:'100vh', paddingBottom:'calc(72px + env(safe-area-inset-bottom))', background:'var(--bg-base)' }}>
       <AmbientBlobs view={view} />
       <OfflineBanner />
       <PullToRefresh onRefresh={() => fetchSessions(cinemaId)} loading={loading} />
       <PWAInstallBanner />
-
       <Header cinemaId={cinemaId} loading={loading} lastFetched={lastFetched} onRefresh={() => fetchSessions(cinemaId)} onOpenPicker={() => setPickerOpen(true)} />
       {sessions.length > 0 && <Ticker sessions={sessions} movieMap={mergedMovies} />}
 
@@ -1074,37 +651,27 @@ export default function App() {
       {view === 'tonight' && (
         <div style={wrap} className="fade-up">
           <PageTitle eyebrow="Final sessions tonight" title={cinema?.name || 'Select a cinema'} />
-
-          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
-            <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:C.amberBg, border:`0.5px solid ${C.amberBdr}`, borderRadius:20, padding:'4px 10px' }}>
-              <div style={{ width:6, height:6, borderRadius:'50%', background:C.amberDim, animation:'pulse 2s ease-in-out infinite' }} />
-              <span style={{ fontFamily:MONO, fontSize:9, fontWeight:700, letterSpacing:1, color:C.amberTxt, textTransform:'uppercase' }}>Live</span>
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:18 }}>
+            <div style={{ display:'inline-flex', alignItems:'center', gap:6, background:'var(--amber-bg)', border:`1px solid var(--amber-bdr)`, borderRadius:99, padding:'4px 11px' }}>
+              <div style={{ width:5, height:5, borderRadius:'50%', background:'var(--amber)', animation:'pulse 2s ease-in-out infinite' }} />
+              <span style={{ fontFamily:'var(--f-mono)', fontSize:8, fontWeight:700, letterSpacing:1.5, color:'var(--amber)', textTransform:'uppercase' }}>Live</span>
             </div>
-            <span style={{ fontFamily:MONO, fontSize:11, color:'rgba(255,255,255,0.45)' }}>{fmtDateLong(todayKey())}</span>
+            <span style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--text-4)' }}>{fmtDateLong(todayKey())}</span>
           </div>
 
           {loading && <SkeletonGrid />}
           {!loading && error && <ErrorState msg={error} onRetry={() => fetchSessions(cinemaId)} />}
-
-          {!loading && !error && sessions.length === 0 && (
-            <EmptyState icon="film" title="No data yet" sub="Sessions load automatically. Check Settings to verify your cinema." />
-          )}
-
-          {!loading && !error && sessions.length > 0 && Object.keys(todayHalls).length === 0 && (
-            <EmptyState icon="night" title="No sessions today" sub="Nothing scheduled for today. Switch to Schedule to browse upcoming days." />
-          )}
+          {!loading && !error && sessions.length === 0 && <EmptyState icon="film" title="No data yet" sub="Sessions load automatically. Check Settings to verify your cinema." />}
+          {!loading && !error && sessions.length > 0 && Object.keys(todayHalls).length === 0 && <EmptyState icon="night" title="No sessions today" sub="Nothing scheduled today. Switch to Schedule for upcoming days." />}
 
           {!loading && !error && Object.keys(todayHalls).length > 0 && (
             <>
-              <div style={{ display:'flex', gap:8, marginBottom:24, flexWrap:'wrap' }}>
-                <StatCard label="Halls" value={allSorted.length} />
+              <div style={{ display:'flex', gap:8, marginBottom:26, flexWrap:'wrap' }}>
+                <StatCard label="Halls"       value={allSorted.length} />
                 <StatCard label="Total shows" value={totalShows} />
-                <StatCard label="Latest start" value={latestStart} color={C.amberTxt} />
+                <StatCard label="Latest start" value={latestStart} color="var(--amber)" />
               </div>
-
-              {ALL_TYPES.map(t => (
-                <TypeSection key={t} typeId={t} halls={todayGroups[t]} expandedHalls={expandedHalls} toggleHall={toggleHall} prefix="tonight" cinemaId={cinemaId} />
-              ))}
+              {ALL_TYPES.map(t => <TypeSection key={t} typeId={t} halls={todayGroups[t]} expandedHalls={expandedHalls} toggleHall={toggleHall} prefix="tonight" cinemaId={cinemaId} />)}
             </>
           )}
         </div>
@@ -1113,67 +680,38 @@ export default function App() {
       {/* ── SCHEDULE ── */}
       {view === 'schedule' && (
         <div style={wrap} className="fade-up">
-          <PageTitle eyebrow="Full schedule" title="All days" />
-
-          {dates.length > 0 && (
-            <div style={{ marginBottom:18 }}>
-              <DateTabs dates={dates} selected={selectedDate} onSelect={setSelectedDate} />
-            </div>
-          )}
-
+          <PageTitle eyebrow="Full schedule" title="All Days" />
+          {dates.length > 0 && <div style={{ marginBottom:20 }}><DateTabs dates={dates} selected={selectedDate} onSelect={setSelectedDate} /></div>}
           {loading && <SkeletonGrid />}
-
-          {!loading && !error && Object.keys(selHalls).length === 0 && (
-            <EmptyState icon="cal" title="No sessions" sub="Nothing scheduled for this day." />
-          )}
-
-          {!loading && !error && Object.keys(selHalls).length > 0 && (
-            <>
-              {ALL_TYPES.map(t => (
-                <TypeSection key={t} typeId={t} halls={selGroups[t]} expandedHalls={expandedHalls} toggleHall={toggleHall} prefix={`sch-${selectedDate}`} cinemaId={cinemaId} />
-              ))}
-            </>
-          )}
+          {!loading && !error && Object.keys(selHalls).length === 0 && <EmptyState icon="cal" title="No sessions" sub="Nothing scheduled for this day." />}
+          {!loading && !error && Object.keys(selHalls).length > 0 && ALL_TYPES.map(t => <TypeSection key={t} typeId={t} halls={selGroups[t]} expandedHalls={expandedHalls} toggleHall={toggleHall} prefix={`sch-${selectedDate}`} cinemaId={cinemaId} />)}
         </div>
       )}
 
       {/* ── CLOSING BOARD ── */}
       {view === 'closing' && (
-        <div style={{ ...wrap }} className="fade-up">
+        <div style={wrap} className="fade-up">
           <PageTitle eyebrow="Tonight" title="Closing Times" />
-          {Object.keys(todayHalls).length === 0 && !loading && (
-            <EmptyState icon="night" title="No sessions today" sub="Switch cinema or check Schedule tab." />
-          )}
+          {Object.keys(todayHalls).length === 0 && !loading && <EmptyState icon="night" title="No sessions today" sub="Switch cinema or check Schedule." />}
           {loading && <SkeletonGrid />}
           {!loading && (
-            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               {sortHalls(todayHalls).map(([name, hall], i) => {
                 const last = hall.sessions[hall.sessions.length - 1]
-                const col  = typeColor[hall.typeId] || C.rec
+                const col  = TYPE_COL[hall.typeId] || 'var(--std)'
                 const status = getHallStatus(hall.sessions)
                 const currentSess = getCurrentSession(hall.sessions)
-                const nowMins = getNowMins()
-                const minsLeft = currentSess ? currentSess.endMin - nowMins : null
+                const minsLeft = currentSess ? currentSess.endMin - getNowMins() : null
                 return (
-                  <div key={name} className="fade-up" style={{
-                    animationDelay: i * 30 + 'ms',
-                    display:'flex', alignItems:'center', gap:14,
-                    background:'rgba(0,0,0,0.25)', border:`1px solid ${status==='playing'?col+'40':'rgba(255,255,255,0.08)'}`,
-                    borderLeft:`3px solid ${status==='done'?'rgba(255,255,255,0.15)':col}`,
-                    borderRadius:10, padding:'12px 16px',
-                    opacity: status === 'done' ? 0.45 : 1,
-                  }}>
+                  <div key={name} className="fade-up" style={{ animationDelay: i*28+'ms', display:'flex', alignItems:'center', gap:14, background:'var(--bg-1)', border:`1px solid ${status==='playing'?'rgba(0,229,160,0.22)':'var(--border-1)'}`, borderLeft:`3px solid ${status==='done'?'var(--border-2)':col}`, borderRadius:12, padding:'13px 15px', opacity: status==='done' ? 0.45 : 1, transition:'opacity 0.3s' }}>
                     <MoviePoster movieName={last.movie} movieId={last.movieId} size="sm" />
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontFamily:MONO, fontSize:9, color:'rgba(255,255,255,0.40)', letterSpacing:1, textTransform:'uppercase', marginBottom:2 }}>{name}</div>
-                      <div style={{ fontFamily:SANS, fontSize:13, fontWeight:600, color:'#FFFFFF', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{last.movie}</div>
+                      <div style={{ fontFamily:'var(--f-mono)', fontSize:8, color:'var(--text-4)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:3 }}>{name}</div>
+                      <div style={{ fontFamily:'var(--f-body)', fontSize:13, fontWeight:600, color:'var(--text-1)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{last.movie}</div>
                     </div>
                     <div style={{ textAlign:'right', flexShrink:0 }}>
-                      <div style={{ fontFamily:BEBAS, fontSize:22, color: status==='done'?'rgba(255,255,255,0.25)':col, letterSpacing:1, lineHeight:1 }}>
-                        {'~'}{fmtTime(last.endMin)}
-                      </div>
-                      <div style={{ fontFamily:MONO, fontSize:9, letterSpacing:.5, marginTop:2,
-                        color: status==='playing'?'#00D4A8': status==='done'?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.40)' }}>
+                      <div style={{ fontFamily:'var(--f-display)', fontSize:22, color: status==='done'?'var(--text-4)':col, letterSpacing:1, lineHeight:1 }}>~{fmtTime(last.endMin)}</div>
+                      <div style={{ fontFamily:'var(--f-mono)', fontSize:8, letterSpacing:.5, marginTop:3, color: status==='playing'?'var(--playing)':status==='done'?'var(--text-4)':'var(--text-4)' }}>
                         {status==='playing' ? `ends in ${minsToHuman(minsLeft)}` : status==='done' ? 'CLOSED' : `last @ ${fmtTime(last.startMin)}`}
                       </div>
                     </div>
@@ -1189,71 +727,40 @@ export default function App() {
       {view === 'settings' && (
         <div style={wrap} className="fade-up">
           <PageTitle eyebrow="Configuration" title="Settings" />
-
           <SettingsSection label="Cinema">
-            <label style={{ display:'block', fontFamily:MONO, fontSize:9, letterSpacing:1.5, textTransform:'uppercase', color:'var(--text-muted, #7A7690)', fontWeight:400, marginBottom:8 }}>
-              Your cinema
-            </label>
+            <label style={{ display:'block', fontFamily:'var(--f-mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--text-4)', marginBottom:10 }}>Your cinema</label>
             <CinemaPicker value={cinemaId} onOpen={() => setPickerOpen(true)} />
           </SettingsSection>
-
           <SettingsSection label="Status">
             <SettingsRow label="Cinema"          value={cinema?.name || '--'} />
             <SettingsRow label="Sessions loaded" value={sessions.length} />
             <SettingsRow label="Dates available" value={dates.length} />
             <SettingsRow label="Last updated"    value={lastFetched ? lastFetched.toLocaleTimeString('en-AU') : '--'} />
-            <SettingsRow label="Cache"           value={(() => {
-              const c = loadSessionCache(cinemaId)
-              return c ? `${c.length} sessions (2 days)` : 'Empty'
-            })()} />
-            <div style={{ display:'flex', gap:8, marginTop:12, flexWrap:'wrap' }}>
-              <button onClick={() => fetchSessions(cinemaId)} disabled={loading}
-                style={{ fontFamily:SANS, fontWeight:600, fontSize:13, padding:'9px 14px', borderRadius:8,
-                  border:'0.5px solid rgba(255,255,255,0.12)', background:'rgba(0,0,0,0.20)',
-                  color:'#FFFFFF', cursor:'pointer' }}>
+            <SettingsRow label="Cache"           value={(() => { const c = loadSessionCache(cinemaId); return c ? `${c.length} sessions (2 days)` : 'Empty' })()} />
+            <div style={{ display:'flex', gap:8, marginTop:14, flexWrap:'wrap' }}>
+              <button onClick={() => fetchSessions(cinemaId)} disabled={loading} style={{ fontFamily:'var(--f-body)', fontWeight:600, fontSize:13, padding:'9px 14px', borderRadius:8, border:`1px solid var(--border-2)`, background:'var(--bg-2)', color:'var(--text-1)' }}>
                 {loading ? 'Refreshing...' : 'Refresh now'}
               </button>
-              <button onClick={() => {
-                localStorage.removeItem(CACHE_KEY(cinemaId))
-                setSessions([])
-                fetchSessions(cinemaId)
-              }} style={{ fontFamily:SANS, fontWeight:600, fontSize:13, padding:'9px 14px', borderRadius:8,
-                border:`0.5px solid ${C.errBdr}`, background:'transparent',
-                color:'#FF5757', cursor:'pointer' }}>
+              <button onClick={() => { localStorage.removeItem(CACHE_KEY(cinemaId)); setSessions([]); fetchSessions(cinemaId) }} style={{ fontFamily:'var(--f-body)', fontWeight:600, fontSize:13, padding:'9px 14px', borderRadius:8, border:`1px solid rgba(239,68,68,0.3)`, background:'transparent', color:'#EF4444' }}>
                 Clear Cache
               </button>
             </div>
           </SettingsSection>
-
           <SettingsSection label="Movie details">
-            <p style={{ fontFamily:MONO, fontSize:11, color:'rgba(255,255,255,0.45)', marginBottom:12, lineHeight:1.6 }}>
-              Known movies are pre-filled. Enter names and runtimes for any missing IDs below.
-            </p>
-            {[...new Set(sessions.map(s => s.movieId).filter(Boolean))].map(mid => {
+            <p style={{ fontFamily:'var(--f-mono)', fontSize:10, color:'var(--text-4)', marginBottom:14, lineHeight:1.6 }}>Known movies are pre-filled. Enter names and runtimes for missing IDs.</p>
+            {[...new Set(sessions.map(s=>s.movieId).filter(Boolean))].map(mid => {
               const m = mergedMovies[mid] || {}
               return (
-                <div key={mid} style={{ display:'flex', gap:8, marginBottom:8, alignItems:'center', flexWrap:'wrap', flexDirection:'row' }}>
-                  <span style={{ fontFamily:SANS, fontSize:10, color:'var(--text-muted, #7A7690)', width:90, flexShrink:0, letterSpacing:.3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{mid}</span>
-                  <input
-                    defaultValue={m.name || ''} placeholder="Movie name"
-                    onChange={e => { const nm = { ...movieMap, [mid]: { ...(movieMap[mid]||{}), name:e.target.value } }; setMovieMap(nm); localStorage.setItem('hoyts-movies', JSON.stringify(nm)) }}
-                    style={{ flex:1, minWidth:120, fontFamily:SANS, fontSize:13 }}
-                  />
-                  <input
-                    defaultValue={m.runtime || ''} placeholder="min" type="number"
-                    onChange={e => { const nm = { ...movieMap, [mid]: { ...(movieMap[mid]||{}), runtime:Number(e.target.value) } }; setMovieMap(nm); localStorage.setItem('hoyts-movies', JSON.stringify(nm)) }}
-                    style={{ width:66, fontFamily:SANS, fontSize:13 }}
-                  />
+                <div key={mid} style={{ display:'flex', gap:8, marginBottom:8, alignItems:'center', flexWrap:'wrap' }}>
+                  <span style={{ fontFamily:'var(--f-mono)', fontSize:9, color:'var(--text-4)', width:90, flexShrink:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{mid}</span>
+                  <input defaultValue={m.name||''} placeholder="Movie name" onChange={e=>{const nm={...movieMap,[mid]:{...(movieMap[mid]||{}),name:e.target.value}};setMovieMap(nm);localStorage.setItem('hoyts-movies',JSON.stringify(nm))}} style={{ flex:1, minWidth:120, fontFamily:'var(--f-body)', fontSize:13, background:'var(--bg-2)', border:`1px solid var(--border-2)`, borderRadius:8, padding:'7px 10px', color:'var(--text-1)' }} />
+                  <input defaultValue={m.runtime||''} placeholder="min" type="number" onChange={e=>{const nm={...movieMap,[mid]:{...(movieMap[mid]||{}),runtime:Number(e.target.value)}};setMovieMap(nm);localStorage.setItem('hoyts-movies',JSON.stringify(nm))}} style={{ width:66, fontFamily:'var(--f-body)', fontSize:13, background:'var(--bg-2)', border:`1px solid var(--border-2)`, borderRadius:8, padding:'7px 10px', color:'var(--text-1)' }} />
                 </div>
               )
             })}
           </SettingsSection>
-
           <SettingsSection label="Data">
-            <button
-              onClick={() => { if (confirm('Clear all saved data?')) { setSessions([]); setMovieMap({}); localStorage.removeItem('hoyts-movies') } }}
-              style={{ fontFamily:SANS, fontWeight:600, fontSize:13, padding:'9px 14px', borderRadius:8, border:`0.5px solid ${C.errBdr}`, background:C.errBg, color:C.err, cursor:'pointer' }}
-            >
+            <button onClick={()=>{if(confirm('Clear all saved data?')){setSessions([]);setMovieMap({});localStorage.removeItem('hoyts-movies')}}} style={{ fontFamily:'var(--f-body)', fontWeight:600, fontSize:13, padding:'9px 14px', borderRadius:8, border:`1px solid rgba(239,68,68,0.3)`, background:'rgba(239,68,68,0.07)', color:'#EF4444' }}>
               Clear all data
             </button>
           </SettingsSection>
