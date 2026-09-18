@@ -149,29 +149,29 @@ function HallCard({hallName,hall,expanded,onToggle,delay,cinemaId}) {
         <div style={{position:'relative',zIndex:1}}>
           {/* Status strip */}
           {(st==='playing'||isFin)&&(
-            <div style={{padding:'10px 16px 0',display:'flex',alignItems:'center',gap:8}}>
+            <div style={{padding:'9px 14px 0',display:'flex',alignItems:'center',gap:8}}>
               <div style={{width:6,height:6,borderRadius:'50%',background:isFin?'var(--gold)':'var(--playing)',boxShadow:`0 0 10px ${isFin?'var(--gold-glow)':'var(--playing-glow)'}`,animation:'blip 1.2s ease-in-out infinite',flexShrink:0}}/>
               <span style={{fontFamily:'var(--mono)',fontSize:8,fontWeight:700,letterSpacing:2,color:isFin?'var(--gold)':'var(--playing)',textTransform:'uppercase'}}>{isFin?'Final Show':'Now Playing'}</span>
-              {mL>0&&<span style={{fontFamily:'var(--mono)',fontSize:8,color:isFin?'var(--gold-txt)':'rgba(0,229,160,0.6)',marginLeft:'auto'}}>ends {human$(mL)}</span>}
+              {mL>0&&<span style={{fontFamily:'var(--mono)',fontSize:8,color:isFin?'var(--gold-txt)':'rgba(0,229,160,0.6)',marginLeft:'auto',flexShrink:0}}>ends {human$(mL)}</span>}
             </div>
           )}
-          <div style={{padding:'12px 16px',display:'flex',gap:13,alignItems:'flex-start'}}>
+          <div style={{padding:'10px 14px 12px',display:'flex',gap:12,alignItems:'flex-start'}}>
             {/* Poster thumb */}
             <div style={{position:'relative',flexShrink:0}}>
-              <MoviePoster movieName={poster.movie} movieId={poster.movieId} size="lg"/>
+              <MoviePoster movieName={poster.movie} movieId={poster.movieId} size="md"/>
               {highOcc&&st!=='done'&&<div style={{position:'absolute',top:-4,right:-4,width:12,height:12,borderRadius:'50%',background:highOcc,border:'2px solid var(--bg-1)',boxShadow:`0 0 10px ${highOcc}`,animation:'blip 1.2s ease-in-out infinite'}}/>}
             </div>
             {/* Info column */}
             <div style={{flex:1,minWidth:0}}>
               {/* Hall + badge */}
-              <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:5}}>
-                <span style={{fontFamily:'var(--display)',fontSize:34,letterSpacing:2,color:'var(--t1)',lineHeight:1,whiteSpace:'nowrap'}}>{hallName}</span>
-                <span style={{fontFamily:'var(--mono)',fontSize:8,fontWeight:700,padding:'3px 8px',borderRadius:99,background:bg,color:col,border:`1px solid ${bdr}`,letterSpacing:.5,flexShrink:0}}>{lbl}</span>
+              <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:4,flexWrap:'wrap'}}>
+                <span style={{fontFamily:'var(--display)',fontSize:22,letterSpacing:1.5,color:'var(--t1)',lineHeight:1}}>{hallName}</span>
+                <span style={{fontFamily:'var(--mono)',fontSize:7,fontWeight:700,padding:'2px 7px',borderRadius:99,background:bg,color:col,border:`1px solid ${bdr}`,letterSpacing:.3,flexShrink:0,maxWidth:80,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{lbl}</span>
               </div>
               {/* Movie title — prominent */}
-              <div style={{fontFamily:'var(--body)',fontSize:'clamp(13px,3.8vw,16px)',fontWeight:700,color:'var(--t1)',marginBottom:10,lineHeight:1.2,overflow:'hidden',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{last.movie}</div>
+              <div style={{fontFamily:'var(--body)',fontSize:'clamp(15px,4vw,18px)',fontWeight:700,color:'var(--t1)',marginBottom:8,lineHeight:1.25,overflow:'hidden',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical'}}>{last.movie}</div>
               {/* Time chips */}
-              <div style={{display:'flex',gap:5}}>
+              <div style={{display:'flex',gap:5,flexWrap:'nowrap'}}>
                 <TimeChip label={st==='done'?'LAST':'START'} value={fmtTime(last.startMin)} col={isFin?'var(--gold)':st==='playing'?'var(--playing)':col} dim={st==='done'}/>
                 {last.runtime>0&&<TimeChip label="ENDS" value={'~'+fmtTime(last.endMin)} col='var(--t3)' dim={st==='done'}/>}
                 {last.runtime>0&&<TimeChip label="RUN" value={last.runtime+'m'} col='var(--t4)' dim={st==='done'}/>}
@@ -185,7 +185,7 @@ function HallCard({hallName,hall,expanded,onToggle,delay,cinemaId}) {
               )}
             </div>
             {/* Chevron + status dot */}
-            <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:7,flexShrink:0,paddingTop:8}}>
+            <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,flexShrink:0,paddingTop:4}}>
               {st==='playing'&&!isFin&&<div style={{width:7,height:7,borderRadius:'50%',background:'var(--playing)',boxShadow:'0 0 10px var(--playing-glow)',animation:'blip 1.2s ease-in-out infinite'}}/>}
               <i className="ti ti-chevron-down chevron" style={{fontSize:15,color:'var(--t4)',transform:expanded?'rotate(180deg)':'none'}}/>
             </div>
@@ -205,9 +205,9 @@ function HallCard({hallName,hall,expanded,onToggle,delay,cinemaId}) {
 
 function TimeChip({label,value,col,dim}) {
   return(
-    <div style={{flex:1,background:'rgba(0,0,0,0.55)',borderRadius:9,padding:'6px 10px',border:'1px solid var(--b1)'}}>
-      <div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--t4)',letterSpacing:1,marginBottom:2}}>{label}</div>
-      <div style={{fontFamily:'var(--display)',fontSize:'clamp(17px,4.2vw,23px)',color:dim?'var(--t4)':col,lineHeight:1}}>{value}</div>
+    <div style={{background:'rgba(0,0,0,0.55)',borderRadius:8,padding:'5px 9px',border:'1px solid var(--b1)',minWidth:0,flexShrink:1}}>
+      <div style={{fontFamily:'var(--mono)',fontSize:7,color:'var(--t4)',letterSpacing:1,marginBottom:2}}>{label}</div>
+      <div style={{fontFamily:'var(--display)',fontSize:16,color:dim?'var(--t4)':col,lineHeight:1,whiteSpace:'nowrap'}}>{value}</div>
     </div>
   )
 }
@@ -220,7 +220,7 @@ function TypeSection({typeId,halls,expandedHalls,toggleHall,prefix,cinemaId}) {
     <div style={{marginBottom:32}}>
       <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,paddingBottom:12,borderBottom:'1px solid var(--b0)'}}>
         <div style={{width:2,height:20,borderRadius:1,background:col,flexShrink:0,boxShadow:`0 0 10px ${col}90`}}/>
-        <span style={{fontFamily:'var(--display)',fontSize:'clamp(16px,4vw,22px)',color:col,letterSpacing:'3px'}}>{lbl}</span>
+        <span style={{fontFamily:'var(--display)',fontSize:'clamp(14px,3.5vw,18px)',color:col,letterSpacing:'2px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'calc(100% - 70px)'}}>{lbl}</span>
         <span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--t4)',marginLeft:'auto'}}>{halls.length} hall{halls.length!==1?'s':''}</span>
       </div>
       {halls.map(([name,hall],i)=><HallCard key={name} hallName={name} hall={hall} delay={i*40} cinemaId={cinemaId} expanded={!!expandedHalls[`${prefix}-${name}`]} onToggle={()=>toggleHall(`${prefix}-${name}`)}/>)}
