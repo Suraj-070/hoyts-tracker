@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { CINEMAS, TYPE_LABEL, KNOWN_MOVIES } from '../lib/constants'
 import { todayKey, fmtDateLong, fmtDayLabel, fmtTime, groupByDateAndHall, sortHalls, getUniqueDates } from '../lib/utils'
 import SeatMap from '../components/SeatMap'
-import MoviePoster, { CardPoster, HeroPoster } from '../components/MoviePoster'
+import MoviePoster, { CardPoster } from '../components/MoviePoster'
 
 // ─── Cache ──────────────────────────────────────────────────────────────────
 const CK = (id) => `hoyts-sessions-${id}`
@@ -39,7 +39,7 @@ function OfflineBanner() {
   const[off,setOff]=useState(false),[show,setShow]=useState(false)
   useEffect(()=>{const a=()=>{setOff(true);setShow(true)},b=()=>{setShow(true);setOff(false);setTimeout(()=>setShow(false),2500)};window.addEventListener('offline',a);window.addEventListener('online',b);if(!navigator.onLine){setOff(true);setShow(true)};return()=>{window.removeEventListener('offline',a);window.removeEventListener('online',b)}},[])
   if(!show)return null
-  return(<div style={{position:'fixed',top:54,left:0,right:0,zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'8px 16px',background:off?'rgba(239,68,68,0.94)':'rgba(0,229,160,0.94)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',borderBottom:`1px solid ${off?'rgba(239,68,68,0.3)':'rgba(0,229,160,0.3)'}`,animation:'slideDown 0.3s ease'}}><i className={`ti ${off?'ti-wifi-off':'ti-wifi'}`} style={{fontSize:13,color:'#fff'}}/><span style={{fontFamily:'var(--mono)',fontSize:9,fontWeight:700,letterSpacing:1.5,color:'#fff',textTransform:'uppercase'}}>{off?'No connection — cached data':'Back online'}</span></div>)
+  return(<div style={{position:'fixed',top:54,left:0,right:0,zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',gap:8,padding:'8px 16px',background:off?'rgba(239,68,68,0.94)':'rgba(0,229,160,0.94)',borderBottom:`1px solid ${off?'rgba(239,68,68,0.3)':'rgba(0,229,160,0.3)'}`,animation:'slideDown 0.3s ease'}}><i className={`ti ${off?'ti-wifi-off':'ti-wifi'}`} style={{fontSize:13,color:'#fff'}}/><span style={{fontFamily:'var(--mono)',fontSize:9,fontWeight:700,letterSpacing:1.5,color:'#fff',textTransform:'uppercase'}}>{off?'No connection — cached data':'Back online'}</span></div>)
 }
 
 function PWABanner() {
@@ -62,7 +62,7 @@ function PullRefresh({onRefresh,loading}) {
   },[onRefresh])
   if(dist<2&&!ref)return null
   const trig=dist>=T
-  return(<div style={{position:'fixed',top:54,left:0,right:0,zIndex:190,display:'flex',alignItems:'center',justifyContent:'center',height:ref?44:Math.min(44,dist*0.65),overflow:'hidden',background:'rgba(0,0,0,0.85)',backdropFilter:'blur(14px)',WebkitBackdropFilter:'blur(14px)',borderBottom:`1px solid ${trig?'var(--gold-bdr)':'var(--b0)'}`,transition:dist===0?'height 0.3s ease':'border-color 0.15s'}}><div style={{display:'flex',alignItems:'center',gap:8}}><i className="ti ti-refresh" style={{fontSize:14,color:trig?'var(--gold)':'var(--t3)',transform:`rotate(${(dist/T)*180}deg)`,animation:ref?'spin 0.8s linear infinite':'none',transition:'color 0.2s,transform 0.06s'}}/><span style={{fontFamily:'var(--mono)',fontSize:9,letterSpacing:1.5,color:trig?'var(--gold)':'var(--t3)',fontWeight:700,textTransform:'uppercase',transition:'color 0.2s'}}>{ref?'Refreshing…':trig?'Release':'Pull to refresh'}</span></div></div>)
+  return(<div style={{position:'fixed',top:54,left:0,right:0,zIndex:190,display:'flex',alignItems:'center',justifyContent:'center',height:ref?44:Math.min(44,dist*0.65),overflow:'hidden',background:'rgba(0,0,0,0.85)',borderBottom:`1px solid ${trig?'var(--gold-bdr)':'var(--b0)'}`,transition:dist===0?'height 0.3s ease':'border-color 0.15s'}}><div style={{display:'flex',alignItems:'center',gap:8}}><i className="ti ti-refresh" style={{fontSize:14,color:trig?'var(--gold)':'var(--t3)',transform:`rotate(${(dist/T)*180}deg)`,animation:ref?'spin 0.8s linear infinite':'none',transition:'color 0.2s,transform 0.06s'}}/><span style={{fontFamily:'var(--mono)',fontSize:9,letterSpacing:1.5,color:trig?'var(--gold)':'var(--t3)',fontWeight:700,textTransform:'uppercase',transition:'color 0.2s'}}>{ref?'Refreshing…':trig?'Release':'Pull to refresh'}</span></div></div>)
 }
 
 // ─── Ticker ─────────────────────────────────────────────────────────────────
@@ -78,84 +78,6 @@ function Ticker({sessions,movieMap}) {
       })
     : [<span key={pfx} style={{fontFamily:'var(--mono)',fontSize:9,fontWeight:700,letterSpacing:2,color:'#080808',padding:'0 24px',flexShrink:0}}>HOYTS LAST SESSION TRACKER · SELECT YOUR CINEMA</span>]
   return(<div style={{background:'var(--gold)',height:26,overflow:'hidden',display:'flex',alignItems:'center'}}><div style={{display:'flex',whiteSpace:'nowrap',animation:'ticker 52s linear infinite',willChange:'transform'}}>{items('a')}{items('b')}</div></div>)
-}
-
-// ─── NOW PLAYING HERO ────────────────────────────────────────────────────────
-// Full-bleed hero card(s) at top of Tonight for anything currently screening
-function NowPlayingHero({halls, cinemaId}) {
-  const[nowM,setNowM]=useState(now$())
-  useEffect(()=>{const t=setInterval(()=>setNowM(now$()),30000);return()=>clearInterval(t)},[])
-
-  // Collect all currently-playing sessions
-  const active=sortHalls(halls).filter(([,hall])=>{const cur=current$(hall.sessions);return!!cur})
-  const finals=active.filter(([,hall])=>{const cur=current$(hall.sessions);const last=hall.sessions[hall.sessions.length-1];return cur&&cur.startMin===last.startMin})
-  const playing=active.filter(([,hall])=>{const cur=current$(hall.sessions);const last=hall.sessions[hall.sessions.length-1];return cur&&cur.startMin!==last.startMin})
-
-  if(!active.length)return null
-
-  const HeroItem=({hallName,hall,isFinal})=>{
-    const cur=current$(hall.sessions),last=hall.sessions[hall.sessions.length-1]
-    const minsLeft=cur?cur.endMin-nowM:null
-    const progress=cur?pct$(cur.startMin,cur.endMin):0
-    const col=TC[hall.typeId]||'var(--std)'
-    const lbl=TYPE_LABEL[hall.typeId]||hall.typeId
-    return(
-      <div className={isFinal?'hero-card hero-card-final':'hero-card'} style={{marginBottom:8}}>
-        <HeroPoster movieName={cur?.movie||last.movie} movieId={cur?.movieId||last.movieId}/>
-        <div style={{position:'relative',zIndex:1,padding:'20px 18px 16px'}}>
-          {/* Status pill */}
-          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
-            <div style={{display:'inline-flex',alignItems:'center',gap:6,background:isFinal?'var(--gold-bg)':'var(--playing-bg)',border:`1px solid ${isFinal?'var(--gold-bdr)':'var(--playing-bdr)'}`,borderRadius:99,padding:'4px 12px'}}>
-              <div style={{width:5,height:5,borderRadius:'50%',background:isFinal?'var(--gold)':'var(--playing)',boxShadow:`0 0 8px ${isFinal?'var(--gold-glow)':'var(--playing-glow)'}`,animation:'blip 1.2s ease-in-out infinite'}}/>
-              <span style={{fontFamily:'var(--mono)',fontSize:8,fontWeight:700,letterSpacing:2,color:isFinal?'var(--gold)':'var(--playing)',textTransform:'uppercase'}}>{isFinal?'Final Show':'Now Playing'}</span>
-            </div>
-            <span style={{fontFamily:'var(--mono)',fontSize:8,padding:'3px 9px',borderRadius:99,background:TB[hall.typeId]||'var(--std-bg)',color:col,border:`1px solid ${TD[hall.typeId]||'var(--std-bdr)'}`}}>{lbl}</span>
-            <span style={{fontFamily:'var(--display)',fontSize:20,color:isFinal?'var(--gold)':'var(--t2)',letterSpacing:2,marginLeft:'auto'}}>{hallName}</span>
-          </div>
-          {/* Movie title — headline treatment */}
-          <div style={{fontFamily:'var(--display)',fontSize:'clamp(26px,7vw,40px)',color:'var(--t1)',letterSpacing:'1px',lineHeight:1.05,marginBottom:14,maxWidth:'75%'}}>{cur?.movie||last.movie}</div>
-          {/* Time row */}
-          <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:16}}>
-            <div style={{background:'rgba(0,0,0,0.55)',backdropFilter:'blur(10px)',borderRadius:9,padding:'7px 12px',border:'1px solid var(--b2)'}}>
-              <div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--t4)',letterSpacing:1,marginBottom:2}}>NOW</div>
-              <div style={{fontFamily:'var(--display)',fontSize:22,color:isFinal?'var(--gold)':'var(--playing)',letterSpacing:1,lineHeight:1}}>{fmtTime(cur?.startMin||last.startMin)}</div>
-            </div>
-            {minsLeft>0&&<>
-              <i className="ti ti-arrow-right" style={{fontSize:12,color:'var(--t4)'}}/>
-              <div style={{background:'rgba(0,0,0,0.55)',backdropFilter:'blur(10px)',borderRadius:9,padding:'7px 12px',border:'1px solid var(--b2)'}}>
-                <div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--t4)',letterSpacing:1,marginBottom:2}}>ENDS</div>
-                <div style={{fontFamily:'var(--display)',fontSize:22,color:'var(--t3)',letterSpacing:1,lineHeight:1}}>~{fmtTime(cur?.endMin||(last.startMin+(last.runtime||0)))}</div>
-              </div>
-              <div style={{flex:1}}/>
-              <div style={{background:'rgba(0,0,0,0.55)',backdropFilter:'blur(10px)',borderRadius:9,padding:'7px 12px',border:`1px solid ${isFinal?'var(--gold-bdr)':'var(--playing-bdr)'}`}}>
-                <div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--t4)',letterSpacing:1,marginBottom:2}}>LEFT</div>
-                <div style={{fontFamily:'var(--display)',fontSize:22,color:isFinal?'var(--gold)':'var(--playing)',letterSpacing:1,lineHeight:1}}>{human$(minsLeft)}</div>
-              </div>
-            </>}
-          </div>
-          {/* Progress bar */}
-          {progress>0&&(
-            <div style={{height:3,background:'var(--b1)',borderRadius:2,overflow:'hidden'}}>
-              <div style={{height:'100%',width:progress+'%',background:`linear-gradient(to right,${isFinal?'var(--gold-dim)':'rgba(0,229,160,0.6)'},${isFinal?'var(--gold)':'var(--playing)'})`,borderRadius:2,transition:'width 30s linear'}}/>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  return(
-    <div style={{marginBottom:32}}>
-      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-        <div style={{width:2,height:16,borderRadius:1,background:'var(--playing)',boxShadow:'0 0 8px var(--playing-glow)',flexShrink:0}}/>
-        <span style={{fontFamily:'var(--display)',fontSize:'clamp(14px,3.5vw,18px)',color:'var(--playing)',letterSpacing:'3px'}}>On Screen Now</span>
-        <span style={{fontFamily:'var(--mono)',fontSize:9,color:'var(--t4)',marginLeft:'auto'}}>{active.length} hall{active.length!==1?'s':''}</span>
-      </div>
-      {[...playing,...finals].map(([name,hall])=>(
-        <HeroItem key={name} hallName={name} hall={hall} isFinal={finals.some(([n])=>n===name)}/>
-      ))}
-    </div>
-  )
 }
 
 // ─── Cinema picker ──────────────────────────────────────────────────────────
@@ -283,7 +205,7 @@ function HallCard({hallName,hall,expanded,onToggle,delay,cinemaId}) {
 
 function TimeChip({label,value,col,dim}) {
   return(
-    <div style={{flex:1,background:'rgba(0,0,0,0.50)',borderRadius:9,padding:'6px 10px',border:'1px solid var(--b1)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)'}}>
+    <div style={{flex:1,background:'rgba(0,0,0,0.55)',borderRadius:9,padding:'6px 10px',border:'1px solid var(--b1)'}}>
       <div style={{fontFamily:'var(--mono)',fontSize:8,color:'var(--t4)',letterSpacing:1,marginBottom:2}}>{label}</div>
       <div style={{fontFamily:'var(--display)',fontSize:'clamp(17px,4.2vw,23px)',color:dim?'var(--t4)':col,lineHeight:1}}>{value}</div>
     </div>
@@ -554,9 +476,6 @@ export default function App() {
 
           {!loading&&!error&&Object.keys(todayH).length>0&&(
             <>
-              {/* NOW PLAYING HERO — first thing you see */}
-              <NowPlayingHero halls={todayH} cinemaId={cinemaId}/>
-
               {/* Stats */}
               <div style={{display:'flex',gap:8,marginBottom:28,flexWrap:'wrap'}}>
                 <StatCard label="Halls"        value={allS.length} icon="ti-door"   />
