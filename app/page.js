@@ -537,10 +537,10 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
   useEffect(() => { document.body.style.overflow = 'hidden'; return () => { document.body.style.overflow = '' } }, [])
 
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:9999, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
+    <div style={{ position:'fixed', inset:0, zIndex:9999 }}>
       <div onClick={onClose} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.88)' }}/>
-      {/* Sheet — fixed height layout: header pinned top, list scrolls, button pinned bottom */}
-      <div style={{ position:'relative', zIndex:1, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', maxHeight:'92vh', height:'92vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)' }}>
+      {/* Sheet — anchored to bottom, fixed height so inner layout is predictable */}
+      <div style={{ position:'absolute', bottom:0, left:0, right:0, zIndex:1, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', height:'92vh', maxHeight:'92vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)' }}>
 
         {/* ── TOP SECTION — fixed, never scrolls ── */}
         <div style={{ flexShrink:0 }}>
