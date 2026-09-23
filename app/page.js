@@ -533,41 +533,49 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
   const canSave         = name.trim().length > 0 && sel.length > 0
   const toggle = n => setSel(p => p.includes(n) ? p.filter(x => x !== n) : [...p, n])
   const save = () => { if (!canSave) return; onSave({ id: existing?.id || Date.now().toString(), name: name.trim(), halls: sel }); onClose() }
-
   useEffect(() => { document.body.style.overflow = 'hidden'; return () => { document.body.style.overflow = '' } }, [])
+
+  const SHEET_H = 'min(92vh, 700px)'
 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:9999 }}>
+      {/* Backdrop */}
       <div onClick={onClose} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.88)' }}/>
-      {/* Sheet — anchored to bottom, fixed height so inner layout is predictable */}
-      <div style={{ position:'absolute', bottom:0, left:0, right:0, zIndex:1, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', height:'92vh', maxHeight:'92vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)' }}>
 
-        {/* ── TOP SECTION — fixed, never scrolls ── */}
+      {/* Sheet — pinned to bottom using top:auto bottom:0 */}
+      <div style={{
+        position:'fixed',
+        bottom:0, left:0, right:0,
+        height:SHEET_H,
+        background:'var(--bg-2)',
+        borderRadius:'22px 22px 0 0',
+        border:'1px solid var(--b2)',
+        borderBottom:'none',
+        boxShadow:'0 -24px 80px rgba(0,0,0,0.95)',
+        animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)',
+        display:'flex',
+        flexDirection:'column',
+        overflow:'hidden',
+        zIndex:1,
+      }}>
+
+        {/* PINNED TOP */}
         <div style={{ flexShrink:0 }}>
-          {/* Handle */}
-          <div style={{ display:'flex', justifyContent:'center', padding:'14px 0 4px' }}>
+          <div style={{ display:'flex', justifyContent:'center', padding:'14px 0 6px' }}>
             <div style={{ width:36, height:4, borderRadius:2, background:'var(--b3)' }}/>
           </div>
-          {/* Title row */}
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 18px 12px' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'4px 18px 12px' }}>
             <div style={{ fontFamily:'var(--display)', fontSize:24, color:'var(--t1)', letterSpacing:2 }}>{isEdit ? 'Edit Group' : 'New Group'}</div>
             <button onClick={onClose} style={{ width:30, height:30, borderRadius:8, border:'1px solid var(--b2)', background:'var(--bg-3)', color:'var(--t2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>✕</button>
           </div>
-          {/* Name input */}
           <div style={{ padding:'0 18px 12px' }}>
             <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)', marginBottom:7 }}>Group name</div>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="e.g. Section A, Suraj's halls…"
-              maxLength={32}
-              style={{ width:'100%', fontFamily:'var(--body)', fontSize:16, fontWeight:600, background:'var(--bg-1)', border:`1px solid ${name.trim() ? 'var(--gold-bdr)' : 'var(--b2)'}`, borderRadius:12, padding:'12px 14px', color:'var(--t1)', outline:'none', caretColor:'var(--gold)', transition:'border-color 0.15s' }}
-            />
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Section A, Suraj's halls…" maxLength={32}
+              style={{ width:'100%', fontFamily:'var(--body)', fontSize:16, fontWeight:600, background:'var(--bg-1)', border:`1px solid ${name.trim() ? 'var(--gold-bdr)' : 'var(--b2)'}`, borderRadius:12, padding:'12px 14px', color:'var(--t1)', outline:'none', caretColor:'var(--gold)', boxSizing:'border-box' }}/>
           </div>
-          {/* Hall list header */}
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 18px 10px', borderBottom:'1px solid var(--b1)' }}>
             <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)' }}>
-              Select halls{sel.length > 0 ? ` · ${sel.length} chosen` : ''}
+              {sel.length > 0 ? `${sel.length} hall${sel.length>1?'s':''} selected` : 'Select halls'}
             </div>
             <div style={{ display:'flex', gap:8 }}>
               <button onClick={() => setSel(allHalls)} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>All</button>
@@ -576,56 +584,45 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
           </div>
         </div>
 
-        {/* ── MIDDLE — scrollable hall list ── */}
-        <div style={{ flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'8px 18px 4px' }}>
+        {/* SCROLLABLE HALL LIST */}
+        <div style={{ flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'8px 18px' }}>
           {allHalls.length === 0 && (
-            <div style={{ textAlign:'center', padding:'32px 20px', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>
-              No halls loaded yet — go to Tonight first.
-            </div>
+            <div style={{ textAlign:'center', padding:'32px 0', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>No halls loaded — go to Tonight first.</div>
           )}
-          {sortHalls(halls).map(([hallName, hall]) => {
-            const active = sel.includes(hallName)
-            const col  = TC[hall.typeId] || 'var(--std)'
-            const bg   = TB[hall.typeId] || 'var(--std-bg)'
-            const bdr  = TD[hall.typeId] || 'var(--std-bdr)'
-            const lbl  = TYPE_LABEL[hall.typeId] || hall.typeId
-            const last = hall.sessions[hall.sessions.length - 1]
+          {sortHalls(halls).map(([hn, hall]) => {
+            const active = sel.includes(hn)
+            const col = TC[hall.typeId]||'var(--std)', bg = TB[hall.typeId]||'var(--std-bg)', bdr = TD[hall.typeId]||'var(--std-bdr)'
+            const lbl = TYPE_LABEL[hall.typeId]||hall.typeId
+            const last = hall.sessions[hall.sessions.length-1]
             return (
-              <button key={hallName} onClick={() => toggle(hallName)} style={{ display:'flex', alignItems:'center', gap:12, width:'100%', textAlign:'left', padding:'11px 13px', marginBottom:6, borderRadius:11, background: active ? 'rgba(245,166,35,0.08)' : 'var(--bg-1)', border:`1px solid ${active ? 'var(--gold-bdr)' : 'var(--b1)'}`, WebkitTapHighlightColor:'transparent', transition:'all 0.13s' }}>
-                {/* Checkbox */}
-                <div style={{ width:22, height:22, borderRadius:6, border:`2px solid ${active ? 'var(--gold)' : 'var(--b3)'}`, background: active ? 'var(--gold)' : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'all 0.13s' }}>
+              <button key={hn} onClick={() => toggle(hn)} style={{ display:'flex', alignItems:'center', gap:12, width:'100%', textAlign:'left', padding:'11px 13px', marginBottom:6, borderRadius:11, background: active ? 'rgba(245,166,35,0.08)' : 'var(--bg-1)', border:`1px solid ${active ? 'var(--gold-bdr)' : 'var(--b1)'}`, WebkitTapHighlightColor:'transparent' }}>
+                <div style={{ width:22, height:22, borderRadius:6, border:`2px solid ${active?'var(--gold)':'var(--b3)'}`, background: active?'var(--gold)':'transparent', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                   {active && <i className="ti ti-check" style={{ fontSize:12, color:'#000' }}/>}
                 </div>
-                {/* Info */}
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
-                    <span style={{ fontFamily:'var(--display)', fontSize:17, letterSpacing:1, color: active ? 'var(--gold)' : 'var(--t1)', lineHeight:1 }}>{hallName}</span>
+                    <span style={{ fontFamily:'var(--display)', fontSize:17, letterSpacing:1, color: active?'var(--gold)':'var(--t1)', lineHeight:1 }}>{hn}</span>
                     <span style={{ fontFamily:'var(--mono)', fontSize:7, padding:'2px 6px', borderRadius:99, background:bg, color:col, border:`1px solid ${bdr}`, flexShrink:0 }}>{lbl}</span>
                   </div>
                   <div style={{ fontFamily:'var(--body)', fontSize:11, color:'var(--t2)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
                 </div>
-                {/* Last session time */}
-                <div style={{ fontFamily:'var(--display)', fontSize:15, color: active ? 'var(--gold)' : 'var(--t3)', letterSpacing:1, flexShrink:0 }}>{fmtTime(last.startMin)}</div>
+                <div style={{ fontFamily:'var(--display)', fontSize:15, color: active?'var(--gold)':'var(--t3)', letterSpacing:1, flexShrink:0 }}>{fmtTime(last.startMin)}</div>
               </button>
             )
           })}
         </div>
 
-        {/* ── BOTTOM — pinned save button ── */}
-        <div style={{ flexShrink:0, padding:'12px 18px', paddingBottom:'calc(env(safe-area-inset-bottom,0px) + 14px)', borderTop:'1px solid var(--b1)', background:'var(--bg-2)' }}>
-          <button onClick={save} disabled={!canSave} style={{ width:'100%', fontFamily:'var(--display)', fontSize:20, letterSpacing:2, padding:'14px', borderRadius:12, border:'none', background: canSave ? 'var(--gold)' : 'var(--bg-4)', color: canSave ? '#000' : 'var(--t4)', transition:'all 0.15s', cursor: canSave ? 'pointer' : 'default' }}>
-            {isEdit
-              ? 'Save changes'
-              : sel.length === 0
-              ? 'Select halls above'
-              : `Create · ${sel.length} hall${sel.length !== 1 ? 's' : ''}`
-            }
+        {/* PINNED BOTTOM BUTTON */}
+        <div style={{ flexShrink:0, padding:'12px 18px', paddingBottom:'calc(env(safe-area-inset-bottom, 0px) + 12px)', borderTop:'1px solid var(--b1)', background:'var(--bg-2)' }}>
+          <button onClick={save} disabled={!canSave} style={{ display:'block', width:'100%', fontFamily:'var(--display)', fontSize:20, letterSpacing:2, padding:'14px', borderRadius:12, border:'none', background: canSave?'var(--gold)':'var(--bg-4)', color: canSave?'#000':'var(--t4)', cursor: canSave?'pointer':'default' }}>
+            {isEdit ? 'Save changes' : canSave ? `Create · ${sel.length} hall${sel.length!==1?'s':''}` : 'Select halls above'}
           </button>
         </div>
       </div>
     </div>
   )
 }
+
 
 
 // ── GroupList — first glance, TripView-style list of saved groups ─────────────
