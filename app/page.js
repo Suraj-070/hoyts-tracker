@@ -537,16 +537,18 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
     onSave({ id: existing?.id || Date.now().toString(), name: name.trim(), halls: sel })
     onClose()
   }
-
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
   }, [])
 
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:9999, display:'flex', flexDirection:'column', justifyContent:'flex-end', pointerEvents:'none' }}>
-      <div onClick={onClose} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.88)', pointerEvents:'auto' }}/>
-      <div style={{ position:'relative', background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', maxHeight:'88vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)', pointerEvents:'auto' }}>
+    <>
+      {/* Backdrop — separate from sheet, low z-index */}
+      <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:10000, background:'rgba(0,0,0,0.88)' }}/>
+
+      {/* Sheet — above backdrop */}
+      <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:10001, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', maxHeight:'88vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)' }}>
 
         {/* PINNED TOP */}
         <div style={{ flexShrink:0 }}>
@@ -603,15 +605,15 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
 
         {/* PINNED BOTTOM */}
         <div style={{ flexShrink:0, padding:'12px 18px', paddingBottom:'calc(env(safe-area-inset-bottom,0px) + 12px)', borderTop:'1px solid var(--b1)', background:'var(--bg-2)' }}>
-          <button onClick={save} disabled={!canSave} style={{ display:'block', width:'100%', fontFamily:'var(--display)', fontSize:20, letterSpacing:2, padding:'14px', borderRadius:12, border:'none', background:canSave?'var(--gold)':'var(--bg-4)', color:canSave?'#000':'var(--t4)', cursor:canSave?'pointer':'default' }}>
+          <button onClick={save} style={{ display:'block', width:'100%', fontFamily:'var(--display)', fontSize:20, letterSpacing:2, padding:'14px', borderRadius:12, border:'none', background:canSave?'var(--gold)':'var(--bg-4)', color:canSave?'#000':'var(--t4)', cursor:canSave?'pointer':'default' }}>
             {isEdit ? 'Save changes' : canSave ? `Create · ${sel.length} hall${sel.length!==1?'s':''}` : 'Select halls above'}
           </button>
         </div>
-
       </div>
-    </div>
+    </>
   )
 }
+
 
 
 
