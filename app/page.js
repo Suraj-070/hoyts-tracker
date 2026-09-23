@@ -457,12 +457,12 @@ const SRow = ({ label, value })    => <div style={{ display:'flex', justifyConte
 
 // ─── Bottom Nav ───────────────────────────────────────────────────────────────
 function BottomNav({ view, setView }) {
-  const tabs = [{ id:'tonight', label:'Tonight', icon:'ti-moon' }, { id:'myhalls', label:'My Halls', icon:'ti-user-star' }, { id:'schedule', label:'Schedule', icon:'ti-calendar' }, { id:'closing', label:'Closing', icon:'ti-clock-off' }, { id:'settings', label:'Settings', icon:'ti-settings' }]
+  const tabs = [{ id:'tonight', label:'Tonight', icon:'ti-moon' }, { id:'myhalls', label:'My Halls', icon:'ti-user-star' }, { id:'schedule', label:'Schedule', icon:'ti-calendar' }, { id:'settings', label:'Settings', icon:'ti-settings' }]
   const ai = tabs.findIndex(t => t.id === view)
   return (
     <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:100, background:'rgba(0,0,0,0.9)', backdropFilter:'blur(28px) saturate(180%)', WebkitBackdropFilter:'blur(28px) saturate(180%)', borderTop:'1px solid var(--b1)', paddingBottom:'env(safe-area-inset-bottom)' }}>
       <div style={{ maxWidth:600, margin:'0 auto', display:'flex', height:60, position:'relative' }}>
-        <div style={{ position:'absolute', bottom:8, left:`calc(${ai*20}% + 10px)`, width:'calc(20% - 20px)', height:2, background:'var(--gold)', borderRadius:1, boxShadow:'0 0 10px var(--gold-glow)', transition:'left 0.3s cubic-bezier(0.34,1.56,0.64,1)', pointerEvents:'none' }} />
+        <div style={{ position:'absolute', bottom:8, left:`calc(${ai*25}% + 12px)`, width:'calc(25% - 24px)', height:2, background:'var(--gold)', borderRadius:1, boxShadow:'0 0 10px var(--gold-glow)', transition:'left 0.3s cubic-bezier(0.34,1.56,0.64,1)', pointerEvents:'none' }} />
         {tabs.map(t => { const active = view === t.id; return (
           <button key={t.id} onClick={() => { setView(t.id); window.scrollTo({ top:0, behavior:'smooth' }) }} className="nav-btn" style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3, background:'transparent', border:'none', color: active ? 'var(--gold)' : 'var(--t3)', fontFamily:'var(--mono)', fontSize:8, fontWeight: active ? 700 : 400, letterSpacing:1, textTransform:'uppercase', position:'relative', zIndex:1, WebkitTapHighlightColor:'transparent', transition:'color 0.18s' }}>
             <i className={`ti ${t.icon}`} style={{ fontSize:20, transition:'transform 0.18s cubic-bezier(0.34,1.56,0.64,1)', transform: active ? 'scale(1.12)' : 'scale(1)', filter: active ? 'drop-shadow(0 0 5px var(--gold))' : '' }} />
@@ -598,12 +598,11 @@ function HallPicker({ halls, myHalls, onSave, onDone }) {
 
 function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
   const [nowM, setNowM] = useState(now$())
-  const [expanded, setExpanded] = useState({})
+  const [expanded, setExpanded] = useState(null) // only one open at a time
   useEffect(() => { const t = setInterval(() => setNowM(now$()), 30000); return () => clearInterval(t) }, [])
 
-  // Filter to only assigned halls that exist tonight
   const assigned = sortHalls(halls).filter(([name]) => myHalls.includes(name))
-  const missing  = myHalls.filter(name => !halls[name]) // assigned but not showing tonight
+  const missing  = myHalls.filter(name => !halls[name])
 
   if (myHalls.length === 0) {
     return (
@@ -612,7 +611,7 @@ function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
           <i className="ti ti-user-star" style={{ fontSize:28, color:'var(--gold)' }}/>
         </div>
         <div style={{ fontFamily:'var(--display)', fontSize:26, color:'var(--t1)', letterSpacing:2, marginBottom:8 }}>No halls selected</div>
-        <div style={{ fontFamily:'var(--body)', fontSize:13, color:'var(--t3)', lineHeight:1.8, marginBottom:28, maxWidth:240, margin:'0 auto 28px' }}>Select the halls you're assigned to tonight for a focused view.</div>
+        <div style={{ fontFamily:'var(--body)', fontSize:13, color:'var(--t3)', lineHeight:1.8, marginBottom:28, maxWidth:240, margin:'0 auto 28px' }}>Select the halls you're assigned to tonight.</div>
         <button onClick={onEdit} style={{ fontFamily:'var(--display)', fontSize:18, letterSpacing:2, padding:'13px 28px', borderRadius:12, border:'1px solid var(--gold-bdr)', background:'var(--gold)', color:'#000' }}>
           Select My Halls
         </button>
@@ -622,152 +621,159 @@ function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
 
   return (
     <div>
-      {/* Header row */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+      {/* Header */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
         <div>
           <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, color:'var(--t3)', textTransform:'uppercase', marginBottom:3 }}>Your assignment</div>
           <div style={{ fontFamily:'var(--display)', fontSize:'clamp(20px,5vw,28px)', color:'var(--t1)', letterSpacing:1, lineHeight:1 }}>{assigned.length} Hall{assigned.length !== 1 ? 's' : ''}</div>
         </div>
         <button onClick={onEdit} style={{ display:'flex', alignItems:'center', gap:6, fontFamily:'var(--mono)', fontSize:8, fontWeight:700, letterSpacing:1, padding:'7px 12px', borderRadius:10, border:'1px solid var(--b2)', background:'var(--bg-2)', color:'var(--t2)' }}>
           <i className="ti ti-pencil" style={{ fontSize:12 }}/>
-          Edit halls
+          Edit
         </button>
       </div>
 
-      {/* Halls with no sessions tonight */}
+      {/* Not scheduled notice */}
       {missing.length > 0 && (
-        <div style={{ marginBottom:12, padding:'10px 14px', background:'rgba(245,166,35,0.06)', border:'1px solid var(--gold-bdr)', borderRadius:10 }}>
-          <div style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, color:'var(--gold)', letterSpacing:1.5, marginBottom:4 }}>NOT SCHEDULED TONIGHT</div>
-          <div style={{ fontFamily:'var(--body)', fontSize:12, color:'var(--t3)' }}>{missing.join(' · ')}</div>
+        <div style={{ marginBottom:10, padding:'9px 13px', background:'rgba(245,166,35,0.06)', border:'1px solid var(--gold-bdr)', borderRadius:10, display:'flex', alignItems:'center', gap:8 }}>
+          <i className="ti ti-alert-triangle" style={{ fontSize:13, color:'var(--gold)', flexShrink:0 }}/>
+          <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--gold)', letterSpacing:.5 }}><span style={{ fontWeight:700 }}>Not tonight: </span>{missing.join(' · ')}</div>
         </div>
       )}
 
-      {/* Assigned hall cards */}
-      {assigned.length === 0 && (
-        <div style={{ textAlign:'center', padding:'40px 20px', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>
-          None of your halls are showing tonight. Tap Edit to update your selection.
-        </div>
-      )}
+      {/* TripView-style hall list */}
+      <div style={{ background:'var(--bg-1)', border:'1px solid var(--b1)', borderRadius:14, overflow:'hidden' }}>
+        {assigned.length === 0 && (
+          <div style={{ padding:'28px 16px', textAlign:'center', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>None of your halls are scheduled tonight.</div>
+        )}
 
-      {assigned.map(([name, hall], i) => {
-        const col  = TC[hall.typeId] || 'var(--std)'
-        const bg   = TB[hall.typeId] || 'var(--std-bg)'
-        const bdr  = TD[hall.typeId] || 'var(--std-bdr)'
-        const lbl  = TYPE_LABEL[hall.typeId] || hall.typeId
-        const last = hall.sessions[hall.sessions.length - 1]
-        const st   = status$(hall.sessions)
-        const cur  = current$(hall.sessions)
-        const isFin = cur && cur.startMin === last.startMin
-        const mL   = cur ? cur.endMin - nowM : null
-        const hallsDone = st === 'done'
-        const accent = isFin ? 'var(--gold)' : st === 'playing' ? 'var(--playing)' : col
-        const isExp = !!expanded[name]
-        const progress = cur ? pct$(cur.startMin, cur.endMin) : 0
+        {assigned.map(([name, hall], i) => {
+          const col   = TC[hall.typeId] || 'var(--std)'
+          const bg    = TB[hall.typeId] || 'var(--std-bg)'
+          const bdr   = TD[hall.typeId] || 'var(--std-bdr)'
+          const lbl   = TYPE_LABEL[hall.typeId] || hall.typeId
+          const last  = hall.sessions[hall.sessions.length - 1]
+          const st    = status$(hall.sessions)
+          const cur   = current$(hall.sessions)
+          const isFin = cur && cur.startMin === last.startMin
+          const mL    = cur ? cur.endMin - nowM : null
+          const freeAt     = last.endMin
+          const minsToFree = freeAt - nowM
+          const isFree     = nowM >= freeAt
+          const accent = isFin ? 'var(--gold)' : st === 'playing' ? 'var(--playing)' : col
+          const isOpen = expanded === name
+          const progress = cur ? pct$(cur.startMin, cur.endMin) : 0
 
-        // Time until hall is free (last session endMin)
-        const freeAt  = last.endMin
-        const minsToFree = freeAt - nowM
-        const isFree  = nowM >= freeAt
+          // Status label — what a staff member needs to know
+          const statusText = isFree
+            ? `Free since ${fmtTime(freeAt)}`
+            : isFin
+            ? `Final · free in ${human$(mL)}`
+            : st === 'playing'
+            ? `Playing · free ~${fmtTime(freeAt)}`
+            : `Last ${fmtTime(last.startMin)} · free ~${fmtTime(freeAt)}`
 
-        return (
-          <div key={name} className="fade-up" style={{ animationDelay: i*50+'ms', marginBottom:10 }}>
-            <div onClick={() => setExpanded(p => ({ ...p, [name]: !p[name] }))} style={{ background:'var(--bg-1)', border:`1px solid ${isFree ? 'var(--b1)' : isFin ? 'var(--gold-bdr)' : st === 'playing' ? 'var(--playing-bdr)' : 'var(--b1)'}`, borderRadius: isExp ? '14px 14px 0 0' : 14, overflow:'hidden', cursor:'pointer', position:'relative', display:'flex', alignItems:'stretch', minHeight:80, transition:'border-color 0.15s' }}>
-              {/* Accent bar */}
-              <div style={{ width:4, flexShrink:0, background: isFree ? 'var(--b2)' : accent, borderRadius:'14px 0 0 14px', transition:'background 0.3s' }}/>
-              {/* Poster */}
-              <div style={{ width:52, flexShrink:0, overflow:'hidden' }}>
-                <MoviePoster movieName={last.movie} movieId={last.movieId} size="fill"/>
-              </div>
-              {/* Content */}
-              <div style={{ flex:1, minWidth:0, padding:'11px 10px 11px 12px' }}>
-                {/* Hall + badge */}
-                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
-                  <span style={{ fontFamily:'var(--display)', fontSize:17, letterSpacing:1, color:'var(--t1)', lineHeight:1, whiteSpace:'nowrap', flexShrink:0 }}>{name}</span>
-                  <span style={{ fontFamily:'var(--mono)', fontSize:7, padding:'2px 6px', borderRadius:99, background:bg, color:col, border:`1px solid ${bdr}`, whiteSpace:'nowrap', flexShrink:0 }}>{lbl}</span>
-                  {!isFree && st !== 'upcoming' && <div style={{ width:5, height:5, borderRadius:'50%', background:accent, flexShrink:0, marginLeft:'auto', animation:'blip 1.4s ease-in-out infinite' }}/>}
+          const statusCol = isFree ? 'var(--playing)' : isFin ? 'var(--gold)' : st === 'playing' ? 'var(--playing)' : 'var(--t3)'
+
+          return (
+            <div key={name}>
+              {/* ── TRIPVIEW ROW ── */}
+              <div
+                onClick={() => setExpanded(isOpen ? null : name)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  borderBottom: i < assigned.length - 1 || isOpen ? '1px solid var(--b1)' : 'none',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  background: isOpen ? 'var(--bg-2)' : 'transparent',
+                  transition: 'background 0.15s',
+                  minHeight: 68,
+                }}
+              >
+                {/* Left colour bar — like TripView */}
+                <div style={{ width:5, flexShrink:0, background: isFree ? 'var(--playing)' : accent, transition:'background 0.3s' }}/>
+
+                {/* Content */}
+                <div style={{ flex:1, minWidth:0, padding:'13px 12px' }}>
+                  {/* Hall name */}
+                  <div style={{ fontFamily:'var(--display)', fontSize:20, letterSpacing:1, color:'var(--t1)', lineHeight:1, marginBottom:4 }}>{name}</div>
+                  {/* Type label */}
+                  <div style={{ fontFamily:'var(--mono)', fontSize:8, color:col, letterSpacing:1, marginBottom:5 }}>{lbl}</div>
+                  {/* Movie */}
+                  <div style={{ fontFamily:'var(--body)', fontSize:12, color:'var(--t2)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
                 </div>
-                {/* Movie */}
-                <div style={{ fontFamily:'var(--body)', fontSize:13, fontWeight:600, color:'var(--t1)', marginBottom:6, overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
-                {/* Status line — the key info for a staff member */}
-                {isFree ? (
-                  <div style={{ display:'inline-flex', alignItems:'center', gap:5, background:'rgba(0,229,160,0.08)', border:'1px solid rgba(0,229,160,0.22)', borderRadius:99, padding:'3px 10px' }}>
-                    <i className="ti ti-check" style={{ fontSize:10, color:'var(--playing)' }}/>
-                    <span style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, color:'var(--playing)', letterSpacing:1 }}>Hall free · {fmtTime(freeAt)}</span>
+
+                {/* Right — free time + status */}
+                <div style={{ padding:'13px 14px 13px 8px', textAlign:'right', flexShrink:0, display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
+                  {/* Free at time — big */}
+                  <div style={{ fontFamily:'var(--display)', fontSize:20, letterSpacing:1, color: isFree ? 'var(--playing)' : 'var(--t1)', lineHeight:1 }}>
+                    ~{fmtTime(freeAt)}
                   </div>
-                ) : isFin ? (
-                  <div style={{ display:'inline-flex', alignItems:'center', gap:5, background:'var(--gold-bg)', border:'1px solid var(--gold-bdr)', borderRadius:99, padding:'3px 10px' }}>
-                    <div style={{ width:4, height:4, borderRadius:'50%', background:'var(--gold)', animation:'pulse 2s ease-in-out infinite' }}/>
-                    <span style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, color:'var(--gold)', letterSpacing:1 }}>Final show · free in {human$(mL)}</span>
+                  {/* Status */}
+                  <div style={{ display:'flex', alignItems:'center', gap:4, justifyContent:'flex-end' }}>
+                    {!isFree && st !== 'upcoming' && <div style={{ width:5, height:5, borderRadius:'50%', background:statusCol, animation:'blip 1.4s ease-in-out infinite', flexShrink:0 }}/>}
+                    {isFree && <i className="ti ti-check" style={{ fontSize:10, color:'var(--playing)' }}/>}
+                    <span style={{ fontFamily:'var(--mono)', fontSize:8, color:statusCol, letterSpacing:.5 }}>{statusText}</span>
                   </div>
-                ) : st === 'playing' ? (
-                  <div style={{ display:'inline-flex', alignItems:'center', gap:5, background:'var(--playing-bg)', border:'1px solid var(--playing-bdr)', borderRadius:99, padding:'3px 10px' }}>
-                    <div style={{ width:4, height:4, borderRadius:'50%', background:'var(--playing)', animation:'blip 1.4s ease-in-out infinite' }}/>
-                    <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--playing)', letterSpacing:1 }}>Playing · free ~{fmtTime(freeAt)}</span>
-                  </div>
-                ) : (
-                  <div style={{ display:'inline-flex', alignItems:'center', gap:5 }}>
-                    <i className="ti ti-clock" style={{ fontSize:10, color:'var(--t3)' }}/>
-                    <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1 }}>Last session {fmtTime(last.startMin)} · free ~{fmtTime(freeAt)}</span>
+                </div>
+
+                {/* Progress bar */}
+                {progress > 0 && !isFree && (
+                  <div style={{ position:'absolute', bottom:0, left:5, right:0, height:2, background:'var(--b0)' }}>
+                    <div style={{ height:'100%', width:progress+'%', background:accent, borderRadius:1 }}/>
                   </div>
                 )}
               </div>
-              {/* Chevron */}
-              <div style={{ width:34, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <i className="ti ti-chevron-down chevron" style={{ fontSize:13, color:'var(--t3)', transform: isExp ? 'rotate(180deg)' : 'none' }}/>
-              </div>
-              {/* Progress bar */}
-              {progress > 0 && !isFree && (
-                <div style={{ position:'absolute', bottom:0, left:0, width:progress+'%', height:2, background:`linear-gradient(to right,${accent}88,${accent})`, borderRadius:1 }}/>
+
+              {/* ── EXPANDED DETAIL ── */}
+              {isOpen && (
+                <div style={{ background:'var(--bg-2)', borderBottom: i < assigned.length - 1 ? '1px solid var(--b1)' : 'none', padding:'14px' }}>
+                  {/* All sessions */}
+                  <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:10 }}>All sessions tonight</div>
+                  {hall.sessions.map((s, si) => {
+                    const sDone    = nowM >= s.endMin
+                    const sPlaying = s.startMin <= nowM && nowM < s.endMin
+                    const isLast   = si === hall.sessions.length - 1
+                    const sCol     = sPlaying ? (isLast ? 'var(--gold)' : 'var(--playing)') : sDone ? 'var(--t4)' : col
+                    return (
+                      <div key={si} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom: si < hall.sessions.length - 1 ? '1px solid var(--b0)' : 'none', opacity: sDone ? 0.45 : 1 }}>
+                        <div style={{ width:5, height:5, borderRadius:'50%', background: sPlaying ? sCol : sDone ? 'var(--t4)' : 'var(--b3)', flexShrink:0, animation: sPlaying ? 'blip 1.4s ease-in-out infinite' : 'none' }}/>
+                        <div style={{ fontFamily:'var(--display)', fontSize:16, color:sCol, letterSpacing:1, flexShrink:0, width:70 }}>{fmtTime(s.startMin)}</div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontFamily:'var(--body)', fontSize:12, fontWeight:600, color: sDone ? 'var(--t3)' : 'var(--t1)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{s.movie}</div>
+                          {s.runtime > 0 && <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', marginTop:1 }}>ends ~{fmtTime(s.endMin)}</div>}
+                        </div>
+                        {isLast && <span style={{ fontFamily:'var(--mono)', fontSize:7, fontWeight:700, color: sPlaying ? 'var(--gold)' : sDone ? 'var(--t4)' : col, flexShrink:0 }}>LAST</span>}
+                        {sPlaying && !isLast && <span style={{ fontFamily:'var(--mono)', fontSize:7, color:'var(--playing)', flexShrink:0 }}>NOW</span>}
+                      </div>
+                    )
+                  })}
+
+                  {/* Free time summary */}
+                  <div style={{ marginTop:12, display:'flex', alignItems:'center', gap:8, padding:'10px 12px', background: isFree ? 'rgba(0,229,160,0.08)' : 'var(--bg-3)', border:`1px solid ${isFree ? 'rgba(0,229,160,0.22)' : 'var(--b1)'}`, borderRadius:9 }}>
+                    <i className={`ti ${isFree ? 'ti-check' : 'ti-clock'}`} style={{ fontSize:13, color: isFree ? 'var(--playing)' : 'var(--t3)', flexShrink:0 }}/>
+                    <div>
+                      <div style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, color: isFree ? 'var(--playing)' : 'var(--t2)', letterSpacing:1 }}>
+                        {isFree ? `Hall free since ${fmtTime(freeAt)}` : `Hall free from ~${fmtTime(freeAt)}`}
+                      </div>
+                      {!isFree && minsToFree > 0 && <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', marginTop:2 }}>in {human$(minsToFree)}</div>}
+                    </div>
+                  </div>
+
+                  {/* Seat map */}
+                  {last.sessionId && (
+                    <div style={{ marginTop:12 }}>
+                      <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:6 }}>Seat map · {fmtTime((cur || last).startMin)}</div>
+                      <SeatMap sessionId={String(cur?.sessionId || last.sessionId)} cinemaId={cur?.cinemaId || last.cinemaId || cinemaId} typeColor={col}/>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
-
-            {/* Expanded — all sessions for this hall tonight */}
-            {isExp && (
-              <div style={{ background:'var(--bg-2)', border:'1px solid var(--b3)', borderTop:'none', borderRadius:'0 0 14px 14px', padding:'14px' }}>
-                <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:1.5, color:'var(--t3)', textTransform:'uppercase', marginBottom:10 }}>All sessions tonight</div>
-                {hall.sessions.map((s, si) => {
-                  const sDone = nowM >= s.endMin
-                  const sPlaying = s.startMin <= nowM && nowM < s.endMin
-                  const sCol = sPlaying ? (s.startMin === last.startMin ? 'var(--gold)' : 'var(--playing)') : sDone ? 'var(--t4)' : col
-                  return (
-                    <div key={si} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom: si < hall.sessions.length - 1 ? '1px solid var(--b0)' : 'none', opacity: sDone ? 0.45 : 1 }}>
-                      <div style={{ width:4, height:4, borderRadius:'50%', background: sPlaying ? sCol : sDone ? 'var(--t4)' : 'var(--b3)', flexShrink:0, animation: sPlaying ? 'blip 1.4s ease-in-out infinite' : 'none' }}/>
-                      <div style={{ fontFamily:'var(--display)', fontSize:16, color:sCol, letterSpacing:1, flexShrink:0, width:72 }}>{fmtTime(s.startMin)}</div>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ fontFamily:'var(--body)', fontSize:12, fontWeight:600, color: sDone ? 'var(--t3)' : 'var(--t1)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{s.movie}</div>
-                        {s.runtime > 0 && <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', marginTop:1 }}>ends ~{fmtTime(s.endMin)}</div>}
-                      </div>
-                      {sDone && <span style={{ fontFamily:'var(--mono)', fontSize:7, color:'var(--t4)', flexShrink:0 }}>done</span>}
-                      {sPlaying && <span style={{ fontFamily:'var(--mono)', fontSize:7, color:sCol, flexShrink:0, fontWeight:700 }}>{si === hall.sessions.length-1 ? 'FINAL' : 'NOW'}</span>}
-                    </div>
-                  )
-                })}
-                {/* Free time banner */}
-                <div style={{ marginTop:12, display:'flex', alignItems:'center', gap:8, padding:'10px 12px', background: isFree ? 'rgba(0,229,160,0.08)' : 'var(--bg-3)', border:`1px solid ${isFree ? 'rgba(0,229,160,0.22)' : 'var(--b1)'}`, borderRadius:9 }}>
-                  <i className={`ti ${isFree ? 'ti-check' : 'ti-clock'}`} style={{ fontSize:13, color: isFree ? 'var(--playing)' : 'var(--t3)', flexShrink:0 }}/>
-                  <div>
-                    <div style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, color: isFree ? 'var(--playing)' : 'var(--t2)', letterSpacing:1 }}>
-                      {isFree ? `Hall free since ${fmtTime(freeAt)}` : `Hall free from ~${fmtTime(freeAt)}`}
-                    </div>
-                    {!isFree && minsToFree > 0 && (
-                      <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', marginTop:2 }}>in {human$(minsToFree)}</div>
-                    )}
-                  </div>
-                </div>
-                {/* Seat map for current or last session */}
-                {last.sessionId && (
-                  <div style={{ marginTop:12 }}>
-                    <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:6 }}>
-                      Seat map · {fmtTime((cur || last).startMin)}
-                    </div>
-                    <SeatMap sessionId={String(cur?.sessionId || last.sessionId)} cinemaId={cur?.cinemaId || last.cinemaId || cinemaId} typeColor={col} />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
