@@ -436,14 +436,14 @@ function SkeletonList() {
 }
 function EmptyState({ icon, title, sub }) {
   const I = { film:<svg width="44" height="44" viewBox="0 0 48 48" fill="none"><rect x="4" y="10" width="40" height="28" rx="5" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".15"/><path d="M4 17h40M4 31h40M11 10v7M35 10v7M11 31v7M35 31v7" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".1" strokeLinecap="round"/></svg>, cal:<svg width="44" height="44" viewBox="0 0 48 48" fill="none"><rect x="6" y="10" width="36" height="30" rx="5" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".15"/><line x1="6" y1="20" x2="42" y2="20" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".1"/><rect x="15" y="6" width="3" height="8" rx="1.5" fill="currentColor" fillOpacity=".15"/><rect x="30" y="6" width="3" height="8" rx="1.5" fill="currentColor" fillOpacity=".15"/></svg>, night:<svg width="44" height="44" viewBox="0 0 48 48" fill="none"><path d="M24 8C15.2 8 8 15.2 8 24s7.2 16 16 16 16-7.2 16-16" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".15" strokeLinecap="round"/></svg> }
-  return <div style={{ textAlign:'center', padding:'72px 20px' }}><div style={{ color:'var(--t4)', marginBottom:16, display:'flex', justifyContent:'center' }}>{I[icon]||I.film}</div><div style={{ fontFamily:'var(--display)', fontSize:22, color:'var(--t3)', letterSpacing:'2px', marginBottom:8 }}>{title}</div><div style={{ fontFamily:'var(--body)', fontSize:13, color:'var(--t4)', lineHeight:1.8, maxWidth:240, margin:'0 auto' }}>{sub}</div></div>
+  return <div style={{ textAlign:'center', padding:'72px 20px' }}><div style={{ color:'var(--t4)', marginBottom:16, display:'flex', justifyContent:'center' }}>{I[icon]||I.film}</div><div style={{ fontFamily:'var(--display)', fontSize:22, color:'var(--t3)', letterSpacing:'2px', marginBottom:8 }}>{title}</div><div style={{ fontFamily:'var(--body)', fontSize:13, color:'var(--t3)', lineHeight:1.8, maxWidth:240, margin:'0 auto' }}>{sub}</div></div>
 }
 function ErrorState({ msg, onRetry }) {
   return <div style={{ background:'rgba(239,68,68,0.07)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:12, padding:'14px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:16 }}><div><div style={{ fontFamily:'var(--body)', fontSize:13, fontWeight:600, color:'#EF4444', marginBottom:2 }}>Couldn't load sessions</div><div style={{ fontFamily:'var(--body)', fontSize:12, color:'var(--t3)' }}>{msg}</div></div><button onClick={onRetry} style={{ fontFamily:'var(--body)', fontWeight:600, fontSize:12, padding:'7px 12px', borderRadius:8, border:'1px solid var(--b2)', background:'var(--bg-2)', color:'var(--t1)', flexShrink:0 }}>Retry</button></div>
 }
 
 // ─── Settings ────────────────────────────────────────────────────────────────
-const Sec  = ({ label, children }) => <div style={{ marginBottom:22 }}><div style={{ fontFamily:'var(--mono)', fontSize:9, letterSpacing:2, textTransform:'uppercase', color:'var(--t4)', marginBottom:8 }}>{label}</div><div style={{ background:'var(--bg-1)', border:'1px solid var(--b1)', borderRadius:14, padding:'14px' }}>{children}</div></div>
+const Sec  = ({ label, children }) => <div style={{ marginBottom:22 }}><div style={{ fontFamily:'var(--mono)', fontSize:9, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)', marginBottom:8 }}>{label}</div><div style={{ background:'var(--bg-1)', border:'1px solid var(--b1)', borderRadius:14, padding:'14px' }}>{children}</div></div>
 const SRow = ({ label, value })    => <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'9px 0', borderBottom:'1px solid var(--b0)' }}><span style={{ fontFamily:'var(--mono)', fontSize:10, color:'var(--t2)' }}>{label}</span><span style={{ fontFamily:'var(--mono)', fontSize:10, fontWeight:700, color:'var(--t2)' }}>{value}</span></div>
 
 // ─── Bottom Nav ───────────────────────────────────────────────────────────────
@@ -627,7 +627,7 @@ export default function App() {
             <div style={{ fontFamily:'var(--display)', fontSize:'clamp(20px,5vw,28px)', color:'var(--t1)', letterSpacing:1, lineHeight:1 }}>Settings</div>
           </div>
           <Sec label="Cinema">
-            <label style={{ display:'block', fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t4)', marginBottom:10 }}>Your cinema</label>
+            <label style={{ display:'block', fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)', marginBottom:10 }}>Your cinema</label>
             <CinemaPicker value={cinemaId} onOpen={() => setPicker(true)} />
           </Sec>
           <Sec label="Status">
@@ -642,7 +642,7 @@ export default function App() {
             </div>
           </Sec>
           <Sec label="Movie details">
-            <p style={{ fontFamily:'var(--mono)', fontSize:10, color:'var(--t4)', marginBottom:12, lineHeight:1.7 }}>Known movies pre-filled. Enter names/runtimes for missing IDs.</p>
+            <p style={{ fontFamily:'var(--mono)', fontSize:10, color:'var(--t3)', marginBottom:12, lineHeight:1.7 }}>Known movies pre-filled. Enter names/runtimes for missing IDs.</p>
             {[...new Set(sessions.map(s => s.movieId).filter(Boolean))].map(mid => {
               const m = movies[mid] || {}
               return (
