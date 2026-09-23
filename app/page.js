@@ -527,91 +527,106 @@ function useGroups(cinemaId) {
 // ── GroupEditor — bottom sheet to create or edit a group ─────────────────────
 function GroupEditor({ halls, existing, onSave, onClose }) {
   const isEdit = !!existing
-  const [name, setName]   = useState(existing?.name || '')
-  const [sel, setSel]     = useState(existing?.halls || [])
-  const nameRef           = useRef(null)
-  const allHalls          = sortHalls(halls).map(([n]) => n)
+  const [name, setName] = useState(existing?.name || '')
+  const [sel, setSel]   = useState(existing?.halls || [])
+  const allHalls        = sortHalls(halls).map(([n]) => n)
+  const canSave         = name.trim().length > 0 && sel.length > 0
+  const toggle = n => setSel(p => p.includes(n) ? p.filter(x => x !== n) : [...p, n])
+  const save = () => { if (!canSave) return; onSave({ id: existing?.id || Date.now().toString(), name: name.trim(), halls: sel }); onClose() }
 
   useEffect(() => { document.body.style.overflow = 'hidden'; return () => { document.body.style.overflow = '' } }, [])
-
-  const toggle = n => setSel(p => p.includes(n) ? p.filter(x => x !== n) : [...p, n])
-  const canSave = name.trim().length > 0 && sel.length > 0
-
-  const save = () => {
-    if (!canSave) return
-    onSave({ id: existing?.id || Date.now().toString(), name: name.trim(), halls: sel })
-    onClose()
-  }
 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:9999, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
       <div onClick={onClose} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.88)' }}/>
-      <div style={{ position:'relative', zIndex:1, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', maxHeight:'92vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)' }}>
-        {/* Handle */}
-        <div style={{ display:'flex', justifyContent:'center', padding:'14px 0 4px' }}>
-          <div style={{ width:36, height:4, borderRadius:2, background:'var(--b3)' }}/>
-        </div>
-        {/* Header */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 18px 14px' }}>
-          <div style={{ fontFamily:'var(--display)', fontSize:24, color:'var(--t1)', letterSpacing:2 }}>{isEdit ? 'Edit Group' : 'New Group'}</div>
-          <button onClick={onClose} style={{ width:30, height:30, borderRadius:8, border:'1px solid var(--b2)', background:'var(--bg-3)', color:'var(--t2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>✕</button>
-        </div>
+      {/* Sheet — fixed height layout: header pinned top, list scrolls, button pinned bottom */}
+      <div style={{ position:'relative', zIndex:1, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', maxHeight:'92vh', height:'92vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)' }}>
 
-        {/* Name input — pinned, not in scroll area */}
-        <div style={{ padding:'0 18px 10px', flexShrink:0 }}>
-          <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)', marginBottom:7 }}>Group name</div>
-          <input ref={nameRef} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Section A, Suraj's halls…" maxLength={32}
-            onFocus={e => setTimeout(() => e.target.scrollIntoView({ block:'nearest' }), 100)}
-            style={{ width:'100%', fontFamily:'var(--body)', fontSize:16, fontWeight:600, background:'var(--bg-1)', border:`1px solid ${name.trim() ? 'var(--gold-bdr)' : 'var(--b2)'}`, borderRadius:12, padding:'12px 14px', color:'var(--t1)', outline:'none', caretColor:'var(--gold)', transition:'border-color 0.15s' }}/>
-        </div>
-
-        {/* Hall picker header — pinned */}
-        <div style={{ padding:'4px 18px 8px', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0, borderBottom:'1px solid var(--b1)' }}>
-          <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)' }}>Halls · {sel.length} selected</div>
-          <div style={{ display:'flex', gap:8 }}>
-            <button onClick={() => setSel(allHalls)} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>All</button>
-            <button onClick={() => setSel([])} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>Clear</button>
+        {/* ── TOP SECTION — fixed, never scrolls ── */}
+        <div style={{ flexShrink:0 }}>
+          {/* Handle */}
+          <div style={{ display:'flex', justifyContent:'center', padding:'14px 0 4px' }}>
+            <div style={{ width:36, height:4, borderRadius:2, background:'var(--b3)' }}/>
+          </div>
+          {/* Title row */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 18px 12px' }}>
+            <div style={{ fontFamily:'var(--display)', fontSize:24, color:'var(--t1)', letterSpacing:2 }}>{isEdit ? 'Edit Group' : 'New Group'}</div>
+            <button onClick={onClose} style={{ width:30, height:30, borderRadius:8, border:'1px solid var(--b2)', background:'var(--bg-3)', color:'var(--t2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>✕</button>
+          </div>
+          {/* Name input */}
+          <div style={{ padding:'0 18px 12px' }}>
+            <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)', marginBottom:7 }}>Group name</div>
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="e.g. Section A, Suraj's halls…"
+              maxLength={32}
+              style={{ width:'100%', fontFamily:'var(--body)', fontSize:16, fontWeight:600, background:'var(--bg-1)', border:`1px solid ${name.trim() ? 'var(--gold-bdr)' : 'var(--b2)'}`, borderRadius:12, padding:'12px 14px', color:'var(--t1)', outline:'none', caretColor:'var(--gold)', transition:'border-color 0.15s' }}
+            />
+          </div>
+          {/* Hall list header */}
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 18px 10px', borderBottom:'1px solid var(--b1)' }}>
+            <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)' }}>
+              Select halls{sel.length > 0 ? ` · ${sel.length} chosen` : ''}
+            </div>
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={() => setSel(allHalls)} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>All</button>
+              <button onClick={() => setSel([])} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>Clear</button>
+            </div>
           </div>
         </div>
 
-        {/* Hall list — only this scrolls */}
-        <div style={{ overflowY:'auto', flex:1, WebkitOverflowScrolling:'touch', padding:'8px 18px 4px' }}>
-          {allHalls.length === 0 && <div style={{ textAlign:'center', padding:'32px 20px', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>No halls loaded — go to Tonight first.</div>}
-          {sortHalls(halls).map(([name2, hall]) => {
-            const active = sel.includes(name2)
-            const col = TC[hall.typeId] || 'var(--std)'
-            const bg  = TB[hall.typeId] || 'var(--std-bg)'
-            const bdr = TD[hall.typeId] || 'var(--std-bdr)'
-            const lbl = TYPE_LABEL[hall.typeId] || hall.typeId
+        {/* ── MIDDLE — scrollable hall list ── */}
+        <div style={{ flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'8px 18px 4px' }}>
+          {allHalls.length === 0 && (
+            <div style={{ textAlign:'center', padding:'32px 20px', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>
+              No halls loaded yet — go to Tonight first.
+            </div>
+          )}
+          {sortHalls(halls).map(([hallName, hall]) => {
+            const active = sel.includes(hallName)
+            const col  = TC[hall.typeId] || 'var(--std)'
+            const bg   = TB[hall.typeId] || 'var(--std-bg)'
+            const bdr  = TD[hall.typeId] || 'var(--std-bdr)'
+            const lbl  = TYPE_LABEL[hall.typeId] || hall.typeId
             const last = hall.sessions[hall.sessions.length - 1]
             return (
-              <button key={name2} onClick={() => toggle(name2)} style={{ display:'flex', alignItems:'center', gap:12, width:'100%', textAlign:'left', padding:'11px 13px', marginBottom:5, borderRadius:11, background: active ? 'rgba(245,166,35,0.08)' : 'var(--bg-1)', border:`1px solid ${active ? 'var(--gold-bdr)' : 'var(--b1)'}`, WebkitTapHighlightColor:'transparent', transition:'all 0.13s' }}>
+              <button key={hallName} onClick={() => toggle(hallName)} style={{ display:'flex', alignItems:'center', gap:12, width:'100%', textAlign:'left', padding:'11px 13px', marginBottom:6, borderRadius:11, background: active ? 'rgba(245,166,35,0.08)' : 'var(--bg-1)', border:`1px solid ${active ? 'var(--gold-bdr)' : 'var(--b1)'}`, WebkitTapHighlightColor:'transparent', transition:'all 0.13s' }}>
+                {/* Checkbox */}
                 <div style={{ width:22, height:22, borderRadius:6, border:`2px solid ${active ? 'var(--gold)' : 'var(--b3)'}`, background: active ? 'var(--gold)' : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'all 0.13s' }}>
                   {active && <i className="ti ti-check" style={{ fontSize:12, color:'#000' }}/>}
                 </div>
+                {/* Info */}
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
-                    <span style={{ fontFamily:'var(--display)', fontSize:17, letterSpacing:1, color: active ? 'var(--gold)' : 'var(--t1)', lineHeight:1 }}>{name2}</span>
-                    <span style={{ fontFamily:'var(--mono)', fontSize:7, padding:'2px 6px', borderRadius:99, background:bg, color:col, border:`1px solid ${bdr}` }}>{lbl}</span>
+                    <span style={{ fontFamily:'var(--display)', fontSize:17, letterSpacing:1, color: active ? 'var(--gold)' : 'var(--t1)', lineHeight:1 }}>{hallName}</span>
+                    <span style={{ fontFamily:'var(--mono)', fontSize:7, padding:'2px 6px', borderRadius:99, background:bg, color:col, border:`1px solid ${bdr}`, flexShrink:0 }}>{lbl}</span>
                   </div>
                   <div style={{ fontFamily:'var(--body)', fontSize:11, color:'var(--t2)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
                 </div>
+                {/* Last session time */}
                 <div style={{ fontFamily:'var(--display)', fontSize:15, color: active ? 'var(--gold)' : 'var(--t3)', letterSpacing:1, flexShrink:0 }}>{fmtTime(last.startMin)}</div>
               </button>
             )
           })}
         </div>
 
-        {/* Save */}
-        <div style={{ padding:'12px 18px', paddingBottom:'calc(env(safe-area-inset-bottom,0px)+14px)', borderTop:'1px solid var(--b1)' }}>
-          <button onClick={save} disabled={!canSave} style={{ width:'100%', fontFamily:'var(--display)', fontSize:20, letterSpacing:2, padding:'14px', borderRadius:12, border:'1px solid var(--gold-bdr)', background: canSave ? 'var(--gold)' : 'var(--bg-3)', color: canSave ? '#000' : 'var(--t4)', transition:'all 0.15s' }}>
-            {isEdit ? 'Save changes' : sel.length === 0 ? 'Select halls above' : `Create · ${sel.length} hall${sel.length !== 1 ? 's' : ''}`}
+        {/* ── BOTTOM — pinned save button ── */}
+        <div style={{ flexShrink:0, padding:'12px 18px', paddingBottom:'calc(env(safe-area-inset-bottom,0px) + 14px)', borderTop:'1px solid var(--b1)', background:'var(--bg-2)' }}>
+          <button onClick={save} disabled={!canSave} style={{ width:'100%', fontFamily:'var(--display)', fontSize:20, letterSpacing:2, padding:'14px', borderRadius:12, border:'none', background: canSave ? 'var(--gold)' : 'var(--bg-4)', color: canSave ? '#000' : 'var(--t4)', transition:'all 0.15s', cursor: canSave ? 'pointer' : 'default' }}>
+            {isEdit
+              ? 'Save changes'
+              : sel.length === 0
+              ? 'Select halls above'
+              : `Create · ${sel.length} hall${sel.length !== 1 ? 's' : ''}`
+            }
           </button>
         </div>
       </div>
     </div>
   )
 }
+
 
 // ── GroupList — first glance, TripView-style list of saved groups ─────────────
 function GroupList({ groups, halls, onOpen, onAdd, onEdit, onDelete }) {
