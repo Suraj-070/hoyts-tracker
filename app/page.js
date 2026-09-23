@@ -209,7 +209,13 @@ function HallCard({ hallName, hall, expanded, onToggle, cinemaId }) {
         <div style={{ width:52, flexShrink:0, position:'relative', overflow:'hidden' }}>
           <MoviePoster movieName={poster.movie} movieId={poster.movieId} size="fill" />
           {/* Occupancy dot */}
-          {highOcc && st !== 'done' && <div style={{ position:'absolute', top:4, right:4, width:8, height:8, borderRadius:'50%', background:highOcc, border:'1px solid var(--bg-1)' }} />}
+          {occ !== null && st !== 'done' && (
+            <div className="occ-badge" style={{ position:'absolute', top:7, right:8, fontFamily:'var(--mono)', fontSize:8, fontWeight:700, letterSpacing:.5, borderRadius:99, padding:'2px 7px',
+              color: occ>=95?'#FF5757':occ>=80?'var(--dbox)':occ>=60?'var(--gold)':'var(--playing)',
+              background: occ>=95?'rgba(255,87,87,0.16)':occ>=80?'rgba(255,107,53,0.16)':occ>=60?'rgba(245,166,35,0.14)':'rgba(0,229,160,0.12)',
+              border: `1px solid ${occ>=95?'rgba(255,87,87,0.35)':occ>=80?'rgba(255,107,53,0.3)':occ>=60?'rgba(245,166,35,0.28)':'rgba(0,229,160,0.22)'}`,
+            }}>{occ}%</div>
+          )}
         </div>
 
         {/* Content */}
@@ -280,7 +286,10 @@ function HallCard({ hallName, hall, expanded, onToggle, cinemaId }) {
 
           {/* Seat map */}
           {sess.some(s => s.sessionId) && (
-            <div style={{ padding:'12px 14px 14px' }}>
+            <div style={{ padding:'0 14px 14px' }}>
+              <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:6, paddingTop:12 }}>
+                Seat map · {fmtTime((sess.find(s => s.sessionId === sel) || last).startMin)}
+              </div>
               <SeatMap key={sel} sessionId={String(sel || last.sessionId)} cinemaId={sess.find(s => s.sessionId === sel)?.cinemaId || last.cinemaId || cinemaId} typeColor={col} />
             </div>
           )}
@@ -745,6 +754,15 @@ function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
                     )}
                   </div>
                 </div>
+                {/* Seat map for current or last session */}
+                {last.sessionId && (
+                  <div style={{ marginTop:12 }}>
+                    <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:6 }}>
+                      Seat map · {fmtTime((cur || last).startMin)}
+                    </div>
+                    <SeatMap sessionId={String(cur?.sessionId || last.sessionId)} cinemaId={cur?.cinemaId || last.cinemaId || cinemaId} typeColor={col} />
+                  </div>
+                )}
               </div>
             )}
           </div>
