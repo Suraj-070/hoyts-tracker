@@ -14,6 +14,12 @@ const loadC = id => { try { const r = localStorage.getItem(CK(id)); if (!r) retu
 const clearOld = () => { try { Object.keys(localStorage).filter(k => k.startsWith('hoyts-sessions-')).forEach(k => { try { const { savedAt } = JSON.parse(localStorage.getItem(k)); if (Date.now() - savedAt > MAX) localStorage.removeItem(k) } catch(e) { localStorage.removeItem(k) } }) } catch(e) {} }
 
 // ─── Time ──────────────────────────────────────────────────────────────────
+// HOYTS session model (from Daily Program Grid analysis):
+//   startMin = listed time = ads begin (NOT feature start)
+//   featureStart = startMin + 20  (20 min HOYTS ads buffer)
+//   endMin = startMin + 20 + runtime  (when feature actually finishes)
+//   status 'playing' = session listed time has passed AND endMin not yet reached
+//   progress bar = % through the whole session block (ads + feature)
 const now$     = () => { const n = new Date(); return n.getHours() * 60 + n.getMinutes() }
 const status$  = ss => { const n = now$(); for (const s of ss) { if (s.startMin <= n && n < s.endMin) return 'playing' } return now$() >= ss[ss.length - 1].endMin ? 'done' : 'upcoming' }
 const current$ = ss => { const n = now$(); return ss.find(s => s.startMin <= n && n < s.endMin) || null }
