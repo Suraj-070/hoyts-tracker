@@ -853,30 +853,19 @@ function GroupDetail({ group, halls, cinemaId, onBack, onEdit }) {
 }
 
 // ── MyHallsView — root: shows GroupList or GroupDetail ───────────────────────
-function MyHallsView({ halls, cinemaId, groups, onAdd, onUpdate, onDelete }) {
-  const [openGroup,  setOpenGroup]  = useState(null)
-  const [editGroup,  setEditGroup]  = useState(null)
+function MyHallsView({ halls, cinemaId, groups, onAdd, onUpdate, onDelete, onOpenEditor }) {
+  const [openGroup, setOpenGroup] = useState(null)
 
-  const handleEdit = g => { setEditGroup(g); setShowEditor(true) }
-  const handleAdd  = ()  => { setEditGroup(null); setShowEditor(true) }
-  const handleSave = g => { editGroup ? onUpdate(g) : onAdd(g) }
-
-  // If a group was deleted or edited while open, go back
   useEffect(() => {
     if (openGroup && !groups.find(g => g.id === openGroup.id)) setOpenGroup(null)
-    if (openGroup) setOpenGroup(groups.find(g => g.id === openGroup.id) || null)
+    else if (openGroup) setOpenGroup(groups.find(g => g.id === openGroup.id) || null)
   }, [groups])
 
-  return (
-    <>
-      {openGroup
-        ? <GroupDetail group={openGroup} halls={halls} cinemaId={cinemaId} onBack={() => setOpenGroup(null)} onEdit={() => handleEdit(openGroup)}/>
-        : <GroupList groups={groups} halls={halls} onOpen={setOpenGroup} onAdd={handleAdd} onEdit={handleEdit} onDelete={onDelete}/>
-      }
-
-    </>
-  )
+  return openGroup
+    ? <GroupDetail group={openGroup} halls={halls} cinemaId={cinemaId} onBack={() => setOpenGroup(null)} onEdit={() => onOpenEditor(openGroup)}/>
+    : <GroupList groups={groups} halls={halls} onOpen={setOpenGroup} onAdd={() => onOpenEditor({})} onEdit={g => onOpenEditor(g)} onDelete={onDelete}/>
 }
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN APP
