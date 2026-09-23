@@ -59,7 +59,7 @@ img { transition: opacity 0.4s ease; }
 @keyframes pulse    { 0%,100%{opacity:1} 50%{opacity:.2} }
 @keyframes blip     { 0%,100%{opacity:1} 50%{opacity:.35} }
 @keyframes shimmer  { 0%{background-position:-700px 0} 100%{background-position:700px 0} }
-@keyframes fadeUp   { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeUp   { from{opacity:0} to{opacity:1} }
 @keyframes slideUp  { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
 @keyframes slideDown{ from{opacity:0;transform:translateY(-100%)} to{opacity:1;transform:translateY(0)} }
 @keyframes popIn    { from{opacity:0;transform:scale(0.65)} to{opacity:1;transform:scale(1)} }
