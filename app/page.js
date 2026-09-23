@@ -448,12 +448,12 @@ const SRow = ({ label, value })    => <div style={{ display:'flex', justifyConte
 
 // ─── Bottom Nav ───────────────────────────────────────────────────────────────
 function BottomNav({ view, setView }) {
-  const tabs = [{ id:'tonight', label:'Tonight', icon:'ti-moon' }, { id:'schedule', label:'Schedule', icon:'ti-calendar' }, { id:'closing', label:'Closing', icon:'ti-clock-off' }, { id:'settings', label:'Settings', icon:'ti-settings' }]
+  const tabs = [{ id:'tonight', label:'Tonight', icon:'ti-moon' }, { id:'myhalls', label:'My Halls', icon:'ti-user-star' }, { id:'schedule', label:'Schedule', icon:'ti-calendar' }, { id:'closing', label:'Closing', icon:'ti-clock-off' }, { id:'settings', label:'Settings', icon:'ti-settings' }]
   const ai = tabs.findIndex(t => t.id === view)
   return (
     <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:100, background:'rgba(0,0,0,0.9)', backdropFilter:'blur(28px) saturate(180%)', WebkitBackdropFilter:'blur(28px) saturate(180%)', borderTop:'1px solid var(--b1)', paddingBottom:'env(safe-area-inset-bottom)' }}>
       <div style={{ maxWidth:600, margin:'0 auto', display:'flex', height:60, position:'relative' }}>
-        <div style={{ position:'absolute', bottom:8, left:`calc(${ai*25}% + 12px)`, width:'calc(25% - 24px)', height:2, background:'var(--gold)', borderRadius:1, boxShadow:'0 0 10px var(--gold-glow)', transition:'left 0.3s cubic-bezier(0.34,1.56,0.64,1)', pointerEvents:'none' }} />
+        <div style={{ position:'absolute', bottom:8, left:`calc(${ai*20}% + 10px)`, width:'calc(20% - 20px)', height:2, background:'var(--gold)', borderRadius:1, boxShadow:'0 0 10px var(--gold-glow)', transition:'left 0.3s cubic-bezier(0.34,1.56,0.64,1)', pointerEvents:'none' }} />
         {tabs.map(t => { const active = view === t.id; return (
           <button key={t.id} onClick={() => { setView(t.id); window.scrollTo({ top:0, behavior:'smooth' }) }} className="nav-btn" style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3, background:'transparent', border:'none', color: active ? 'var(--gold)' : 'var(--t3)', fontFamily:'var(--mono)', fontSize:8, fontWeight: active ? 700 : 400, letterSpacing:1, textTransform:'uppercase', position:'relative', zIndex:1, WebkitTapHighlightColor:'transparent', transition:'color 0.18s' }}>
             <i className={`ti ${t.icon}`} style={{ fontSize:20, transition:'transform 0.18s cubic-bezier(0.34,1.56,0.64,1)', transform: active ? 'scale(1.12)' : 'scale(1)', filter: active ? 'drop-shadow(0 0 5px var(--gold))' : '' }} />
@@ -494,6 +494,266 @@ function Header({ cinemaId, loading, lastFetched, onRefresh, onOpenPicker }) {
   )
 }
 
+
+// ─── MY HALLS ────────────────────────────────────────────────────────────────
+// Staff hall picker — select assigned halls, get a focused personal view
+// Persists to localStorage by cinemaId so switching cinemas resets selection
+
+function useMyHalls(cinemaId) {
+  const KEY = `hoyts-myhalls-${cinemaId}`
+  const [myHalls, setMyHalls] = useState(() => {
+    try { const s = localStorage.getItem(KEY); return s ? JSON.parse(s) : [] } catch(e) { return [] }
+  })
+  // Reset when cinema changes
+  useEffect(() => {
+    try { const s = localStorage.getItem(KEY); setMyHalls(s ? JSON.parse(s) : []) } catch(e) { setMyHalls([]) }
+  }, [cinemaId])
+  const save = halls => { setMyHalls(halls); try { localStorage.setItem(KEY, JSON.stringify(halls)) } catch(e) {} }
+  return [myHalls, save]
+}
+
+function HallPicker({ halls, myHalls, onSave, onDone }) {
+  const allNames = sortHalls(halls).map(([name]) => name)
+  const [sel, setSel] = useState([...myHalls])
+  const toggle = name => setSel(p => p.includes(name) ? p.filter(n => n !== name) : [...p, name])
+  const save = () => { onSave(sel); onDone() }
+
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:9999, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
+      <div onClick={onDone} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.88)' }}/>
+      <div style={{ position:'relative', zIndex:1, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', maxHeight:'88vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)' }}>
+        <div style={{ display:'flex', justifyContent:'center', padding:'14px 0 4px' }}>
+          <div style={{ width:36, height:4, borderRadius:2, background:'var(--b3)' }}/>
+        </div>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 18px 14px' }}>
+          <div>
+            <div style={{ fontFamily:'var(--display)', fontSize:24, color:'var(--t1)', letterSpacing:2 }}>Select Your Halls</div>
+            <div style={{ fontFamily:'var(--mono)', fontSize:9, color:'var(--t3)', letterSpacing:1, marginTop:3 }}>{sel.length} selected · tap to toggle</div>
+          </div>
+          <button onClick={onDone} style={{ width:30, height:30, borderRadius:8, border:'1px solid var(--b2)', background:'var(--bg-3)', color:'var(--t2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>✕</button>
+        </div>
+
+        {/* Select all / clear */}
+        <div style={{ display:'flex', gap:8, padding:'0 18px 12px' }}>
+          <button onClick={() => setSel(allNames)} style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, padding:'5px 12px', borderRadius:8, border:'1px solid var(--b2)', background:'var(--bg-3)', color:'var(--t2)', letterSpacing:.5 }}>Select all</button>
+          <button onClick={() => setSel([])} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'5px 12px', borderRadius:8, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)', letterSpacing:.5 }}>Clear</button>
+        </div>
+
+        {/* Hall list */}
+        <div style={{ overflowY:'auto', flex:1, WebkitOverflowScrolling:'touch', padding:'0 18px 12px' }}>
+          {allNames.length === 0 && (
+            <div style={{ textAlign:'center', padding:'40px 20px', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>No halls loaded yet — go to Tonight first to load sessions.</div>
+          )}
+          {sortHalls(halls).map(([name, hall]) => {
+            const active = sel.includes(name)
+            const col = TC[hall.typeId] || 'var(--std)'
+            const bg  = TB[hall.typeId] || 'var(--std-bg)'
+            const bdr = TD[hall.typeId] || 'var(--std-bdr)'
+            const lbl = TYPE_LABEL[hall.typeId] || hall.typeId
+            const last = hall.sessions[hall.sessions.length - 1]
+            const st = status$(hall.sessions)
+            return (
+              <button key={name} onClick={() => toggle(name)} style={{ display:'flex', alignItems:'center', gap:12, width:'100%', textAlign:'left', padding:'12px 14px', marginBottom:6, borderRadius:12, background: active ? 'rgba(245,166,35,0.08)' : 'var(--bg-1)', border:`1px solid ${active ? 'var(--gold-bdr)' : 'var(--b1)'}`, WebkitTapHighlightColor:'transparent', transition:'all 0.15s' }}>
+                {/* Check */}
+                <div style={{ width:22, height:22, borderRadius:6, border:`2px solid ${active ? 'var(--gold)' : 'var(--b3)'}`, background: active ? 'var(--gold)' : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'all 0.15s' }}>
+                  {active && <i className="ti ti-check" style={{ fontSize:13, color:'#000', fontWeight:900 }}/>}
+                </div>
+                {/* Hall info */}
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:3 }}>
+                    <span style={{ fontFamily:'var(--display)', fontSize:18, letterSpacing:1, color: active ? 'var(--gold)' : 'var(--t1)', lineHeight:1 }}>{name}</span>
+                    <span style={{ fontFamily:'var(--mono)', fontSize:7, padding:'2px 6px', borderRadius:99, background:bg, color:col, border:`1px solid ${bdr}` }}>{lbl}</span>
+                  </div>
+                  <div style={{ fontFamily:'var(--body)', fontSize:12, color:'var(--t2)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
+                </div>
+                {/* Last session time */}
+                <div style={{ textAlign:'right', flexShrink:0 }}>
+                  <div style={{ fontFamily:'var(--display)', fontSize:16, color: st === 'done' ? 'var(--t3)' : col, letterSpacing:1 }}>{fmtTime(last.startMin)}</div>
+                  <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)' }}>last session</div>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Save button */}
+        <div style={{ padding:'12px 18px', paddingBottom:'calc(env(safe-area-inset-bottom,0px)+14px)', borderTop:'1px solid var(--b1)', background:'var(--bg-2)' }}>
+          <button onClick={save} style={{ width:'100%', fontFamily:'var(--display)', fontSize:20, letterSpacing:2, padding:'14px', borderRadius:12, border:'1px solid var(--gold-bdr)', background:'var(--gold)', color:'#000', fontWeight:700 }}>
+            Save — {sel.length} hall{sel.length !== 1 ? 's' : ''} selected
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
+  const [nowM, setNowM] = useState(now$())
+  const [expanded, setExpanded] = useState({})
+  useEffect(() => { const t = setInterval(() => setNowM(now$()), 30000); return () => clearInterval(t) }, [])
+
+  // Filter to only assigned halls that exist tonight
+  const assigned = sortHalls(halls).filter(([name]) => myHalls.includes(name))
+  const missing  = myHalls.filter(name => !halls[name]) // assigned but not showing tonight
+
+  if (myHalls.length === 0) {
+    return (
+      <div style={{ textAlign:'center', padding:'60px 20px' }}>
+        <div style={{ width:64, height:64, borderRadius:18, background:'var(--gold-bg)', border:'1px solid var(--gold-bdr)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px' }}>
+          <i className="ti ti-user-star" style={{ fontSize:28, color:'var(--gold)' }}/>
+        </div>
+        <div style={{ fontFamily:'var(--display)', fontSize:26, color:'var(--t1)', letterSpacing:2, marginBottom:8 }}>No halls selected</div>
+        <div style={{ fontFamily:'var(--body)', fontSize:13, color:'var(--t3)', lineHeight:1.8, marginBottom:28, maxWidth:240, margin:'0 auto 28px' }}>Select the halls you're assigned to tonight for a focused view.</div>
+        <button onClick={onEdit} style={{ fontFamily:'var(--display)', fontSize:18, letterSpacing:2, padding:'13px 28px', borderRadius:12, border:'1px solid var(--gold-bdr)', background:'var(--gold)', color:'#000' }}>
+          Select My Halls
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {/* Header row */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
+        <div>
+          <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, color:'var(--t3)', textTransform:'uppercase', marginBottom:3 }}>Your assignment</div>
+          <div style={{ fontFamily:'var(--display)', fontSize:'clamp(20px,5vw,28px)', color:'var(--t1)', letterSpacing:1, lineHeight:1 }}>{assigned.length} Hall{assigned.length !== 1 ? 's' : ''}</div>
+        </div>
+        <button onClick={onEdit} style={{ display:'flex', alignItems:'center', gap:6, fontFamily:'var(--mono)', fontSize:8, fontWeight:700, letterSpacing:1, padding:'7px 12px', borderRadius:10, border:'1px solid var(--b2)', background:'var(--bg-2)', color:'var(--t2)' }}>
+          <i className="ti ti-pencil" style={{ fontSize:12 }}/>
+          Edit halls
+        </button>
+      </div>
+
+      {/* Halls with no sessions tonight */}
+      {missing.length > 0 && (
+        <div style={{ marginBottom:12, padding:'10px 14px', background:'rgba(245,166,35,0.06)', border:'1px solid var(--gold-bdr)', borderRadius:10 }}>
+          <div style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, color:'var(--gold)', letterSpacing:1.5, marginBottom:4 }}>NOT SCHEDULED TONIGHT</div>
+          <div style={{ fontFamily:'var(--body)', fontSize:12, color:'var(--t3)' }}>{missing.join(' · ')}</div>
+        </div>
+      )}
+
+      {/* Assigned hall cards */}
+      {assigned.length === 0 && (
+        <div style={{ textAlign:'center', padding:'40px 20px', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>
+          None of your halls are showing tonight. Tap Edit to update your selection.
+        </div>
+      )}
+
+      {assigned.map(([name, hall], i) => {
+        const col  = TC[hall.typeId] || 'var(--std)'
+        const bg   = TB[hall.typeId] || 'var(--std-bg)'
+        const bdr  = TD[hall.typeId] || 'var(--std-bdr)'
+        const lbl  = TYPE_LABEL[hall.typeId] || hall.typeId
+        const last = hall.sessions[hall.sessions.length - 1]
+        const st   = status$(hall.sessions)
+        const cur  = current$(hall.sessions)
+        const isFin = cur && cur.startMin === last.startMin
+        const mL   = cur ? cur.endMin - nowM : null
+        const hallsDone = st === 'done'
+        const accent = isFin ? 'var(--gold)' : st === 'playing' ? 'var(--playing)' : col
+        const isExp = !!expanded[name]
+        const progress = cur ? pct$(cur.startMin, cur.endMin) : 0
+
+        // Time until hall is free (last session endMin)
+        const freeAt  = last.endMin
+        const minsToFree = freeAt - nowM
+        const isFree  = nowM >= freeAt
+
+        return (
+          <div key={name} className="fade-up" style={{ animationDelay: i*50+'ms', marginBottom:10 }}>
+            <div onClick={() => setExpanded(p => ({ ...p, [name]: !p[name] }))} style={{ background:'var(--bg-1)', border:`1px solid ${isFree ? 'var(--b1)' : isFin ? 'var(--gold-bdr)' : st === 'playing' ? 'var(--playing-bdr)' : 'var(--b1)'}`, borderRadius: isExp ? '14px 14px 0 0' : 14, overflow:'hidden', cursor:'pointer', position:'relative', display:'flex', alignItems:'stretch', minHeight:80, transition:'border-color 0.15s' }}>
+              {/* Accent bar */}
+              <div style={{ width:4, flexShrink:0, background: isFree ? 'var(--b2)' : accent, borderRadius:'14px 0 0 14px', transition:'background 0.3s' }}/>
+              {/* Poster */}
+              <div style={{ width:52, flexShrink:0, overflow:'hidden' }}>
+                <MoviePoster movieName={last.movie} movieId={last.movieId} size="fill"/>
+              </div>
+              {/* Content */}
+              <div style={{ flex:1, minWidth:0, padding:'11px 10px 11px 12px' }}>
+                {/* Hall + badge */}
+                <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:4 }}>
+                  <span style={{ fontFamily:'var(--display)', fontSize:17, letterSpacing:1, color:'var(--t1)', lineHeight:1, whiteSpace:'nowrap', flexShrink:0 }}>{name}</span>
+                  <span style={{ fontFamily:'var(--mono)', fontSize:7, padding:'2px 6px', borderRadius:99, background:bg, color:col, border:`1px solid ${bdr}`, whiteSpace:'nowrap', flexShrink:0 }}>{lbl}</span>
+                  {!isFree && st !== 'upcoming' && <div style={{ width:5, height:5, borderRadius:'50%', background:accent, flexShrink:0, marginLeft:'auto', animation:'blip 1.4s ease-in-out infinite' }}/>}
+                </div>
+                {/* Movie */}
+                <div style={{ fontFamily:'var(--body)', fontSize:13, fontWeight:600, color:'var(--t1)', marginBottom:6, overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
+                {/* Status line — the key info for a staff member */}
+                {isFree ? (
+                  <div style={{ display:'inline-flex', alignItems:'center', gap:5, background:'rgba(0,229,160,0.08)', border:'1px solid rgba(0,229,160,0.22)', borderRadius:99, padding:'3px 10px' }}>
+                    <i className="ti ti-check" style={{ fontSize:10, color:'var(--playing)' }}/>
+                    <span style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, color:'var(--playing)', letterSpacing:1 }}>Hall free · {fmtTime(freeAt)}</span>
+                  </div>
+                ) : isFin ? (
+                  <div style={{ display:'inline-flex', alignItems:'center', gap:5, background:'var(--gold-bg)', border:'1px solid var(--gold-bdr)', borderRadius:99, padding:'3px 10px' }}>
+                    <div style={{ width:4, height:4, borderRadius:'50%', background:'var(--gold)', animation:'pulse 2s ease-in-out infinite' }}/>
+                    <span style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, color:'var(--gold)', letterSpacing:1 }}>Final show · free in {human$(mL)}</span>
+                  </div>
+                ) : st === 'playing' ? (
+                  <div style={{ display:'inline-flex', alignItems:'center', gap:5, background:'var(--playing-bg)', border:'1px solid var(--playing-bdr)', borderRadius:99, padding:'3px 10px' }}>
+                    <div style={{ width:4, height:4, borderRadius:'50%', background:'var(--playing)', animation:'blip 1.4s ease-in-out infinite' }}/>
+                    <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--playing)', letterSpacing:1 }}>Playing · free ~{fmtTime(freeAt)}</span>
+                  </div>
+                ) : (
+                  <div style={{ display:'inline-flex', alignItems:'center', gap:5 }}>
+                    <i className="ti ti-clock" style={{ fontSize:10, color:'var(--t3)' }}/>
+                    <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1 }}>Last session {fmtTime(last.startMin)} · free ~{fmtTime(freeAt)}</span>
+                  </div>
+                )}
+              </div>
+              {/* Chevron */}
+              <div style={{ width:34, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <i className="ti ti-chevron-down chevron" style={{ fontSize:13, color:'var(--t3)', transform: isExp ? 'rotate(180deg)' : 'none' }}/>
+              </div>
+              {/* Progress bar */}
+              {progress > 0 && !isFree && (
+                <div style={{ position:'absolute', bottom:0, left:0, width:progress+'%', height:2, background:`linear-gradient(to right,${accent}88,${accent})`, borderRadius:1 }}/>
+              )}
+            </div>
+
+            {/* Expanded — all sessions for this hall tonight */}
+            {isExp && (
+              <div style={{ background:'var(--bg-2)', border:'1px solid var(--b3)', borderTop:'none', borderRadius:'0 0 14px 14px', padding:'14px' }}>
+                <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:1.5, color:'var(--t3)', textTransform:'uppercase', marginBottom:10 }}>All sessions tonight</div>
+                {hall.sessions.map((s, si) => {
+                  const sDone = nowM >= s.endMin
+                  const sPlaying = s.startMin <= nowM && nowM < s.endMin
+                  const sCol = sPlaying ? (s.startMin === last.startMin ? 'var(--gold)' : 'var(--playing)') : sDone ? 'var(--t4)' : col
+                  return (
+                    <div key={si} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom: si < hall.sessions.length - 1 ? '1px solid var(--b0)' : 'none', opacity: sDone ? 0.45 : 1 }}>
+                      <div style={{ width:4, height:4, borderRadius:'50%', background: sPlaying ? sCol : sDone ? 'var(--t4)' : 'var(--b3)', flexShrink:0, animation: sPlaying ? 'blip 1.4s ease-in-out infinite' : 'none' }}/>
+                      <div style={{ fontFamily:'var(--display)', fontSize:16, color:sCol, letterSpacing:1, flexShrink:0, width:72 }}>{fmtTime(s.startMin)}</div>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontFamily:'var(--body)', fontSize:12, fontWeight:600, color: sDone ? 'var(--t3)' : 'var(--t1)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{s.movie}</div>
+                        {s.runtime > 0 && <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', marginTop:1 }}>ends ~{fmtTime(s.endMin)}</div>}
+                      </div>
+                      {sDone && <span style={{ fontFamily:'var(--mono)', fontSize:7, color:'var(--t4)', flexShrink:0 }}>done</span>}
+                      {sPlaying && <span style={{ fontFamily:'var(--mono)', fontSize:7, color:sCol, flexShrink:0, fontWeight:700 }}>{si === hall.sessions.length-1 ? 'FINAL' : 'NOW'}</span>}
+                    </div>
+                  )
+                })}
+                {/* Free time banner */}
+                <div style={{ marginTop:12, display:'flex', alignItems:'center', gap:8, padding:'10px 12px', background: isFree ? 'rgba(0,229,160,0.08)' : 'var(--bg-3)', border:`1px solid ${isFree ? 'rgba(0,229,160,0.22)' : 'var(--b1)'}`, borderRadius:9 }}>
+                  <i className={`ti ${isFree ? 'ti-check' : 'ti-clock'}`} style={{ fontSize:13, color: isFree ? 'var(--playing)' : 'var(--t3)', flexShrink:0 }}/>
+                  <div>
+                    <div style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, color: isFree ? 'var(--playing)' : 'var(--t2)', letterSpacing:1 }}>
+                      {isFree ? `Hall free since ${fmtTime(freeAt)}` : `Hall free from ~${fmtTime(freeAt)}`}
+                    </div>
+                    {!isFree && minsToFree > 0 && (
+                      <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', marginTop:2 }}>in {human$(minsToFree)}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN APP
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -508,6 +768,8 @@ export default function App() {
   const [lastFetched, setLastFetched] = useState(null)
   const [view,        setView]        = useState('tonight')
   const [picker,      setPicker]      = useState(false)
+  const [myHalls,     saveMyHalls]    = useMyHalls(cinemaId)
+  const [hallPicker,  setHallPicker]  = useState(false)
 
   const cinema = CINEMAS.find(c => c.id === cinemaId)
   const movies = { ...KNOWN_MOVIES, ...movieMap }
@@ -619,6 +881,13 @@ export default function App() {
         </div>
       )}
 
+      {/* ── MY HALLS ── */}
+      {view === 'myhalls' && (
+        <div style={wrap} className="fade-up">
+          <MyHallsView halls={todayH} myHalls={myHalls} onEdit={() => setHallPicker(true)} cinemaId={cinemaId}/>
+        </div>
+      )}
+
       {/* ── SETTINGS ── */}
       {view === 'settings' && (
         <div style={wrap} className="fade-up">
@@ -660,6 +929,7 @@ export default function App() {
         </div>
       )}
 
+      {hallPicker && <HallPicker halls={todayH} myHalls={myHalls} onSave={saveMyHalls} onDone={() => setHallPicker(false)}/>}
       <BottomNav view={view} setView={setView} />
       <CinemaSheet value={cinemaId} onChange={setCinemaId} open={picker} onClose={() => setPicker(false)} />
     </div>
