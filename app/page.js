@@ -526,7 +526,7 @@ function useGroups(cinemaId) {
 
 // ── GroupEditor — bottom sheet to create or edit a group ─────────────────────
 function GroupEditor({ halls, existing, onSave, onClose }) {
-  const isEdit  = !!existing
+  const isEdit   = !!existing
   const [name, setName] = useState(existing?.name || '')
   const [sel, setSel]   = useState(existing?.halls || [])
   const allHalls = sortHalls(halls).map(([n]) => n)
@@ -537,18 +537,48 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
     onSave({ id: existing?.id || Date.now().toString(), name: name.trim(), halls: sel })
     onClose()
   }
+
+  // Lock scroll on body
   useEffect(() => {
+    const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
+    return () => { document.body.style.overflow = prev }
   }, [])
 
-  return (
-    <>
-      {/* Backdrop — separate from sheet, low z-index */}
-      <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:10000, background:'rgba(0,0,0,0.88)' }}/>
+  // Inline styles for the overlay — avoid all fixed/absolute/z-index issues
+  // by using a top-level overlay that IS the page during open
+  const overlayStyle = {
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    zIndex: 99999,
+    isolation: 'isolate',  // creates NEW stacking context at this level
+  }
 
-      {/* Sheet — above backdrop */}
-      <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:10001, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', maxHeight:'88vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)' }}>
+  const backdropStyle = {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    background: 'rgba(0,0,0,0.88)',
+  }
+
+  const sheetStyle = {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    background: 'var(--bg-2)',
+    borderRadius: '22px 22px 0 0',
+    border: '1px solid var(--b2)',
+    borderBottom: 'none',
+    maxHeight: '88vh',
+    display: 'flex',
+    flexDirection: 'column',
+    boxShadow: '0 -24px 80px rgba(0,0,0,0.95)',
+    animation: 'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)',
+    overflow: 'hidden',
+  }
+
+  return (
+    <div style={overlayStyle}>
+      <div style={backdropStyle} onClick={onClose}/>
+      <div style={sheetStyle}>
 
         {/* PINNED TOP */}
         <div style={{ flexShrink:0 }}>
@@ -609,10 +639,12 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
             {isEdit ? 'Save changes' : canSave ? `Create · ${sel.length} hall${sel.length!==1?'s':''}` : 'Select halls above'}
           </button>
         </div>
+
       </div>
-    </>
+    </div>
   )
 }
+
 
 
 
