@@ -504,91 +504,107 @@ function Header({ cinemaId, loading, lastFetched, onRefresh, onOpenPicker }) {
 }
 
 
-// ─── MY HALLS ────────────────────────────────────────────────────────────────
-// Staff hall picker — select assigned halls, get a focused personal view
-// Persists to localStorage by cinemaId so switching cinemas resets selection
+// ─── MY HALLS ─ multi-group system ─────────────────────────────────────────
+// Each "group" is { id, name, halls: [hallName, ...] }
+// Stored per cinemaId so switching cinema gives a fresh slate
 
-function useMyHalls(cinemaId) {
-  const KEY = `hoyts-myhalls-${cinemaId}`
-  const [myHalls, setMyHalls] = useState(() => {
-    try { const s = localStorage.getItem(KEY); return s ? JSON.parse(s) : [] } catch(e) { return [] }
+const GROUPS_KEY = id => `hoyts-groups-${id}`
+
+function useGroups(cinemaId) {
+  const [groups, setGroups] = useState(() => {
+    try { const s = localStorage.getItem(GROUPS_KEY(cinemaId)); return s ? JSON.parse(s) : [] } catch(e) { return [] }
   })
-  // Reset when cinema changes
   useEffect(() => {
-    try { const s = localStorage.getItem(KEY); setMyHalls(s ? JSON.parse(s) : []) } catch(e) { setMyHalls([]) }
+    try { const s = localStorage.getItem(GROUPS_KEY(cinemaId)); setGroups(s ? JSON.parse(s) : []) } catch(e) { setGroups([]) }
   }, [cinemaId])
-  const save = halls => { setMyHalls(halls); try { localStorage.setItem(KEY, JSON.stringify(halls)) } catch(e) {} }
-  return [myHalls, save]
+  const save = gs => { setGroups(gs); try { localStorage.setItem(GROUPS_KEY(cinemaId), JSON.stringify(gs)) } catch(e) {} }
+  const add    = g  => save([...groups, g])
+  const update = g  => save(groups.map(x => x.id === g.id ? g : x))
+  const remove = id => save(groups.filter(x => x.id !== id))
+  return { groups, add, update, remove }
 }
 
-function HallPicker({ halls, myHalls, onSave, onDone }) {
-  const allNames = sortHalls(halls).map(([name]) => name)
-  const [sel, setSel] = useState([...myHalls])
-  const toggle = name => setSel(p => p.includes(name) ? p.filter(n => n !== name) : [...p, name])
-  const save = () => { onSave(sel); onDone() }
+// ── GroupEditor — bottom sheet to create or edit a group ─────────────────────
+function GroupEditor({ halls, existing, onSave, onClose }) {
+  const isEdit = !!existing
+  const [name, setName]   = useState(existing?.name || '')
+  const [sel, setSel]     = useState(existing?.halls || [])
+  const nameRef           = useRef(null)
+  const allHalls          = sortHalls(halls).map(([n]) => n)
+
+  useEffect(() => { document.body.style.overflow = 'hidden'; setTimeout(() => nameRef.current?.focus(), 300); return () => { document.body.style.overflow = '' } }, [])
+
+  const toggle = n => setSel(p => p.includes(n) ? p.filter(x => x !== n) : [...p, n])
+  const canSave = name.trim().length > 0 && sel.length > 0
+
+  const save = () => {
+    if (!canSave) return
+    onSave({ id: existing?.id || Date.now().toString(), name: name.trim(), halls: sel })
+    onClose()
+  }
 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:9999, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
-      <div onClick={onDone} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.88)' }}/>
-      <div style={{ position:'relative', zIndex:1, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', maxHeight:'88vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)' }}>
+      <div onClick={onClose} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.88)' }}/>
+      <div style={{ position:'relative', zIndex:1, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', maxHeight:'92vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)' }}>
+        {/* Handle */}
         <div style={{ display:'flex', justifyContent:'center', padding:'14px 0 4px' }}>
           <div style={{ width:36, height:4, borderRadius:2, background:'var(--b3)' }}/>
         </div>
+        {/* Header */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 18px 14px' }}>
-          <div>
-            <div style={{ fontFamily:'var(--display)', fontSize:24, color:'var(--t1)', letterSpacing:2 }}>Select Your Halls</div>
-            <div style={{ fontFamily:'var(--mono)', fontSize:9, color:'var(--t3)', letterSpacing:1, marginTop:3 }}>{sel.length} selected · tap to toggle</div>
-          </div>
-          <button onClick={onDone} style={{ width:30, height:30, borderRadius:8, border:'1px solid var(--b2)', background:'var(--bg-3)', color:'var(--t2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>✕</button>
+          <div style={{ fontFamily:'var(--display)', fontSize:24, color:'var(--t1)', letterSpacing:2 }}>{isEdit ? 'Edit Group' : 'New Group'}</div>
+          <button onClick={onClose} style={{ width:30, height:30, borderRadius:8, border:'1px solid var(--b2)', background:'var(--bg-3)', color:'var(--t2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>✕</button>
         </div>
 
-        {/* Select all / clear */}
-        <div style={{ display:'flex', gap:8, padding:'0 18px 12px' }}>
-          <button onClick={() => setSel(allNames)} style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, padding:'5px 12px', borderRadius:8, border:'1px solid var(--b2)', background:'var(--bg-3)', color:'var(--t2)', letterSpacing:.5 }}>Select all</button>
-          <button onClick={() => setSel([])} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'5px 12px', borderRadius:8, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)', letterSpacing:.5 }}>Clear</button>
+        {/* Name input */}
+        <div style={{ padding:'0 18px 14px' }}>
+          <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)', marginBottom:7 }}>Group name</div>
+          <input ref={nameRef} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Section A, Suraj's halls…" maxLength={32}
+            style={{ width:'100%', fontFamily:'var(--body)', fontSize:16, fontWeight:600, background:'var(--bg-1)', border:`1px solid ${name.trim() ? 'var(--gold-bdr)' : 'var(--b2)'}`, borderRadius:12, padding:'12px 14px', color:'var(--t1)', outline:'none', caretColor:'var(--gold)', transition:'border-color 0.15s' }}/>
+        </div>
+
+        {/* Hall picker */}
+        <div style={{ padding:'0 18px 10px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)' }}>Select halls · {sel.length} chosen</div>
+          <div style={{ display:'flex', gap:8 }}>
+            <button onClick={() => setSel(allHalls)} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>All</button>
+            <button onClick={() => setSel([])} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>Clear</button>
+          </div>
         </div>
 
         {/* Hall list */}
         <div style={{ overflowY:'auto', flex:1, WebkitOverflowScrolling:'touch', padding:'0 18px 12px' }}>
-          {allNames.length === 0 && (
-            <div style={{ textAlign:'center', padding:'40px 20px', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>No halls loaded yet — go to Tonight first to load sessions.</div>
-          )}
-          {sortHalls(halls).map(([name, hall]) => {
-            const active = sel.includes(name)
+          {allHalls.length === 0 && <div style={{ textAlign:'center', padding:'32px 20px', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>No halls loaded — go to Tonight first.</div>}
+          {sortHalls(halls).map(([name2, hall]) => {
+            const active = sel.includes(name2)
             const col = TC[hall.typeId] || 'var(--std)'
             const bg  = TB[hall.typeId] || 'var(--std-bg)'
             const bdr = TD[hall.typeId] || 'var(--std-bdr)'
             const lbl = TYPE_LABEL[hall.typeId] || hall.typeId
             const last = hall.sessions[hall.sessions.length - 1]
-            const st = status$(hall.sessions)
             return (
-              <button key={name} onClick={() => toggle(name)} style={{ display:'flex', alignItems:'center', gap:12, width:'100%', textAlign:'left', padding:'12px 14px', marginBottom:6, borderRadius:12, background: active ? 'rgba(245,166,35,0.08)' : 'var(--bg-1)', border:`1px solid ${active ? 'var(--gold-bdr)' : 'var(--b1)'}`, WebkitTapHighlightColor:'transparent', transition:'all 0.15s' }}>
-                {/* Check */}
-                <div style={{ width:22, height:22, borderRadius:6, border:`2px solid ${active ? 'var(--gold)' : 'var(--b3)'}`, background: active ? 'var(--gold)' : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'all 0.15s' }}>
-                  {active && <i className="ti ti-check" style={{ fontSize:13, color:'#000', fontWeight:900 }}/>}
+              <button key={name2} onClick={() => toggle(name2)} style={{ display:'flex', alignItems:'center', gap:12, width:'100%', textAlign:'left', padding:'11px 13px', marginBottom:5, borderRadius:11, background: active ? 'rgba(245,166,35,0.08)' : 'var(--bg-1)', border:`1px solid ${active ? 'var(--gold-bdr)' : 'var(--b1)'}`, WebkitTapHighlightColor:'transparent', transition:'all 0.13s' }}>
+                <div style={{ width:22, height:22, borderRadius:6, border:`2px solid ${active ? 'var(--gold)' : 'var(--b3)'}`, background: active ? 'var(--gold)' : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'all 0.13s' }}>
+                  {active && <i className="ti ti-check" style={{ fontSize:12, color:'#000' }}/>}
                 </div>
-                {/* Hall info */}
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:3 }}>
-                    <span style={{ fontFamily:'var(--display)', fontSize:18, letterSpacing:1, color: active ? 'var(--gold)' : 'var(--t1)', lineHeight:1 }}>{name}</span>
+                  <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
+                    <span style={{ fontFamily:'var(--display)', fontSize:17, letterSpacing:1, color: active ? 'var(--gold)' : 'var(--t1)', lineHeight:1 }}>{name2}</span>
                     <span style={{ fontFamily:'var(--mono)', fontSize:7, padding:'2px 6px', borderRadius:99, background:bg, color:col, border:`1px solid ${bdr}` }}>{lbl}</span>
                   </div>
-                  <div style={{ fontFamily:'var(--body)', fontSize:12, color:'var(--t2)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
+                  <div style={{ fontFamily:'var(--body)', fontSize:11, color:'var(--t2)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
                 </div>
-                {/* Last session time */}
-                <div style={{ textAlign:'right', flexShrink:0 }}>
-                  <div style={{ fontFamily:'var(--display)', fontSize:16, color: st === 'done' ? 'var(--t3)' : col, letterSpacing:1 }}>{fmtTime(last.startMin)}</div>
-                  <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)' }}>last session</div>
-                </div>
+                <div style={{ fontFamily:'var(--display)', fontSize:15, color: active ? 'var(--gold)' : 'var(--t3)', letterSpacing:1, flexShrink:0 }}>{fmtTime(last.startMin)}</div>
               </button>
             )
           })}
         </div>
 
-        {/* Save button */}
-        <div style={{ padding:'12px 18px', paddingBottom:'calc(env(safe-area-inset-bottom,0px)+14px)', borderTop:'1px solid var(--b1)', background:'var(--bg-2)' }}>
-          <button onClick={save} style={{ width:'100%', fontFamily:'var(--display)', fontSize:20, letterSpacing:2, padding:'14px', borderRadius:12, border:'1px solid var(--gold-bdr)', background:'var(--gold)', color:'#000', fontWeight:700 }}>
-            Save — {sel.length} hall{sel.length !== 1 ? 's' : ''} selected
+        {/* Save */}
+        <div style={{ padding:'12px 18px', paddingBottom:'calc(env(safe-area-inset-bottom,0px)+14px)', borderTop:'1px solid var(--b1)' }}>
+          <button onClick={save} disabled={!canSave} style={{ width:'100%', fontFamily:'var(--display)', fontSize:20, letterSpacing:2, padding:'14px', borderRadius:12, border:'1px solid var(--gold-bdr)', background: canSave ? 'var(--gold)' : 'var(--bg-3)', color: canSave ? '#000' : 'var(--t4)', transition:'all 0.15s' }}>
+            {isEdit ? 'Save changes' : `Create — ${sel.length} hall${sel.length !== 1 ? 's' : ''}`}
           </button>
         </div>
       </div>
@@ -596,24 +612,20 @@ function HallPicker({ halls, myHalls, onSave, onDone }) {
   )
 }
 
-function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
-  const [nowM, setNowM] = useState(now$())
-  const [expanded, setExpanded] = useState(null) // only one open at a time
-  useEffect(() => { const t = setInterval(() => setNowM(now$()), 30000); return () => clearInterval(t) }, [])
+// ── GroupList — first glance, TripView-style list of saved groups ─────────────
+function GroupList({ groups, halls, onOpen, onAdd, onEdit, onDelete }) {
+  const [confirmDel, setConfirmDel] = useState(null)
 
-  const assigned = sortHalls(halls).filter(([name]) => myHalls.includes(name))
-  const missing  = myHalls.filter(name => !halls[name])
-
-  if (myHalls.length === 0) {
+  if (groups.length === 0) {
     return (
-      <div style={{ textAlign:'center', padding:'60px 20px' }}>
-        <div style={{ width:64, height:64, borderRadius:18, background:'var(--gold-bg)', border:'1px solid var(--gold-bdr)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 20px' }}>
+      <div style={{ textAlign:'center', padding:'56px 20px' }}>
+        <div style={{ width:64, height:64, borderRadius:18, background:'var(--gold-bg)', border:'1px solid var(--gold-bdr)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 18px' }}>
           <i className="ti ti-user-star" style={{ fontSize:28, color:'var(--gold)' }}/>
         </div>
-        <div style={{ fontFamily:'var(--display)', fontSize:26, color:'var(--t1)', letterSpacing:2, marginBottom:8 }}>No halls selected</div>
-        <div style={{ fontFamily:'var(--body)', fontSize:13, color:'var(--t3)', lineHeight:1.8, marginBottom:28, maxWidth:240, margin:'0 auto 28px' }}>Select the halls you're assigned to tonight.</div>
-        <button onClick={onEdit} style={{ fontFamily:'var(--display)', fontSize:18, letterSpacing:2, padding:'13px 28px', borderRadius:12, border:'1px solid var(--gold-bdr)', background:'var(--gold)', color:'#000' }}>
-          Select My Halls
+        <div style={{ fontFamily:'var(--display)', fontSize:24, color:'var(--t1)', letterSpacing:2, marginBottom:8 }}>No groups yet</div>
+        <div style={{ fontFamily:'var(--body)', fontSize:13, color:'var(--t3)', lineHeight:1.8, marginBottom:26, maxWidth:230, margin:'0 auto 26px' }}>Create a group for each set of halls you cover.</div>
+        <button onClick={onAdd} style={{ fontFamily:'var(--display)', fontSize:18, letterSpacing:2, padding:'13px 28px', borderRadius:12, border:'1px solid var(--gold-bdr)', background:'var(--gold)', color:'#000' }}>
+          Create first group
         </button>
       </div>
     )
@@ -621,32 +633,113 @@ function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
 
   return (
     <div>
-      {/* Header */}
+      {/* Groups list — TripView style */}
+      <div style={{ background:'var(--bg-1)', border:'1px solid var(--b1)', borderRadius:14, overflow:'hidden', marginBottom:14 }}>
+        {groups.map((group, i) => {
+          // Summarise halls for this group
+          const assigned = group.halls.filter(n => halls[n])
+          const missing  = group.halls.filter(n => !halls[n])
+          // Find the earliest free time among assigned halls
+          const freeTimes = assigned.map(n => {
+            const hall = halls[n]; if (!hall) return null
+            return hall.sessions[hall.sessions.length - 1].endMin
+          }).filter(Boolean)
+          const allFree = assigned.length > 0 && assigned.every(n => {
+            const hall = halls[n]; if (!hall) return false
+            return (new Date().getHours()*60 + new Date().getMinutes()) >= hall.sessions[hall.sessions.length-1].endMin
+          })
+          const latestFree = freeTimes.length ? Math.max(...freeTimes) : null
+
+          return (
+            <div key={group.id} style={{ borderBottom: i < groups.length - 1 ? '1px solid var(--b1)' : 'none' }}>
+              <div style={{ display:'flex', alignItems:'stretch', minHeight:70, cursor:'pointer' }} onClick={() => onOpen(group)}>
+                {/* Colour bar */}
+                <div style={{ width:5, flexShrink:0, background: allFree ? 'var(--playing)' : 'var(--gold)', borderRadius: i === 0 ? '14px 0 0 0' : i === groups.length-1 && groups.length > 0 ? '0 0 0 14px' : 0 }}/>
+                {/* Info */}
+                <div style={{ flex:1, minWidth:0, padding:'13px 12px' }}>
+                  <div style={{ fontFamily:'var(--display)', fontSize:20, letterSpacing:1, color:'var(--t1)', lineHeight:1, marginBottom:4 }}>{group.name}</div>
+                  <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:.5 }}>
+                    {group.halls.slice(0,4).join(' · ')}{group.halls.length > 4 ? ` +${group.halls.length-4}` : ''}
+                  </div>
+                  {missing.length > 0 && <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--gold)', marginTop:3 }}>{missing.length} hall{missing.length>1?'s':''} not tonight</div>}
+                </div>
+                {/* Right — free time + chevron */}
+                <div style={{ padding:'13px 10px', display:'flex', flexDirection:'column', alignItems:'flex-end', justifyContent:'space-between', flexShrink:0 }}>
+                  {latestFree !== null && (
+                    <div style={{ fontFamily:'var(--display)', fontSize:18, letterSpacing:1, color: allFree ? 'var(--playing)' : 'var(--t1)', lineHeight:1 }}>~{fmtTime(latestFree)}</div>
+                  )}
+                  <i className="ti ti-chevron-right" style={{ fontSize:14, color:'var(--t3)' }}/>
+                </div>
+              </div>
+
+              {/* Edit / Delete actions — swipe feel with long-press alternative */}
+              <div style={{ display:'flex', gap:0, borderTop:'1px solid var(--b0)' }}>
+                <button onClick={() => onEdit(group)} style={{ flex:1, padding:'8px', fontFamily:'var(--mono)', fontSize:8, letterSpacing:1, color:'var(--t3)', background:'transparent', border:'none', borderRight:'1px solid var(--b0)', display:'flex', alignItems:'center', justifyContent:'center', gap:5 }}>
+                  <i className="ti ti-pencil" style={{ fontSize:11 }}/>Edit
+                </button>
+                <button onClick={() => setConfirmDel(group.id)} style={{ flex:1, padding:'8px', fontFamily:'var(--mono)', fontSize:8, letterSpacing:1, color: confirmDel === group.id ? '#FF5757' : 'var(--t3)', background: confirmDel === group.id ? 'rgba(255,87,87,0.08)' : 'transparent', border:'none', display:'flex', alignItems:'center', justifyContent:'center', gap:5, transition:'all 0.15s' }}>
+                  {confirmDel === group.id
+                    ? <><i className="ti ti-trash" style={{ fontSize:11 }}/>Confirm delete</>
+                    : <><i className="ti ti-trash" style={{ fontSize:11 }}/>Delete</>
+                  }
+                </button>
+              </div>
+              {/* Confirm delete tap outside to cancel */}
+              {confirmDel === group.id && (
+                <div onClick={() => setConfirmDel(null)} style={{ position:'fixed', inset:0, zIndex:50 }}/>
+              )}
+              {confirmDel === group.id && setTimeout(() => {
+                // auto-cancel confirm after 3s handled via onDelete immediate
+              }, 0) && null}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Add new group */}
+      <button onClick={onAdd} style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'13px', borderRadius:12, border:'1px solid var(--b2)', background:'transparent', fontFamily:'var(--body)', fontSize:14, fontWeight:600, color:'var(--t2)', transition:'border-color 0.15s, color 0.15s' }}>
+        <i className="ti ti-plus" style={{ fontSize:16 }}/>
+        New group
+      </button>
+    </div>
+  )
+}
+
+// ── GroupDetail — the TripView-style hall rows inside a group ─────────────────
+function GroupDetail({ group, halls, cinemaId, onBack, onEdit }) {
+  const [nowM, setNowM]   = useState(now$())
+  const [expanded, setExp] = useState(null)
+  useEffect(() => { const t = setInterval(() => setNowM(now$()), 30000); return () => clearInterval(t) }, [])
+
+  const assigned = sortHalls(halls).filter(([name]) => group.halls.includes(name))
+  const missing  = group.halls.filter(n => !halls[n])
+
+  return (
+    <div>
+      {/* Back header */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-        <div>
-          <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, color:'var(--t3)', textTransform:'uppercase', marginBottom:3 }}>Your assignment</div>
-          <div style={{ fontFamily:'var(--display)', fontSize:'clamp(20px,5vw,28px)', color:'var(--t1)', letterSpacing:1, lineHeight:1 }}>{assigned.length} Hall{assigned.length !== 1 ? 's' : ''}</div>
-        </div>
-        <button onClick={onEdit} style={{ display:'flex', alignItems:'center', gap:6, fontFamily:'var(--mono)', fontSize:8, fontWeight:700, letterSpacing:1, padding:'7px 12px', borderRadius:10, border:'1px solid var(--b2)', background:'var(--bg-2)', color:'var(--t2)' }}>
-          <i className="ti ti-pencil" style={{ fontSize:12 }}/>
-          Edit
+        <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:7, fontFamily:'var(--mono)', fontSize:8, fontWeight:700, letterSpacing:1, padding:'7px 12px', borderRadius:10, border:'1px solid var(--b2)', background:'var(--bg-2)', color:'var(--t2)', WebkitTapHighlightColor:'transparent' }}>
+          <i className="ti ti-chevron-left" style={{ fontSize:13 }}/>Back
+        </button>
+        <div style={{ fontFamily:'var(--display)', fontSize:20, color:'var(--t1)', letterSpacing:1 }}>{group.name}</div>
+        <button onClick={onEdit} style={{ display:'flex', alignItems:'center', gap:5, fontFamily:'var(--mono)', fontSize:8, letterSpacing:1, padding:'7px 12px', borderRadius:10, border:'1px solid var(--b2)', background:'var(--bg-2)', color:'var(--t2)' }}>
+          <i className="ti ti-pencil" style={{ fontSize:11 }}/>Edit
         </button>
       </div>
 
-      {/* Not scheduled notice */}
+      {/* Not tonight notice */}
       {missing.length > 0 && (
         <div style={{ marginBottom:10, padding:'9px 13px', background:'rgba(245,166,35,0.06)', border:'1px solid var(--gold-bdr)', borderRadius:10, display:'flex', alignItems:'center', gap:8 }}>
-          <i className="ti ti-alert-triangle" style={{ fontSize:13, color:'var(--gold)', flexShrink:0 }}/>
+          <i className="ti ti-alert-triangle" style={{ fontSize:12, color:'var(--gold)', flexShrink:0 }}/>
           <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--gold)', letterSpacing:.5 }}><span style={{ fontWeight:700 }}>Not tonight: </span>{missing.join(' · ')}</div>
         </div>
       )}
 
-      {/* TripView-style hall list */}
+      {/* Hall list */}
       <div style={{ background:'var(--bg-1)', border:'1px solid var(--b1)', borderRadius:14, overflow:'hidden' }}>
         {assigned.length === 0 && (
           <div style={{ padding:'28px 16px', textAlign:'center', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>None of your halls are scheduled tonight.</div>
         )}
-
         {assigned.map(([name, hall], i) => {
           const col   = TC[hall.typeId] || 'var(--std)'
           const bg    = TB[hall.typeId] || 'var(--std-bg)'
@@ -664,61 +757,31 @@ function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
           const isOpen = expanded === name
           const progress = cur ? pct$(cur.startMin, cur.endMin) : 0
 
-          // Status label — what a staff member needs to know
           const statusText = isFree
             ? `Free since ${fmtTime(freeAt)}`
-            : isFin
-            ? `Final · free in ${human$(mL)}`
-            : st === 'playing'
-            ? `Playing · free ~${fmtTime(freeAt)}`
+            : isFin ? `Final · free in ${human$(mL)}`
+            : st === 'playing' ? `Playing · free ~${fmtTime(freeAt)}`
             : `Last ${fmtTime(last.startMin)} · free ~${fmtTime(freeAt)}`
-
           const statusCol = isFree ? 'var(--playing)' : isFin ? 'var(--gold)' : st === 'playing' ? 'var(--playing)' : 'var(--t3)'
 
           return (
             <div key={name}>
-              {/* ── TRIPVIEW ROW ── */}
-              <div
-                onClick={() => setExpanded(isOpen ? null : name)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'stretch',
-                  borderBottom: i < assigned.length - 1 || isOpen ? '1px solid var(--b1)' : 'none',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  background: isOpen ? 'var(--bg-2)' : 'transparent',
-                  transition: 'background 0.15s',
-                  minHeight: 68,
-                }}
-              >
-                {/* Left colour bar — like TripView */}
+              {/* TripView row */}
+              <div onClick={() => setExp(isOpen ? null : name)} style={{ display:'flex', alignItems:'stretch', borderBottom: i < assigned.length - 1 || isOpen ? '1px solid var(--b1)' : 'none', cursor:'pointer', position:'relative', background: isOpen ? 'var(--bg-2)' : 'transparent', transition:'background 0.15s', minHeight:68 }}>
                 <div style={{ width:5, flexShrink:0, background: isFree ? 'var(--playing)' : accent, transition:'background 0.3s' }}/>
-
-                {/* Content */}
                 <div style={{ flex:1, minWidth:0, padding:'13px 12px' }}>
-                  {/* Hall name */}
                   <div style={{ fontFamily:'var(--display)', fontSize:20, letterSpacing:1, color:'var(--t1)', lineHeight:1, marginBottom:4 }}>{name}</div>
-                  {/* Type label */}
                   <div style={{ fontFamily:'var(--mono)', fontSize:8, color:col, letterSpacing:1, marginBottom:5 }}>{lbl}</div>
-                  {/* Movie */}
                   <div style={{ fontFamily:'var(--body)', fontSize:12, color:'var(--t2)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
                 </div>
-
-                {/* Right — free time + status */}
                 <div style={{ padding:'13px 14px 13px 8px', textAlign:'right', flexShrink:0, display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
-                  {/* Free at time — big */}
-                  <div style={{ fontFamily:'var(--display)', fontSize:20, letterSpacing:1, color: isFree ? 'var(--playing)' : 'var(--t1)', lineHeight:1 }}>
-                    ~{fmtTime(freeAt)}
-                  </div>
-                  {/* Status */}
+                  <div style={{ fontFamily:'var(--display)', fontSize:20, letterSpacing:1, color: isFree ? 'var(--playing)' : 'var(--t1)', lineHeight:1 }}>~{fmtTime(freeAt)}</div>
                   <div style={{ display:'flex', alignItems:'center', gap:4, justifyContent:'flex-end' }}>
                     {!isFree && st !== 'upcoming' && <div style={{ width:5, height:5, borderRadius:'50%', background:statusCol, animation:'blip 1.4s ease-in-out infinite', flexShrink:0 }}/>}
                     {isFree && <i className="ti ti-check" style={{ fontSize:10, color:'var(--playing)' }}/>}
-                    <span style={{ fontFamily:'var(--mono)', fontSize:8, color:statusCol, letterSpacing:.5 }}>{statusText}</span>
+                    <span style={{ fontFamily:'var(--mono)', fontSize:8, color:statusCol, letterSpacing:.5, textAlign:'right', maxWidth:120 }}>{statusText}</span>
                   </div>
                 </div>
-
-                {/* Progress bar */}
                 {progress > 0 && !isFree && (
                   <div style={{ position:'absolute', bottom:0, left:5, right:0, height:2, background:'var(--b0)' }}>
                     <div style={{ height:'100%', width:progress+'%', background:accent, borderRadius:1 }}/>
@@ -726,10 +789,9 @@ function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
                 )}
               </div>
 
-              {/* ── EXPANDED DETAIL ── */}
+              {/* Expanded */}
               {isOpen && (
                 <div style={{ background:'var(--bg-2)', borderBottom: i < assigned.length - 1 ? '1px solid var(--b1)' : 'none', padding:'14px' }}>
-                  {/* All sessions */}
                   <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:10 }}>All sessions tonight</div>
                   {hall.sessions.map((s, si) => {
                     const sDone    = nowM >= s.endMin
@@ -737,7 +799,7 @@ function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
                     const isLast   = si === hall.sessions.length - 1
                     const sCol     = sPlaying ? (isLast ? 'var(--gold)' : 'var(--playing)') : sDone ? 'var(--t4)' : col
                     return (
-                      <div key={si} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom: si < hall.sessions.length - 1 ? '1px solid var(--b0)' : 'none', opacity: sDone ? 0.45 : 1 }}>
+                      <div key={si} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom: si < hall.sessions.length-1 ? '1px solid var(--b0)' : 'none', opacity: sDone ? 0.45 : 1 }}>
                         <div style={{ width:5, height:5, borderRadius:'50%', background: sPlaying ? sCol : sDone ? 'var(--t4)' : 'var(--b3)', flexShrink:0, animation: sPlaying ? 'blip 1.4s ease-in-out infinite' : 'none' }}/>
                         <div style={{ fontFamily:'var(--display)', fontSize:16, color:sCol, letterSpacing:1, flexShrink:0, width:70 }}>{fmtTime(s.startMin)}</div>
                         <div style={{ flex:1, minWidth:0 }}>
@@ -749,8 +811,6 @@ function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
                       </div>
                     )
                   })}
-
-                  {/* Free time summary */}
                   <div style={{ marginTop:12, display:'flex', alignItems:'center', gap:8, padding:'10px 12px', background: isFree ? 'rgba(0,229,160,0.08)' : 'var(--bg-3)', border:`1px solid ${isFree ? 'rgba(0,229,160,0.22)' : 'var(--b1)'}`, borderRadius:9 }}>
                     <i className={`ti ${isFree ? 'ti-check' : 'ti-clock'}`} style={{ fontSize:13, color: isFree ? 'var(--playing)' : 'var(--t3)', flexShrink:0 }}/>
                     <div>
@@ -760,8 +820,6 @@ function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
                       {!isFree && minsToFree > 0 && <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', marginTop:2 }}>in {human$(minsToFree)}</div>}
                     </div>
                   </div>
-
-                  {/* Seat map */}
                   {last.sessionId && (
                     <div style={{ marginTop:12 }}>
                       <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:6 }}>Seat map · {fmtTime((cur || last).startMin)}</div>
@@ -775,6 +833,35 @@ function MyHallsView({ halls, myHalls, onEdit, cinemaId }) {
         })}
       </div>
     </div>
+  )
+}
+
+// ── MyHallsView — root: shows GroupList or GroupDetail ───────────────────────
+function MyHallsView({ halls, cinemaId, groups, onAdd, onUpdate, onDelete }) {
+  const [openGroup,  setOpenGroup]  = useState(null)
+  const [editGroup,  setEditGroup]  = useState(null)
+  const [showEditor, setShowEditor] = useState(false)
+
+  const handleEdit = g => { setEditGroup(g); setShowEditor(true) }
+  const handleAdd  = ()  => { setEditGroup(null); setShowEditor(true) }
+  const handleSave = g => { editGroup ? onUpdate(g) : onAdd(g) }
+
+  // If a group was deleted or edited while open, go back
+  useEffect(() => {
+    if (openGroup && !groups.find(g => g.id === openGroup.id)) setOpenGroup(null)
+    if (openGroup) setOpenGroup(groups.find(g => g.id === openGroup.id) || null)
+  }, [groups])
+
+  return (
+    <>
+      {openGroup
+        ? <GroupDetail group={openGroup} halls={halls} cinemaId={cinemaId} onBack={() => setOpenGroup(null)} onEdit={() => handleEdit(openGroup)}/>
+        : <GroupList groups={groups} halls={halls} onOpen={setOpenGroup} onAdd={handleAdd} onEdit={handleEdit} onDelete={onDelete}/>
+      }
+      {showEditor && (
+        <GroupEditor halls={halls} existing={editGroup} onSave={handleSave} onClose={() => { setShowEditor(false); setEditGroup(null) }}/>
+      )}
+    </>
   )
 }
 
@@ -792,8 +879,7 @@ export default function App() {
   const [lastFetched, setLastFetched] = useState(null)
   const [view,        setView]        = useState('tonight')
   const [picker,      setPicker]      = useState(false)
-  const [myHalls,     saveMyHalls]    = useMyHalls(cinemaId)
-  const [hallPicker,  setHallPicker]  = useState(false)
+  const { groups, add: addGroup, update: updateGroup, remove: removeGroup } = useGroups(cinemaId)
 
   const cinema = CINEMAS.find(c => c.id === cinemaId)
   const movies = { ...KNOWN_MOVIES, ...movieMap }
@@ -908,7 +994,7 @@ export default function App() {
       {/* ── MY HALLS ── */}
       {view === 'myhalls' && (
         <div style={wrap} className="fade-up">
-          <MyHallsView halls={todayH} myHalls={myHalls} onEdit={() => setHallPicker(true)} cinemaId={cinemaId}/>
+          <MyHallsView halls={todayH} cinemaId={cinemaId} groups={groups} onAdd={addGroup} onUpdate={updateGroup} onDelete={removeGroup}/>
         </div>
       )}
 
@@ -953,7 +1039,6 @@ export default function App() {
         </div>
       )}
 
-      {hallPicker && <HallPicker halls={todayH} myHalls={myHalls} onSave={saveMyHalls} onDone={() => setHallPicker(false)}/>}
       <BottomNav view={view} setView={setView} />
       <CinemaSheet value={cinemaId} onChange={setCinemaId} open={picker} onClose={() => setPicker(false)} />
     </div>
