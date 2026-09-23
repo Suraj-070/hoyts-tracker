@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { CINEMAS, TYPE_LABEL, KNOWN_MOVIES } from '../lib/constants'
 import { todayKey, fmtDateLong, fmtDayLabel, fmtTime, groupByDateAndHall, sortHalls, getUniqueDates } from '../lib/utils'
 import SeatMap from '../components/SeatMap'
@@ -527,8 +528,9 @@ function useGroups(cinemaId) {
 // ── GroupEditor — bottom sheet to create or edit a group ─────────────────────
 function GroupEditor({ halls, existing, onSave, onClose }) {
   const isEdit   = !!existing
-  const [name, setName] = useState(existing?.name || '')
-  const [sel, setSel]   = useState(existing?.halls || [])
+  const [name, setName]     = useState(existing?.name || '')
+  const [sel, setSel]       = useState(existing?.halls || [])
+  const [mounted, setMounted] = useState(false)
   const allHalls = sortHalls(halls).map(([n]) => n)
   const canSave  = name.trim().length > 0 && sel.length > 0
   const toggle   = n => setSel(p => p.includes(n) ? p.filter(x => x !== n) : [...p, n])
@@ -538,47 +540,20 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
     onClose()
   }
 
-  // Lock scroll on body
   useEffect(() => {
-    const prev = document.body.style.overflow
+    setMounted(true)
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = prev }
+    return () => { document.body.style.overflow = '' }
   }, [])
 
-  // Inline styles for the overlay — avoid all fixed/absolute/z-index issues
-  // by using a top-level overlay that IS the page during open
-  const overlayStyle = {
-    position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
-    zIndex: 99999,
-    isolation: 'isolate',  // creates NEW stacking context at this level
-  }
+  if (!mounted) return null
 
-  const backdropStyle = {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    background: 'rgba(0,0,0,0.88)',
-  }
-
-  const sheetStyle = {
-    position: 'absolute',
-    bottom: 0, left: 0, right: 0,
-    background: 'var(--bg-2)',
-    borderRadius: '22px 22px 0 0',
-    border: '1px solid var(--b2)',
-    borderBottom: 'none',
-    maxHeight: '88vh',
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '0 -24px 80px rgba(0,0,0,0.95)',
-    animation: 'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)',
-    overflow: 'hidden',
-  }
-
-  return (
-    <div style={overlayStyle}>
-      <div style={backdropStyle} onClick={onClose}/>
-      <div style={sheetStyle}>
+  const sheet = (
+    <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:999999 }}>
+      {/* Backdrop */}
+      <div onClick={onClose} style={{ position:'absolute', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.88)' }}/>
+      {/* Sheet */}
+      <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', maxHeight:'88vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)', overflow:'hidden' }}>
 
         {/* PINNED TOP */}
         <div style={{ flexShrink:0 }}>
@@ -605,7 +580,7 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
           </div>
         </div>
 
-        {/* SCROLLABLE MIDDLE */}
+        {/* SCROLLABLE */}
         <div style={{ overflowY:'auto', flex:1, WebkitOverflowScrolling:'touch', padding:'8px 18px' }}>
           {allHalls.length === 0 && (
             <div style={{ textAlign:'center', padding:'32px 0', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>No halls loaded — go to Tonight first.</div>
@@ -639,11 +614,13 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
             {isEdit ? 'Save changes' : canSave ? `Create · ${sel.length} hall${sel.length!==1?'s':''}` : 'Select halls above'}
           </button>
         </div>
-
       </div>
     </div>
   )
+
+  return createPortal(sheet, document.body)
 }
+
 
 
 
