@@ -526,57 +526,30 @@ function useGroups(cinemaId) {
 
 // ── GroupEditor — bottom sheet to create or edit a group ─────────────────────
 function GroupEditor({ halls, existing, onSave, onClose }) {
-  const isEdit = !!existing
+  const isEdit  = !!existing
   const [name, setName] = useState(existing?.name || '')
   const [sel, setSel]   = useState(existing?.halls || [])
-  const allHalls        = sortHalls(halls).map(([n]) => n)
-  const canSave         = name.trim().length > 0 && sel.length > 0
-  const toggle = n => setSel(p => p.includes(n) ? p.filter(x => x !== n) : [...p, n])
+  const allHalls = sortHalls(halls).map(([n]) => n)
+  const canSave  = name.trim().length > 0 && sel.length > 0
+  const toggle   = n => setSel(p => p.includes(n) ? p.filter(x => x !== n) : [...p, n])
   const save = () => {
     if (!canSave) return
     onSave({ id: existing?.id || Date.now().toString(), name: name.trim(), halls: sel })
     onClose()
   }
+
   useEffect(() => {
     document.body.style.overflow = 'hidden'
-    document.body.style.position = 'fixed'
-    document.body.style.width = '100%'
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.width = ''
-    }
+    return () => { document.body.style.overflow = '' }
   }, [])
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0, left: 0, right: 0, bottom: 0,
-      zIndex: 9999,
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-end',
-    }}>
-      {/* Backdrop */}
-      <div onClick={onClose} style={{ position:'absolute', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.88)' }}/>
+    <div style={{ position:'fixed', inset:0, zIndex:9999, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
+      <div onClick={onClose} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.88)' }}/>
+      <div style={{ position:'relative', zIndex:1, background:'var(--bg-2)', borderRadius:'22px 22px 0 0', border:'1px solid var(--b2)', borderBottom:'none', maxHeight:'88vh', display:'flex', flexDirection:'column', boxShadow:'0 -24px 80px rgba(0,0,0,0.95)', animation:'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)' }}>
 
-      {/* Sheet */}
-      <div style={{
-        position: 'relative',
-        zIndex: 1,
-        background: 'var(--bg-2)',
-        borderRadius: '22px 22px 0 0',
-        border: '1px solid var(--b2)',
-        borderBottom: 'none',
-        maxHeight: '88vh',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 -24px 80px rgba(0,0,0,0.95)',
-        animation: 'slideUp 0.28s cubic-bezier(0.16,1,0.3,1)',
-      }}>
-
-        {/* PINNED: handle + title + name input + hall header */}
-        <div style={{ flexShrink: 0 }}>
+        {/* PINNED TOP */}
+        <div style={{ flexShrink:0 }}>
           <div style={{ display:'flex', justifyContent:'center', padding:'14px 0 6px' }}>
             <div style={{ width:36, height:4, borderRadius:2, background:'var(--b3)' }}/>
           </div>
@@ -586,13 +559,8 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
           </div>
           <div style={{ padding:'0 18px 12px' }}>
             <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)', marginBottom:7 }}>Group name</div>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="e.g. Section A, Suraj's halls…"
-              maxLength={32}
-              style={{ width:'100%', fontFamily:'var(--body)', fontSize:16, fontWeight:600, background:'var(--bg-1)', border:`1px solid ${name.trim()?'var(--gold-bdr)':'var(--b2)'}`, borderRadius:12, padding:'12px 14px', color:'var(--t1)', outline:'none', caretColor:'var(--gold)', boxSizing:'border-box' }}
-            />
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Section A, Suraj's halls…" maxLength={32}
+              style={{ width:'100%', fontFamily:'var(--body)', fontSize:16, fontWeight:600, background:'var(--bg-1)', border:`1px solid ${name.trim()?'var(--gold-bdr)':'var(--b2)'}`, borderRadius:12, padding:'12px 14px', color:'var(--t1)', outline:'none', caretColor:'var(--gold)', boxSizing:'border-box' }}/>
           </div>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 18px 10px', borderBottom:'1px solid var(--b1)' }}>
             <span style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)' }}>
@@ -605,15 +573,15 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
           </div>
         </div>
 
-        {/* SCROLLABLE: hall list */}
-        <div style={{ overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'8px 18px' }}>
+        {/* SCROLLABLE MIDDLE */}
+        <div style={{ overflowY:'auto', flex:1, WebkitOverflowScrolling:'touch', padding:'8px 18px' }}>
           {allHalls.length === 0 && (
             <div style={{ textAlign:'center', padding:'32px 0', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>No halls loaded — go to Tonight first.</div>
           )}
           {sortHalls(halls).map(([hn, hall]) => {
             const active = sel.includes(hn)
             const col = TC[hall.typeId]||'var(--std)', bg = TB[hall.typeId]||'var(--std-bg)', bdr = TD[hall.typeId]||'var(--std-bdr)'
-            const lbl = TYPE_LABEL[hall.typeId]||hall.typeId
+            const lbl  = TYPE_LABEL[hall.typeId]||hall.typeId
             const last = hall.sessions[hall.sessions.length-1]
             return (
               <button key={hn} onClick={() => toggle(hn)} style={{ display:'flex', alignItems:'center', gap:12, width:'100%', textAlign:'left', padding:'11px 13px', marginBottom:6, borderRadius:11, background:active?'rgba(245,166,35,0.08)':'var(--bg-1)', border:`1px solid ${active?'var(--gold-bdr)':'var(--b1)'}`, WebkitTapHighlightColor:'transparent' }}>
@@ -631,20 +599,20 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
               </button>
             )
           })}
-          {/* Bottom padding so last item clears the save button */}
-          <div style={{ height:80 }}/>
         </div>
 
-        {/* PINNED: save button */}
+        {/* PINNED BOTTOM */}
         <div style={{ flexShrink:0, padding:'12px 18px', paddingBottom:'calc(env(safe-area-inset-bottom,0px) + 12px)', borderTop:'1px solid var(--b1)', background:'var(--bg-2)' }}>
           <button onClick={save} disabled={!canSave} style={{ display:'block', width:'100%', fontFamily:'var(--display)', fontSize:20, letterSpacing:2, padding:'14px', borderRadius:12, border:'none', background:canSave?'var(--gold)':'var(--bg-4)', color:canSave?'#000':'var(--t4)', cursor:canSave?'pointer':'default' }}>
             {isEdit ? 'Save changes' : canSave ? `Create · ${sel.length} hall${sel.length!==1?'s':''}` : 'Select halls above'}
           </button>
         </div>
+
       </div>
     </div>
   )
 }
+
 
 
 
@@ -877,7 +845,6 @@ function GroupDetail({ group, halls, cinemaId, onBack, onEdit }) {
 function MyHallsView({ halls, cinemaId, groups, onAdd, onUpdate, onDelete }) {
   const [openGroup,  setOpenGroup]  = useState(null)
   const [editGroup,  setEditGroup]  = useState(null)
-  const [showEditor, setShowEditor] = useState(false)
 
   const handleEdit = g => { setEditGroup(g); setShowEditor(true) }
   const handleAdd  = ()  => { setEditGroup(null); setShowEditor(true) }
@@ -895,9 +862,7 @@ function MyHallsView({ halls, cinemaId, groups, onAdd, onUpdate, onDelete }) {
         ? <GroupDetail group={openGroup} halls={halls} cinemaId={cinemaId} onBack={() => setOpenGroup(null)} onEdit={() => handleEdit(openGroup)}/>
         : <GroupList groups={groups} halls={halls} onOpen={setOpenGroup} onAdd={handleAdd} onEdit={handleEdit} onDelete={onDelete}/>
       }
-      {showEditor && (
-        <GroupEditor halls={halls} existing={editGroup} onSave={handleSave} onClose={() => { setShowEditor(false); setEditGroup(null) }}/>
-      )}
+
     </>
   )
 }
@@ -917,6 +882,7 @@ export default function App() {
   const [view,        setView]        = useState('tonight')
   const [picker,      setPicker]      = useState(false)
   const { groups, add: addGroup, update: updateGroup, remove: removeGroup } = useGroups(cinemaId)
+  const [groupEditor, setGroupEditor] = useState(null) // null=closed, {}=new, {id,...}=edit
 
   const cinema = CINEMAS.find(c => c.id === cinemaId)
   const movies = { ...KNOWN_MOVIES, ...movieMap }
@@ -1031,7 +997,7 @@ export default function App() {
       {/* ── MY HALLS ── */}
       {view === 'myhalls' && (
         <div style={wrap} className="fade-up">
-          <MyHallsView halls={todayH} cinemaId={cinemaId} groups={groups} onAdd={addGroup} onUpdate={updateGroup} onDelete={removeGroup}/>
+          <MyHallsView halls={todayH} cinemaId={cinemaId} groups={groups} onAdd={addGroup} onUpdate={updateGroup} onDelete={removeGroup} onOpenEditor={setGroupEditor}/>
         </div>
       )}
 
@@ -1078,6 +1044,14 @@ export default function App() {
 
       <BottomNav view={view} setView={setView} />
       <CinemaSheet value={cinemaId} onChange={setCinemaId} open={picker} onClose={() => setPicker(false)} />
+      {groupEditor !== null && (
+        <GroupEditor
+          halls={todayH}
+          existing={groupEditor.id ? groupEditor : null}
+          onSave={g => { groupEditor.id ? updateGroup(g) : addGroup(g) }}
+          onClose={() => setGroupEditor(null)}
+        />
+      )}
     </div>
   )
 }
