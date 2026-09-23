@@ -69,7 +69,23 @@ export async function GET(request) {
         s.film?.runtime || s.Movie?.runtime || 0
       )
       if (movieName && s.movieId) knownIds[s.movieId] = { name: movieName, runtime }
-      return { ...s, _movieName: movieName, _runtime: runtime }
+
+      // Normalise type fields so getTypeForSession can detect them
+      const screenName = s.screenName || s.hallName || s.screen || s.Screen || ''
+      const originalTags = [
+        ...(s.originalTags || s.tags || s.Tags || []),
+        ...(s.experienceType ? [s.experienceType] : []),
+        ...(s.screenType ? [s.screenType] : []),
+        ...(s.format ? [s.format] : []),
+      ]
+
+      return {
+        ...s,
+        screenName,
+        originalTags,
+        _movieName: movieName,
+        _runtime: runtime,
+      }
     })
 
     // For any unknown IDs, fetch in parallel
