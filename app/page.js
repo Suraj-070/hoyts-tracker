@@ -532,7 +532,7 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
   const nameRef           = useRef(null)
   const allHalls          = sortHalls(halls).map(([n]) => n)
 
-  useEffect(() => { document.body.style.overflow = 'hidden'; setTimeout(() => nameRef.current?.focus(), 300); return () => { document.body.style.overflow = '' } }, [])
+  useEffect(() => { document.body.style.overflow = 'hidden'; return () => { document.body.style.overflow = '' } }, [])
 
   const toggle = n => setSel(p => p.includes(n) ? p.filter(x => x !== n) : [...p, n])
   const canSave = name.trim().length > 0 && sel.length > 0
@@ -557,24 +557,25 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
           <button onClick={onClose} style={{ width:30, height:30, borderRadius:8, border:'1px solid var(--b2)', background:'var(--bg-3)', color:'var(--t2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>✕</button>
         </div>
 
-        {/* Name input */}
-        <div style={{ padding:'0 18px 14px' }}>
+        {/* Name input — pinned, not in scroll area */}
+        <div style={{ padding:'0 18px 10px', flexShrink:0 }}>
           <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)', marginBottom:7 }}>Group name</div>
           <input ref={nameRef} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Section A, Suraj's halls…" maxLength={32}
+            onFocus={e => setTimeout(() => e.target.scrollIntoView({ block:'nearest' }), 100)}
             style={{ width:'100%', fontFamily:'var(--body)', fontSize:16, fontWeight:600, background:'var(--bg-1)', border:`1px solid ${name.trim() ? 'var(--gold-bdr)' : 'var(--b2)'}`, borderRadius:12, padding:'12px 14px', color:'var(--t1)', outline:'none', caretColor:'var(--gold)', transition:'border-color 0.15s' }}/>
         </div>
 
-        {/* Hall picker */}
-        <div style={{ padding:'0 18px 10px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-          <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)' }}>Select halls · {sel.length} chosen</div>
+        {/* Hall picker header — pinned */}
+        <div style={{ padding:'4px 18px 8px', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0, borderBottom:'1px solid var(--b1)' }}>
+          <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)' }}>Halls · {sel.length} selected</div>
           <div style={{ display:'flex', gap:8 }}>
             <button onClick={() => setSel(allHalls)} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>All</button>
             <button onClick={() => setSel([])} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>Clear</button>
           </div>
         </div>
 
-        {/* Hall list */}
-        <div style={{ overflowY:'auto', flex:1, WebkitOverflowScrolling:'touch', padding:'0 18px 12px' }}>
+        {/* Hall list — only this scrolls */}
+        <div style={{ overflowY:'auto', flex:1, WebkitOverflowScrolling:'touch', padding:'8px 18px 4px' }}>
           {allHalls.length === 0 && <div style={{ textAlign:'center', padding:'32px 20px', color:'var(--t3)', fontFamily:'var(--body)', fontSize:13 }}>No halls loaded — go to Tonight first.</div>}
           {sortHalls(halls).map(([name2, hall]) => {
             const active = sel.includes(name2)
@@ -604,7 +605,7 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
         {/* Save */}
         <div style={{ padding:'12px 18px', paddingBottom:'calc(env(safe-area-inset-bottom,0px)+14px)', borderTop:'1px solid var(--b1)' }}>
           <button onClick={save} disabled={!canSave} style={{ width:'100%', fontFamily:'var(--display)', fontSize:20, letterSpacing:2, padding:'14px', borderRadius:12, border:'1px solid var(--gold-bdr)', background: canSave ? 'var(--gold)' : 'var(--bg-3)', color: canSave ? '#000' : 'var(--t4)', transition:'all 0.15s' }}>
-            {isEdit ? 'Save changes' : `Create — ${sel.length} hall${sel.length !== 1 ? 's' : ''}`}
+            {isEdit ? 'Save changes' : sel.length === 0 ? 'Select halls above' : `Create · ${sel.length} hall${sel.length !== 1 ? 's' : ''}`}
           </button>
         </div>
       </div>
