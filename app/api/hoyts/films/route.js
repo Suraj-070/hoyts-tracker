@@ -28,8 +28,12 @@ async function getMovieMap() {
 
       // posterImage can be full URL or relative — normalise it
       let posterImage = m.posterImage || m.headerImage || null
-      if (posterImage && !posterImage.startsWith('http')) {
-        posterImage = 'https://apim-aea.hoyts.com.au' + posterImage
+      if (posterImage) {
+        if (!posterImage.startsWith('http')) {
+          posterImage = 'https://apim-aea.hoyts.com.au/' + posterImage
+        }
+        // HOYTS CDN returns 403 to browsers — proxy through our API
+        posterImage = '/api/img?url=' + encodeURIComponent(posterImage)
       }
 
       const entry = {
@@ -94,6 +98,7 @@ export async function GET(request) {
     if (!posterImage && m.name) {
       posterImage = await tmdbPoster(m.name)
     }
+    // posterImage at this point is already proxied from the map
     result[id] = { name: m.name, runtime: m.runtime, posterImage }
   }))
 
