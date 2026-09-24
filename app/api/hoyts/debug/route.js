@@ -27,7 +27,7 @@ export async function GET(request) {
       const runtime = typeof m.runtime === 'object'
         ? (m.runtime?.minutes || 0) : Number(m.runtime || 0)
       let poster = m.posterImage || m.headerImage || null
-      if (poster && !poster.startsWith('http')) poster = 'https://apim-aea.hoyts.com.au' + poster
+      if (poster && !poster.startsWith('http')) poster = 'https://apim-aea.hoyts.com.au/' + poster
       m.vistaId.split(',').map(s => s.trim()).filter(Boolean).forEach(id => {
         movieMap[id] = { name: m.name, runtime, poster }
       })
