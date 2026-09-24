@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-const cache = {}
+export const posterCache = {}
+const cache = posterCache  // alias
 
 function usePoster(movieName, movieId) {
   const [poster, setPoster] = useState(null)

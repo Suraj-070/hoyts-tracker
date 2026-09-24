@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import { CINEMAS, TYPE_LABEL, KNOWN_MOVIES } from '../lib/constants'
 import { todayKey, fmtDateLong, fmtDayLabel, fmtTime, groupByDateAndHall, sortHalls, getUniqueDates } from '../lib/utils'
 import SeatMap from '../components/SeatMap'
-import MoviePoster, { CardPoster } from '../components/MoviePoster'
+import MoviePoster, { CardPoster, posterCache } from '../components/MoviePoster'
 
 // ─── Cache ──────────────────────────────────────────────────────────────────
 const CK = id => `hoyts-sessions-${id}`
@@ -13,6 +13,8 @@ const MAX = 2 * 24 * 60 * 60 * 1000
 const saveC = (id, s) => { try { localStorage.setItem(CK(id), JSON.stringify({ savedAt: Date.now(), sessions: s })) } catch(e) {} }
 const loadC = id => { try { const r = localStorage.getItem(CK(id)); if (!r) return null; const { savedAt, sessions } = JSON.parse(r); if (Date.now() - savedAt > MAX) { localStorage.removeItem(CK(id)); return null } return sessions.filter(s => new Date(s.date || '').getTime() > Date.now() - MAX) } catch(e) { return null } }
 const clearOld = () => { try { Object.keys(localStorage).filter(k => k.startsWith('hoyts-sessions-')).forEach(k => { try { const { savedAt } = JSON.parse(localStorage.getItem(k)); if (Date.now() - savedAt > MAX) localStorage.removeItem(k) } catch(e) { localStorage.removeItem(k) } }) } catch(e) {} }
+const clearPosters = () => { try { Object.keys(localStorage).filter(k => k.startsWith('hoyts-poster-')).forEach(k => localStorage.removeItem(k)) } catch(e) {} try { Object.keys(posterCache).forEach(k => delete posterCache[k]) } catch(e) {} }
+const clearAll = () => { try { Object.keys(localStorage).filter(k => k.startsWith('hoyts-')).forEach(k => localStorage.removeItem(k)) } catch(e) {} }
 
 // ─── Time ──────────────────────────────────────────────────────────────────
 // HOYTS session model (from Daily Program Grid analysis):
@@ -1020,7 +1022,7 @@ export default function App() {
             <SRow label="Cache"           value={(() => { const c = loadC(cinemaId); return c ? `${c.length} sessions (2 days)` : 'Empty' })()} />
             <div style={{ display:'flex', gap:8, marginTop:12, flexWrap:'wrap' }}>
               <button onClick={() => fetch$(cinemaId)} disabled={loading} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid var(--b2)', background:'var(--surface-2)', color:'var(--fg)' }}>{loading ? 'Refreshing…' : 'Refresh now'}</button>
-              <button onClick={() => { localStorage.removeItem(CK(cinemaId)); setSessions([]); fetch$(cinemaId) }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'transparent', color:'#EF4444' }}>Clear Cache</button>
+              <button onClick={() => { localStorage.removeItem(CK(cinemaId)); clearPosters(); setSessions([]); fetch$(cinemaId) }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'transparent', color:'#EF4444' }}>Clear Cache</button>
             </div>
           </Sec>
           <Sec label="Movie details">
@@ -1037,7 +1039,7 @@ export default function App() {
             })}
           </Sec>
           <Sec label="Data">
-            <button onClick={() => { if (confirm('Clear all saved data?')) { setSessions([]); setMovieMap({}); localStorage.removeItem('hoyts-movies') } }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'rgba(239,68,68,0.07)', color:'#EF4444' }}>Clear all data</button>
+            <button onClick={() => { if (confirm('Clear all saved data?')) { clearAll(); setSessions([]); setMovieMap({}) } }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'rgba(239,68,68,0.07)', color:'#EF4444' }}>Clear all data</button>
           </Sec>
         </div>
       )}
