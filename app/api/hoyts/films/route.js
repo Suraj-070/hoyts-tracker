@@ -1,53 +1,52 @@
-const MOVIES_URL = 'https://apim-aea.hoyts.com.au/cinemaapi-au-live/api/movies'
+// Resolves movieIds (e.g. HO00010253) to { name, runtime, posterImage }
+// Source: HOYTS /movies API which has all these fields
 
-let moviesCache = null
-let moviesCacheTime = 0
+const HOYTS_BASE = 'https://apim-aea.hoyts.com.au/cinemaapi-au-live/api'
 
-async function getAllMovies() {
-  if (moviesCache && Date.now() - moviesCacheTime < 3600000) return moviesCache
-  const res = await fetch(MOVIES_URL, {
-    headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
-    next: { revalidate: 3600 },
-  })
-  if (!res.ok) throw new Error('movies list HTTP ' + res.status)
-  const d = await res.json()
-  const arr = Array.isArray(d) ? d : d.movies || d.data || []
-  const map = {}
-  arr.forEach(function(m) {
-    if (!m.vistaId) return
-    // vistaId can be comma-separated e.g. "HO00010000,HO00011219"
-    const ids = m.vistaId.split(',').map(function(s) { return s.trim() })
-    ids.forEach(function(id) {
-      if (id) {
-        map[id] = {
-          name: m.name,
-          runtime: (m.runtime && m.runtime.minutes) || m.duration || 0,
-        }
-      }
+let cache    = null
+let cacheAt  = 0
+const TTL    = 3600000
+
+async function getMovieMap() {
+  if (cache && Date.now() - cacheAt < TTL) return cache
+  try {
+    const res = await fetch(`${HOYTS_BASE}/movies`, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+      next: { revalidate: 3600 },
     })
-  })
-  moviesCache = map
-  moviesCacheTime = Date.now()
-  return map
+    if (!res.ok) return {}
+    const d   = await res.json()
+    const arr = Array.isArray(d) ? d : d.movies || d.data || []
+    const map = {}
+    arr.forEach(m => {
+      if (!m.vistaId) return
+      // vistaId can be comma-separated
+      m.vistaId.split(',').map(s => s.trim()).filter(Boolean).forEach(id => {
+        map[id] = {
+          name:        m.name || m.title || null,
+          runtime:     m.runtime || 0,
+          posterImage: m.posterImage || m.headerImage || null,
+        }
+      })
+    })
+    cache   = map
+    cacheAt = Date.now()
+    return map
+  } catch(e) { return {} }
 }
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
-  const ids = (searchParams.get('ids') || '').split(',').map(function(s) { return s.trim() }).filter(Boolean)
-  if (ids.length === 0) return Response.json({ error: 'Pass ?ids=HO00010000' }, { status: 400 })
+  const ids = (searchParams.get('ids') || '').split(',').map(s => s.trim()).filter(Boolean)
+  if (!ids.length) return Response.json({})
 
-  try {
-    const allMovies = await getAllMovies()
-    const result = {}
-    ids.forEach(function(id) {
-      if (allMovies[id]) result[id] = allMovies[id]
-    })
-    return Response.json(result, { headers: { 'Access-Control-Allow-Origin': '*' } })
-  } catch (e) {
-    return Response.json({ error: e.message }, { status: 500, headers: { 'Access-Control-Allow-Origin': '*' } })
-  }
-}
+  const map    = await getMovieMap()
+  const result = {}
+  ids.forEach(id => {
+    if (map[id]) result[id] = map[id]
+  })
 
-export async function OPTIONS() {
-  return new Response(null, { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET' } })
+  return Response.json(result, {
+    headers: { 'Access-Control-Allow-Origin': '*' }
+  })
 }

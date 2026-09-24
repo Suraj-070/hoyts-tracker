@@ -4,24 +4,39 @@ import { useState, useEffect } from 'react'
 export const posterCache = {}
 const cache = posterCache  // alias
 
-function usePoster(movieName, movieId) {
+function usePoster(movieName, movieId, posterImageDirect) {
   const [poster, setPoster] = useState(null)
-  // Normalise key — strip language suffixes so "Hope (Korean, Eng Sub)" 
-  // and "Hope" hit the same cache entry
-  const cleanName = movieName?.replace(/\s*\([^)]*(?:sub|dub|eng|korean|mandarin)[^)]*\)/gi,'').trim()
+  const cleanName = movieName?.replace(/\s*\([^)]*(?:sub|dub|eng|korean|mandarin|cantonese|japanese|dubbed|subtitled)[^)]*\)/gi,'').trim()
   const key = movieId || cleanName || movieName
+
   useEffect(() => {
     if (!key) return
+
+    // 1. Use HOYTS poster directly if provided — most accurate
+    if (posterImageDirect) {
+      cache[key] = posterImageDirect
+      setPoster(posterImageDirect)
+      return
+    }
+
     const hasId   = movieId && movieId.startsWith('HO')
-    const hasName = movieName && movieName !== 'Loading...' && movieName !== 'Unknown Film'
+    const hasName = cleanName || movieName
     if (!hasId && !hasName) return
+
+    // 2. Check in-memory cache
     if (cache[key]) { setPoster(cache[key]); return }
+
+    // 3. Check localStorage cache
     try {
       const saved = localStorage.getItem('hoyts-poster-' + key)
-      if (saved && saved.startsWith('https://')) { cache[key] = saved; setPoster(saved); return }
+      if (saved && saved.startsWith('http')) { cache[key] = saved; setPoster(saved); return }
       if (saved) localStorage.removeItem('hoyts-poster-' + key)
     } catch(e) {}
-    const url = hasId ? '/api/poster?vistaId=' + movieId : '/api/poster?q=' + encodeURIComponent(cleanName || movieName || '')
+
+    // 4. Fetch from poster API (tries HOYTS first, TMDB fallback)
+    const url = hasId
+      ? '/api/poster?vistaId=' + movieId
+      : '/api/poster?q=' + encodeURIComponent(cleanName || movieName || '')
     fetch(url).then(r => r.json()).then(d => {
       if (d.poster) {
         cache[key] = d.poster
@@ -29,14 +44,14 @@ function usePoster(movieName, movieId) {
         setPoster(d.poster)
       }
     }).catch(() => {})
-  }, [key])
+  }, [key, posterImageDirect])
   return poster
 }
 
 // ── Card background — right-side poster with gradient wipe ──────────────────
 // NO backdrop-filter, NO grain (both caused repaints on every card)
-export function CardPoster({ movieName, movieId }) {
-  const poster = usePoster(movieName, movieId)
+export function CardPoster({ movieName, movieId, posterImage }) {
+  const poster = usePoster(movieName, movieId, posterImage)
   if (!poster) return null
   return (
     <div style={{ position:'absolute', inset:0, zIndex:0, borderRadius:'inherit', overflow:'hidden', pointerEvents:'none' }}>

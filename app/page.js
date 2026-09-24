@@ -210,7 +210,7 @@ function HallCard({ hallName, hall, expanded, onToggle, cinemaId }) {
 
         {/* Poster — full height */}
         <div style={{ width:52, flexShrink:0, position:'relative', overflow:'hidden' }}>
-          <MoviePoster movieName={poster.movie} movieId={poster.movieId} size="fill" />
+          <MoviePoster movieName={poster.movie} movieId={poster.movieId} size="fill" posterImage={poster.posterImage}/>
           {/* Occupancy dot */}
           {occ !== null && st !== 'done' && (
             <div className="occ-badge" style={{ position:'absolute', top:7, right:8, fontFamily:'var(--font)', fontSize:8, fontWeight:700, letterSpacing:.5, borderRadius:99, padding:'2px 7px',
@@ -261,7 +261,7 @@ function HallCard({ hallName, hall, expanded, onToggle, cinemaId }) {
         <div style={{ background:'var(--surface-2)', border:'1px solid var(--b3)', borderTop:'none', borderRadius:'0 0 14px 14px', overflow:'hidden' }} onClick={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
           {/* Movie detail */}
           <div style={{ padding:'14px 14px 0', display:'flex', gap:12 }}>
-            <MoviePoster movieName={poster.movie} movieId={poster.movieId} size="md" />
+            <MoviePoster movieName={poster.movie} movieId={poster.movieId} size="md" posterImage={poster.posterImage}/>
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontFamily:'var(--font)', fontSize:16, fontWeight:700, color:'var(--fg)', marginBottom:6, lineHeight:1.25 }}>{last.movie}</div>
               <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
@@ -908,7 +908,11 @@ export default function App() {
       if (miss.length) {
         fetch(`/api/hoyts/films?ids=${miss.join(',')}`).then(r => r.json()).then(map => {
           const mg = { ...mmRef.current }
-          Object.entries(map).forEach(([id, f]) => { if (f && (f.name || f.runtime)) mg[id] = { ...(mg[id] || {}), ...f } })
+          Object.entries(map).forEach(([id, f]) => {
+            if (f && (f.name || f.runtime || f.posterImage)) {
+              mg[id] = { ...(mg[id] || {}), ...f }
+            }
+          })
           setMovieMap(mg); localStorage.setItem('hoyts-movies', JSON.stringify(mg))
         }).catch(() => {})
       }

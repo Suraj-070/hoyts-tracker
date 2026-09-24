@@ -59,32 +59,27 @@ export async function GET(request) {
     // Extract movie name from session fields first
     const knownIds = {}
     data = data.map(s => {
-      const movieName =
-        s.movieName || s.title || s.filmName ||
-        s.film?.name || s.film?.title ||
-        s.Movie?.name || s.Movie?.title ||
-        s.movie?.name || s.movie?.title || null
-      const runtime = Number(
-        s.runtimeWithCredits || s.runtime || s.runTime ||
-        s.film?.runtime || s.Movie?.runtime || 0
-      )
-      if (movieName && s.movieId) knownIds[s.movieId] = { name: movieName, runtime }
-
-      // Normalise type fields so getTypeForSession can detect them
+      // Sessions have NO movie name field — only movieId (e.g. HO00010253)
+      // Movie names are resolved via /movies API lookup after session fetch
+      const movieId    = s.movieId || s.vistaId || s.FilmId || s.filmId
       const screenName = s.screenName || s.hallName || s.screen || s.Screen || ''
+
+      // typeId comes directly from session — trust it
+      // originalTags array also contains type hints (e.g. "XTREME")
+      const typeId = s.typeId || ''
       const originalTags = [
         ...(s.originalTags || s.tags || s.Tags || []),
-        ...(s.experienceType ? [s.experienceType] : []),
-        ...(s.screenType ? [s.screenType] : []),
-        ...(s.format ? [s.format] : []),
+        ...(typeId ? [typeId] : []),
       ]
 
       return {
         ...s,
+        movieId,
         screenName,
+        typeId,
         originalTags,
-        _movieName: movieName,
-        _runtime: runtime,
+        _movieName: null,  // filled in after /movies lookup
+        _runtime: 0,
       }
     })
 
