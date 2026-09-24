@@ -79,8 +79,8 @@ export default function MoviePoster({ movieName, movieId, size }) {
   const poster = usePoster(movieName, movieId)
   // 'fill' = no fixed size, fills parent container (used in compact row)
   if (size === 'fill') {
-    if (!poster) return <div style={{ width:'100%', height:'100%', background:'var(--surface-3)', display:'flex', alignItems:'center', justifyContent:'center' }}><i className="ti ti-movie" style={{ fontSize:18, color:'var(--fg-4)' }}/></div>
-    return <img src={poster} alt={movieName} loading="lazy" decoding="async" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+    if (!poster) return <div style={{ width:'100%', height:'100%', background:'var(--surface-3)', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}><i className="ti ti-movie" style={{ fontSize:18, color:'var(--fg-4)' }}/></div>
+    return <img src={poster} alt="" loading="lazy" decoding="async" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', overflow:'hidden' }}/>
   }
   const s = { sm:{w:38,h:57,r:6}, md:{w:52,h:78,r:8}, lg:{w:64,h:96,r:10} }[size] || { w:38,h:57,r:6 }
 
