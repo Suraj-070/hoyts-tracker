@@ -5,7 +5,10 @@ const cache = {}
 
 function usePoster(movieName, movieId) {
   const [poster, setPoster] = useState(null)
-  const key = movieId || movieName
+  // Normalise key — strip language suffixes so "Hope (Korean, Eng Sub)" 
+  // and "Hope" hit the same cache entry
+  const cleanName = movieName?.replace(/\s*\([^)]*(?:sub|dub|eng|korean|mandarin)[^)]*\)/gi,'').trim()
+  const key = movieId || cleanName || movieName
   useEffect(() => {
     if (!key) return
     const hasId   = movieId && movieId.startsWith('HO')
@@ -17,7 +20,7 @@ function usePoster(movieName, movieId) {
       if (saved && saved.startsWith('https://')) { cache[key] = saved; setPoster(saved); return }
       if (saved) localStorage.removeItem('hoyts-poster-' + key)
     } catch(e) {}
-    const url = hasId ? '/api/poster?vistaId=' + movieId : '/api/poster?q=' + encodeURIComponent(movieName || '')
+    const url = hasId ? '/api/poster?vistaId=' + movieId : '/api/poster?q=' + encodeURIComponent(cleanName || movieName || '')
     fetch(url).then(r => r.json()).then(d => {
       if (d.poster) {
         cache[key] = d.poster
