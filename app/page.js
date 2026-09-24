@@ -51,7 +51,7 @@ function OfflineBanner() {
   const [off, setOff] = useState(false), [show, setShow] = useState(false)
   useEffect(() => { const a = () => { setOff(true); setShow(true) }, b = () => { setShow(true); setOff(false); setTimeout(() => setShow(false), 2500) }; window.addEventListener('offline', a); window.addEventListener('online', b); if (!navigator.onLine) { setOff(true); setShow(true) }; return () => { window.removeEventListener('offline', a); window.removeEventListener('online', b) } }, [])
   if (!show) return null
-  return <div style={{ position:'fixed', top:54, left:0, right:0, zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'8px 16px', background: off ? 'rgba(239,68,68,0.95)' : 'rgba(0,229,160,0.95)', borderBottom:`1px solid ${off?'rgba(239,68,68,0.3)':'rgba(0,229,160,0.3)'}`, animation:'slideDown 0.3s ease' }}><i className={`ti ${off?'ti-wifi-off':'ti-wifi'}`} style={{ fontSize:13, color:'#fff' }} /><span style={{ fontFamily:'var(--mono)', fontSize:9, fontWeight:700, letterSpacing:1.5, color:'#fff', textTransform:'uppercase' }}>{off ? 'No connection — cached' : 'Back online'}</span></div>
+  return <div style={{ position:'fixed', top:54, left:0, right:0, zIndex:200, display:'flex', alignItems:'center', justifyContent:'center', gap:8, padding:'8px 16px', background: off ? 'rgba(239,68,68,0.95)' : 'rgba(0,229,160,0.95)', borderBottom:`1px solid ${off?'rgba(239,68,68,0.3)':'rgba(0,229,160,0.3)'}`, animation:'slideDown 0.3s ease' }}><i className={`ti ${off?'ti-wifi-off':'ti-wifi'}`} style={{ fontSize:13, color:'#fff' }} /><span style={{ fontFamily:'var(--body)', fontSize:9, fontWeight:700, letterSpacing:1.5, color:'#fff', textTransform:'uppercase' }}>{off ? 'No connection — cached' : 'Back online'}</span></div>
 }
 
 function PWABanner() {
@@ -59,7 +59,7 @@ function PWABanner() {
   useEffect(() => { if (localStorage.getItem('pwa-dismissed')) { setG(true); return }; const h = e => { e.preventDefault(); setP(e) }; window.addEventListener('beforeinstallprompt', h); return () => window.removeEventListener('beforeinstallprompt', h) }, [])
   if (!p || g) return null
   const go = async () => { p.prompt(); await p.userChoice; setP(null); localStorage.setItem('pwa-dismissed','1') }
-  return <div style={{ position:'fixed', bottom:80, left:12, right:12, zIndex:150, background:'var(--bg-2)', border:'1px solid var(--gold-bdr)', borderRadius:18, padding:'12px 14px', display:'flex', alignItems:'center', gap:10, boxShadow:'0 20px 60px rgba(0,0,0,0.8)', animation:'slideUp 0.3s cubic-bezier(0.16,1,0.3,1)' }}><div style={{ width:36, height:36, background:'var(--gold-bg)', border:'1px solid var(--gold-bdr)', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><i className="ti ti-device-mobile" style={{ fontSize:17, color:'var(--gold)' }} /></div><div style={{ flex:1 }}><div style={{ fontFamily:'var(--body)', fontSize:12, fontWeight:600, color:'var(--t1)', marginBottom:1 }}>Install Last Session</div><div style={{ fontFamily:'var(--body)', fontSize:11, color:'var(--t3)' }}>Add to home screen</div></div><div style={{ display:'flex', gap:5, flexShrink:0 }}><button onClick={() => { setP(null); setG(true); localStorage.setItem('pwa-dismissed','1') }} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'5px 9px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>Skip</button><button onClick={go} style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, padding:'5px 10px', borderRadius:7, border:'1px solid var(--gold-bdr)', background:'var(--gold-bg)', color:'var(--gold)' }}>Install</button></div></div>
+  return <div style={{ position:'fixed', bottom:80, left:12, right:12, zIndex:150, background:'var(--bg-2)', border:'1px solid var(--gold-bdr)', borderRadius:18, padding:'12px 14px', display:'flex', alignItems:'center', gap:10, boxShadow:'0 20px 60px rgba(0,0,0,0.8)', animation:'slideUp 0.3s cubic-bezier(0.16,1,0.3,1)' }}><div style={{ width:36, height:36, background:'var(--gold-bg)', border:'1px solid var(--gold-bdr)', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><i className="ti ti-device-mobile" style={{ fontSize:17, color:'var(--gold)' }} /></div><div style={{ flex:1 }}><div style={{ fontFamily:'var(--body)', fontSize:12, fontWeight:600, color:'var(--t1)', marginBottom:1 }}>Install Last Session</div><div style={{ fontFamily:'var(--body)', fontSize:11, color:'var(--t3)' }}>Add to home screen</div></div><div style={{ display:'flex', gap:5, flexShrink:0 }}><button onClick={() => { setP(null); setG(true); localStorage.setItem('pwa-dismissed','1') }} style={{ fontFamily:'var(--body)', fontSize:8, padding:'5px 9px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>Skip</button><button onClick={go} style={{ fontFamily:'var(--body)', fontSize:8, fontWeight:700, padding:'5px 10px', borderRadius:7, border:'1px solid var(--gold-bdr)', background:'var(--gold-bg)', color:'var(--gold)' }}>Install</button></div></div>
 }
 
 function PullRefresh({ onRefresh, loading }) {
@@ -74,7 +74,7 @@ function PullRefresh({ onRefresh, loading }) {
   }, [onRefresh])
   if (dist < 2 && !ref) return null
   const trig = dist >= T
-  return <div style={{ position:'fixed', top:54, left:0, right:0, zIndex:190, display:'flex', alignItems:'center', justifyContent:'center', height: ref ? 40 : Math.min(40, dist * 0.62), overflow:'hidden', background:'rgba(0,0,0,0.85)', borderBottom:`1px solid ${trig?'var(--gold-bdr)':'var(--b0)'}`, transition: dist === 0 ? 'height 0.3s ease' : 'border-color 0.15s' }}><div style={{ display:'flex', alignItems:'center', gap:7 }}><i className="ti ti-refresh" style={{ fontSize:13, color: trig?'var(--gold)':'var(--t3)', transform:`rotate(${(dist/T)*180}deg)`, animation: ref?'spin 0.8s linear infinite':'none', transition:'color 0.2s,transform 0.06s' }} /><span style={{ fontFamily:'var(--mono)', fontSize:9, letterSpacing:1.5, color: trig?'var(--gold)':'var(--t3)', fontWeight:700, textTransform:'uppercase', transition:'color 0.2s' }}>{ref ? 'Refreshing…' : trig ? 'Release' : 'Pull to refresh'}</span></div></div>
+  return <div style={{ position:'fixed', top:54, left:0, right:0, zIndex:190, display:'flex', alignItems:'center', justifyContent:'center', height: ref ? 40 : Math.min(40, dist * 0.62), overflow:'hidden', background:'rgba(0,0,0,0.85)', borderBottom:`1px solid ${trig?'var(--gold-bdr)':'var(--b0)'}`, transition: dist === 0 ? 'height 0.3s ease' : 'border-color 0.15s' }}><div style={{ display:'flex', alignItems:'center', gap:7 }}><i className="ti ti-refresh" style={{ fontSize:13, color: trig?'var(--gold)':'var(--t3)', transform:`rotate(${(dist/T)*180}deg)`, animation: ref?'spin 0.8s linear infinite':'none', transition:'color 0.2s,transform 0.06s' }} /><span style={{ fontFamily:'var(--body)', fontSize:9, letterSpacing:1.5, color: trig?'var(--gold)':'var(--t3)', fontWeight:700, textTransform:'uppercase', transition:'color 0.2s' }}>{ref ? 'Refreshing…' : trig ? 'Release' : 'Pull to refresh'}</span></div></div>
 }
 
 // ─── Ticker ─────────────────────────────────────────────────────────────────
@@ -87,11 +87,11 @@ function Ticker({ sessions, movieMap }) {
         const st = status$(hall.sessions)
         const tint = st === 'playing' ? 'rgba(0,60,35,0.55)' : st === 'done' ? 'rgba(0,0,0,0.2)' : 'transparent'
         return [
-          <span key={pfx+i} style={{ fontFamily:'var(--mono)', fontSize:9, fontWeight:700, letterSpacing:1.5, color:'#080808', padding:'0 16px', flexShrink:0, background:tint }}>{name} · {fmtTime(last.startMin)}</span>,
+          <span key={pfx+i} style={{ fontFamily:'var(--body)', fontSize:10, fontWeight:700, letterSpacing:.5, color:'#080808', padding:'0 16px', flexShrink:0, background:tint }}>{name} · {fmtTime(last.startMin)}</span>,
           <span key={pfx+i+'s'} style={{ color:'rgba(0,0,0,0.2)', fontSize:8, flexShrink:0, padding:'0 2px' }}>◆</span>
         ]
       })
-    : [<span key={pfx} style={{ fontFamily:'var(--mono)', fontSize:9, fontWeight:700, letterSpacing:1.5, color:'#080808', padding:'0 24px', flexShrink:0 }}>HOYTS LAST SESSION TRACKER · SELECT YOUR CINEMA</span>]
+    : [<span key={pfx} style={{ fontFamily:'var(--body)', fontSize:10, fontWeight:700, letterSpacing:.5, color:'#080808', padding:'0 24px', flexShrink:0 }}>HOYTS LAST SESSION TRACKER · SELECT YOUR CINEMA</span>]
   return (
     <div style={{ background:'var(--gold)', height:24, overflow:'hidden', display:'flex', alignItems:'center' }}>
       <div style={{ display:'flex', whiteSpace:'nowrap', animation:'ticker 50s linear infinite', willChange:'transform' }}>
@@ -128,7 +128,7 @@ function CinemaSheet({ value, onChange, open, onClose }) {
           {total === 0 && <div style={{ textAlign:'center', padding:'40px 20px', color:'var(--t3)', fontFamily:'var(--body)', fontSize:14 }}>No cinemas match "{search}"</div>}
           {Object.entries(grouped).map(([state, cins]) => (
             <div key={state}>
-              <div style={{ fontFamily:'var(--mono)', fontSize:9, letterSpacing:2, textTransform:'uppercase', color:'var(--t4)', padding:'10px 20px 4px' }}>{state}</div>
+              <div style={{ fontFamily:'var(--body)', fontSize:10, fontWeight:500, letterSpacing:.5, textTransform:'uppercase', color:'var(--t4)', padding:'10px 20px 4px' }}>{state}</div>
               {cins.map(c => { const active = c.id === value; return (
                 <button key={c.id} onClick={() => { onChange(c.id); onClose() }} style={{ display:'flex', alignItems:'center', gap:12, width:'100%', textAlign:'left', padding:'13px 20px', minHeight:52, background: active ? 'var(--gold-bg)' : 'transparent', border:'none', borderBottom:'1px solid var(--b0)', WebkitTapHighlightColor:'transparent' }}>
                   <i className="ti ti-building" style={{ fontSize:14, color: active ? 'var(--gold)' : 'var(--t4)', flexShrink:0 }} />
@@ -211,7 +211,7 @@ function HallCard({ hallName, hall, expanded, onToggle, cinemaId }) {
           <MoviePoster movieName={poster.movie} movieId={poster.movieId} size="fill" />
           {/* Occupancy dot */}
           {occ !== null && st !== 'done' && (
-            <div className="occ-badge" style={{ position:'absolute', top:7, right:8, fontFamily:'var(--mono)', fontSize:8, fontWeight:700, letterSpacing:.5, borderRadius:99, padding:'2px 7px',
+            <div className="occ-badge" style={{ position:'absolute', top:7, right:8, fontFamily:'var(--body)', fontSize:8, fontWeight:700, letterSpacing:.5, borderRadius:99, padding:'2px 7px',
               color: occ>=95?'#FF5757':occ>=80?'var(--dbox)':occ>=60?'var(--gold)':'var(--playing)',
               background: occ>=95?'rgba(255,87,87,0.16)':occ>=80?'rgba(255,107,53,0.16)':occ>=60?'rgba(245,166,35,0.14)':'rgba(0,229,160,0.12)',
               border: `1px solid ${occ>=95?'rgba(255,87,87,0.35)':occ>=80?'rgba(255,107,53,0.3)':occ>=60?'rgba(245,166,35,0.28)':'rgba(0,229,160,0.22)'}`,
@@ -223,23 +223,23 @@ function HallCard({ hallName, hall, expanded, onToggle, cinemaId }) {
         <div style={{ flex:1, minWidth:0, padding:'10px 10px 10px 12px', display:'flex', flexDirection:'column', justifyContent:'center', gap:3 }}>
           {/* Row 1: Hall name + type badge */}
           <div style={{ display:'flex', alignItems:'center', gap:6, minWidth:0 }}>
-            <span style={{ fontFamily:'var(--display)', fontSize:17, letterSpacing:1, color: st === 'done' ? 'var(--t3)' : 'var(--t1)', lineHeight:1, whiteSpace:'nowrap', flexShrink:0 }}>{hallName}</span>
-            <span style={{ fontFamily:'var(--mono)', fontSize:7, padding:'2px 6px', borderRadius:99, background:bg, color:col, border:`1px solid ${bdr}`, letterSpacing:.3, flexShrink:0, whiteSpace:'nowrap' }}>{lbl}</span>
+            <span style={{ fontFamily:'var(--display)', fontSize:19, letterSpacing:1, color: st === 'done' ? 'var(--t3)' : 'var(--t1)', lineHeight:1, whiteSpace:'nowrap', flexShrink:0 }}>{hallName}</span>
+            <span style={{ fontFamily:'var(--body)', fontSize:7, padding:'2px 6px', borderRadius:99, background:bg, color:col, border:`1px solid ${bdr}`, letterSpacing:.3, flexShrink:0, whiteSpace:'nowrap' }}>{lbl}</span>
             {/* Live dot */}
             {st !== 'done' && st !== 'upcoming' && (
               <div style={{ width:5, height:5, borderRadius:'50%', background:accent, flexShrink:0, marginLeft:'auto', animation:'blip 1.4s ease-in-out infinite' }} />
             )}
           </div>
           {/* Row 2: Movie title */}
-          <div style={{ fontFamily:'var(--body)', fontSize:13, fontWeight:600, color: st === 'done' ? 'var(--t3)' : 'var(--t1)', lineHeight:1.2, overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
+          <div style={{ fontFamily:'var(--body)', fontSize:14, fontWeight:600, color: st === 'done' ? 'var(--t3)' : 'var(--t1)', lineHeight:1.3, overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
           {/* Row 3: Time + status */}
           <div style={{ display:'flex', alignItems:'center', gap:6 }}>
             <span style={{ fontFamily:'var(--display)', fontSize:15, color:accent, letterSpacing:.5, lineHeight:1 }}>{fmtTime(last.startMin)}</span>
-            {last.runtime > 0 && <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)' }}>~{fmtTime(last.endMin)}</span>}
-            {isFin && mL > 0 && <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--gold-txt)', marginLeft:'auto' }}>ends {human$(mL)}</span>}
-            {st === 'playing' && !isFin && mL > 0 && <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'rgba(0,229,160,0.6)', marginLeft:'auto' }}>ends {human$(mL)}</span>}
-            {st === 'upcoming' && mN > 0 && nx && nx.startMin === last.startMin && <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', marginLeft:'auto' }}>in {human$(mN)}</span>}
-            {st === 'done' && <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', marginLeft:'auto' }}>closed</span>}
+            {last.runtime > 0 && <span style={{ fontFamily:'var(--body)', fontSize:12, color:'var(--t3)' }}>~{fmtTime(last.endMin)}</span>}
+            {isFin && mL > 0 && <span style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--gold-txt)', marginLeft:'auto' }}>ends {human$(mL)}</span>}
+            {st === 'playing' && !isFin && mL > 0 && <span style={{ fontFamily:'var(--body)', fontSize:11, fontWeight:500, color:'rgba(0,229,160,0.6)', marginLeft:'auto' }}>ends {human$(mL)}</span>}
+            {st === 'upcoming' && mN > 0 && nx && nx.startMin === last.startMin && <span style={{ fontFamily:'var(--body)', fontSize:11, fontWeight:500, color:'var(--t3)', marginLeft:'auto' }}>in {human$(mN)}</span>}
+            {st === 'done' && <span style={{ fontFamily:'var(--body)', fontSize:11, fontWeight:500, color:'var(--t3)', marginLeft:'auto' }}>closed</span>}
           </div>
         </div>
 
@@ -288,7 +288,7 @@ function HallCard({ hallName, hall, expanded, onToggle, cinemaId }) {
           {/* Seat map */}
           {sess.some(s => s.sessionId) && (
             <div style={{ padding:'0 14px 14px' }}>
-              <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:6, paddingTop:12 }}>
+              <div style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:6, paddingTop:12 }}>
                 Seat map · {fmtTime((sess.find(s => s.sessionId === sel) || last).startMin)}
               </div>
               <SeatMap key={sel} sessionId={String(sel || last.sessionId)} cinemaId={sess.find(s => s.sessionId === sel)?.cinemaId || last.cinemaId || cinemaId} typeColor={col} />
@@ -303,7 +303,7 @@ function HallCard({ hallName, hall, expanded, onToggle, cinemaId }) {
 function Chip({ label, value, col }) {
   return (
     <div style={{ background:'var(--bg-3)', borderRadius:7, padding:'5px 9px', border:'1px solid var(--b1)', flexShrink:0 }}>
-      <div style={{ fontFamily:'var(--mono)', fontSize:7, color:'var(--t3)', letterSpacing:1, marginBottom:2 }}>{label}</div>
+      <div style={{ fontFamily:'var(--body)', fontSize:7, color:'var(--t3)', letterSpacing:1, marginBottom:2 }}>{label}</div>
       <div style={{ fontFamily:'var(--display)', fontSize:15, color:col, lineHeight:1, whiteSpace:'nowrap' }}>{value}</div>
     </div>
   )
@@ -325,8 +325,8 @@ function TypeGroup({ typeId, halls, expandedHalls, toggleHall, prefix, cinemaId 
       {/* Inline section label */}
       <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
         <div style={{ width:2, height:14, borderRadius:1, background:col, flexShrink:0 }} />
-        <span style={{ fontFamily:'var(--mono)', fontSize:9, color:col, letterSpacing:2, textTransform:'uppercase', fontWeight:700 }}>{lbl}</span>
-        <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)' }}>{count}</span>
+        <span style={{ fontFamily:'var(--body)', fontSize:9, color:col, letterSpacing:2, textTransform:'uppercase', fontWeight:700 }}>{lbl}</span>
+        <span style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--t3)' }}>{count}</span>
       </div>
       {halls.map(([name, hall]) => (
         <HallCard key={name} hallName={name} hall={hall} cinemaId={cinemaId}
@@ -366,7 +366,7 @@ function StatsBar({ hallCount, showCount, latest }) {
       ].map((s, i) => (
         <div key={s.label} style={{ flex:1, padding:'10px 0', textAlign:'center', borderRight: i < 2 ? '1px solid var(--b1)' : 'none' }}>
           <div style={{ fontFamily:'var(--display)', fontSize:20, color:s.col, letterSpacing:1, lineHeight:1, marginBottom:3 }}>{s.value}</div>
-          <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1, textTransform:'uppercase' }}>{s.label}</div>
+          <div style={{ fontFamily:'var(--body)', fontSize:11, fontWeight:500, color:'var(--t3)' }}>{s.label}</div>
         </div>
       ))}
     </div>
@@ -387,12 +387,12 @@ function DepartureBoard({ halls, loading }) {
         <span style={{ fontFamily:'var(--display)', fontSize:18, color:'var(--t1)', letterSpacing:2 }}>Closing Times</span>
         <div style={{ display:'inline-flex', alignItems:'center', gap:5, background:'var(--gold-bg)', border:'1px solid var(--gold-bdr)', borderRadius:99, padding:'3px 10px' }}>
           <div style={{ width:4, height:4, borderRadius:'50%', background:'var(--gold)', animation:'pulse 2s ease-in-out infinite' }} />
-          <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--gold)', letterSpacing:1.5, fontWeight:700 }}>LIVE</span>
+          <span style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--gold)', letterSpacing:1.5, fontWeight:700 }}>LIVE</span>
         </div>
       </div>
       {/* Col headers */}
       <div style={{ display:'grid', gridTemplateColumns:'80px 1fr auto', padding:'6px 16px', background:'var(--bg-2)', borderBottom:'1px solid var(--b0)' }}>
-        {['Ends ~','Hall · Film',''].map((h, i) => <span key={i} style={{ fontFamily:'var(--mono)', fontSize:7, color:'var(--t4)', letterSpacing:1.5, textTransform:'uppercase' }}>{h}</span>)}
+        {['Ends ~','Hall · Film',''].map((h, i) => <span key={i} style={{ fontFamily:'var(--body)', fontSize:10, fontWeight:500, color:'var(--t4)' }}>{h}</span>)}
       </div>
       {/* Rows */}
       {sorted.map(([name, hall], i) => {
@@ -410,14 +410,14 @@ function DepartureBoard({ halls, loading }) {
             <div><span className="board-time" style={{ fontSize:'clamp(22px,5.5vw,34px)' }}>~{fmtTime(last.endMin)}</span></div>
             <div style={{ minWidth:0, paddingRight:10 }}>
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
-                <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t2)', letterSpacing:1, textTransform:'uppercase', whiteSpace:'nowrap' }}>{name}</span>
-                <span style={{ fontFamily:'var(--mono)', fontSize:7, padding:'1px 6px', borderRadius:99, background:TB[hall.typeId]||'var(--std-bg)', color:col, border:`1px solid ${TD[hall.typeId]||'var(--std-bdr)'}`, whiteSpace:'nowrap' }}>{TYPE_LABEL[hall.typeId]||hall.typeId}</span>
+                <span style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--t2)', letterSpacing:1, textTransform:'uppercase', whiteSpace:'nowrap' }}>{name}</span>
+                <span style={{ fontFamily:'var(--body)', fontSize:7, padding:'1px 6px', borderRadius:99, background:TB[hall.typeId]||'var(--std-bg)', color:col, border:`1px solid ${TD[hall.typeId]||'var(--std-bdr)'}`, whiteSpace:'nowrap' }}>{TYPE_LABEL[hall.typeId]||hall.typeId}</span>
               </div>
               <div style={{ fontFamily:'var(--body)', fontWeight:600, fontSize:13, color:'var(--t1)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{last.movie}</div>
             </div>
             <div style={{ textAlign:'right', flexShrink:0 }}>
               {(st === 'playing' || isFin) && <div style={{ width:5, height:5, borderRadius:'50%', background:tCol, marginLeft:'auto', marginBottom:4, animation:'blip 1.4s ease-in-out infinite' }} />}
-              <span style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, color:tCol, textTransform:'uppercase', letterSpacing:.5 }}>{sLabel}</span>
+              <span style={{ fontFamily:'var(--body)', fontSize:8, fontWeight:700, color:tCol, textTransform:'uppercase', letterSpacing:.5 }}>{sLabel}</span>
             </div>
           </div>
         )
@@ -446,15 +446,15 @@ function SkeletonList() {
 }
 function EmptyState({ icon, title, sub }) {
   const I = { film:<svg width="44" height="44" viewBox="0 0 48 48" fill="none"><rect x="4" y="10" width="40" height="28" rx="5" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".15"/><path d="M4 17h40M4 31h40M11 10v7M35 10v7M11 31v7M35 31v7" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".1" strokeLinecap="round"/></svg>, cal:<svg width="44" height="44" viewBox="0 0 48 48" fill="none"><rect x="6" y="10" width="36" height="30" rx="5" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".15"/><line x1="6" y1="20" x2="42" y2="20" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".1"/><rect x="15" y="6" width="3" height="8" rx="1.5" fill="currentColor" fillOpacity=".15"/><rect x="30" y="6" width="3" height="8" rx="1.5" fill="currentColor" fillOpacity=".15"/></svg>, night:<svg width="44" height="44" viewBox="0 0 48 48" fill="none"><path d="M24 8C15.2 8 8 15.2 8 24s7.2 16 16 16 16-7.2 16-16" stroke="currentColor" strokeWidth="1.5" strokeOpacity=".15" strokeLinecap="round"/></svg> }
-  return <div style={{ textAlign:'center', padding:'72px 20px' }}><div style={{ color:'var(--t4)', marginBottom:16, display:'flex', justifyContent:'center' }}>{I[icon]||I.film}</div><div style={{ fontFamily:'var(--display)', fontSize:22, color:'var(--t3)', letterSpacing:'2px', marginBottom:8 }}>{title}</div><div style={{ fontFamily:'var(--body)', fontSize:13, color:'var(--t3)', lineHeight:1.8, maxWidth:240, margin:'0 auto' }}>{sub}</div></div>
+  return <div style={{ textAlign:'center', padding:'72px 20px' }}><div style={{ color:'var(--t4)', marginBottom:16, display:'flex', justifyContent:'center' }}>{I[icon]||I.film}</div><div style={{ fontFamily:'var(--display)', fontSize:22, color:'var(--t3)', letterSpacing:'1px', marginBottom:8 }}>{title}</div><div style={{ fontFamily:'var(--body)', fontSize:13, color:'var(--t3)', lineHeight:1.8, maxWidth:240, margin:'0 auto' }}>{sub}</div></div>
 }
 function ErrorState({ msg, onRetry }) {
   return <div style={{ background:'rgba(239,68,68,0.07)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:12, padding:'14px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:16 }}><div><div style={{ fontFamily:'var(--body)', fontSize:13, fontWeight:600, color:'#EF4444', marginBottom:2 }}>Couldn't load sessions</div><div style={{ fontFamily:'var(--body)', fontSize:12, color:'var(--t3)' }}>{msg}</div></div><button onClick={onRetry} style={{ fontFamily:'var(--body)', fontWeight:600, fontSize:12, padding:'7px 12px', borderRadius:8, border:'1px solid var(--b2)', background:'var(--bg-2)', color:'var(--t1)', flexShrink:0 }}>Retry</button></div>
 }
 
 // ─── Settings ────────────────────────────────────────────────────────────────
-const Sec  = ({ label, children }) => <div style={{ marginBottom:22 }}><div style={{ fontFamily:'var(--mono)', fontSize:9, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)', marginBottom:8 }}>{label}</div><div style={{ background:'var(--bg-1)', border:'1px solid var(--b1)', borderRadius:14, padding:'14px' }}>{children}</div></div>
-const SRow = ({ label, value })    => <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'9px 0', borderBottom:'1px solid var(--b0)' }}><span style={{ fontFamily:'var(--mono)', fontSize:10, color:'var(--t2)' }}>{label}</span><span style={{ fontFamily:'var(--mono)', fontSize:10, fontWeight:700, color:'var(--t2)' }}>{value}</span></div>
+const Sec  = ({ label, children }) => <div style={{ marginBottom:22 }}><div style={{ fontFamily:'var(--body)', fontSize:10, fontWeight:500, letterSpacing:.5, textTransform:'uppercase', color:'var(--t3)', marginBottom:8 }}>{label}</div><div style={{ background:'var(--bg-1)', border:'1px solid var(--b1)', borderRadius:14, padding:'14px' }}>{children}</div></div>
+const SRow = ({ label, value })    => <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'9px 0', borderBottom:'1px solid var(--b0)' }}><span style={{ fontFamily:'var(--body)', fontSize:13, fontWeight:500, color:'var(--t2)' }}>{label}</span><span style={{ fontFamily:'var(--body)', fontSize:13, fontWeight:600, color:'var(--t1)' }}>{value}</span></div>
 
 // ─── Bottom Nav ───────────────────────────────────────────────────────────────
 function BottomNav({ view, setView }) {
@@ -465,7 +465,7 @@ function BottomNav({ view, setView }) {
       <div style={{ maxWidth:600, margin:'0 auto', display:'flex', height:60, position:'relative' }}>
         <div style={{ position:'absolute', bottom:8, left:`calc(${ai*25}% + 12px)`, width:'calc(25% - 24px)', height:2, background:'var(--gold)', borderRadius:1, boxShadow:'0 0 10px var(--gold-glow)', transition:'left 0.3s cubic-bezier(0.34,1.56,0.64,1)', pointerEvents:'none' }} />
         {tabs.map(t => { const active = view === t.id; return (
-          <button key={t.id} onClick={() => { setView(t.id); window.scrollTo({ top:0, behavior:'smooth' }) }} className="nav-btn" style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3, background:'transparent', border:'none', color: active ? 'var(--gold)' : 'var(--t3)', fontFamily:'var(--mono)', fontSize:8, fontWeight: active ? 700 : 400, letterSpacing:1, textTransform:'uppercase', position:'relative', zIndex:1, WebkitTapHighlightColor:'transparent', transition:'color 0.18s' }}>
+          <button key={t.id} onClick={() => { setView(t.id); window.scrollTo({ top:0, behavior:'smooth' }) }} className="nav-btn" style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3, background:'transparent', border:'none', color: active ? 'var(--gold)' : 'var(--t3)', fontFamily:'var(--body)', fontSize:10, fontWeight: active ? 600 : 400, letterSpacing:.3, textTransform:'uppercase', position:'relative', zIndex:1, WebkitTapHighlightColor:'transparent', transition:'color 0.18s' }}>
             <i className={`ti ${t.icon}`} style={{ fontSize:20, transition:'transform 0.18s cubic-bezier(0.34,1.56,0.64,1)', transform: active ? 'scale(1.12)' : 'scale(1)', filter: active ? 'drop-shadow(0 0 5px var(--gold))' : '' }} />
             {t.label}
           </button>
@@ -489,11 +489,11 @@ function Header({ cinemaId, loading, lastFetched, onRefresh, onOpenPicker }) {
           </div>
           <div>
             <div style={{ fontFamily:'var(--display)', fontSize:18, color:'var(--t1)', letterSpacing:'1px', lineHeight:1 }}>Last Session</div>
-            <div style={{ fontFamily:'var(--mono)', fontSize:7, letterSpacing:2, color:'var(--gold)', textTransform:'uppercase', marginTop:1 }}>HOYTS Tracker</div>
+            <div style={{ fontFamily:'var(--body)', fontSize:9, fontWeight:600, letterSpacing:1, color:'var(--gold)', textTransform:'uppercase', marginTop:1 }}>HOYTS Tracker</div>
           </div>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:7 }}>
-          {age && <span style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)' }}>{age}</span>}
+          {age && <span style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--t3)' }}>{age}</span>}
           <button onClick={onRefresh} disabled={loading} style={{ width:32, height:32, borderRadius:8, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)', display:'flex', alignItems:'center', justifyContent:'center' }}>
             <i className="ti ti-refresh" style={{ fontSize:15, animation: loading ? 'spin 1s linear infinite' : 'none' }} />
           </button>
@@ -565,17 +565,17 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
             <button onClick={onClose} style={{ width:30, height:30, borderRadius:8, border:'1px solid var(--b2)', background:'var(--bg-3)', color:'var(--t2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>✕</button>
           </div>
           <div style={{ padding:'0 18px 12px' }}>
-            <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)', marginBottom:7 }}>Group name</div>
+            <div style={{ fontFamily:'var(--body)', fontSize:10, fontWeight:500, letterSpacing:.5, textTransform:'uppercase', color:'var(--t3)', marginBottom:7 }}>Group name</div>
             <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Section A, Suraj's halls…" maxLength={32}
               style={{ width:'100%', fontFamily:'var(--body)', fontSize:16, fontWeight:600, background:'var(--bg-1)', border:`1px solid ${name.trim()?'var(--gold-bdr)':'var(--b2)'}`, borderRadius:12, padding:'12px 14px', color:'var(--t1)', outline:'none', caretColor:'var(--gold)', boxSizing:'border-box' }}/>
           </div>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 18px 10px', borderBottom:'1px solid var(--b1)' }}>
-            <span style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)' }}>
+            <span style={{ fontFamily:'var(--body)', fontSize:10, fontWeight:500, letterSpacing:.5, textTransform:'uppercase', color:'var(--t3)' }}>
               {sel.length > 0 ? `${sel.length} hall${sel.length>1?'s':''} selected` : 'Select halls'}
             </span>
             <div style={{ display:'flex', gap:8 }}>
-              <button onClick={() => setSel(allHalls)} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>All</button>
-              <button onClick={() => setSel([])} style={{ fontFamily:'var(--mono)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>Clear</button>
+              <button onClick={() => setSel(allHalls)} style={{ fontFamily:'var(--body)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>All</button>
+              <button onClick={() => setSel([])} style={{ fontFamily:'var(--body)', fontSize:8, padding:'4px 10px', borderRadius:7, border:'1px solid var(--b2)', background:'transparent', color:'var(--t3)' }}>Clear</button>
             </div>
           </div>
         </div>
@@ -598,7 +598,7 @@ function GroupEditor({ halls, existing, onSave, onClose }) {
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:2 }}>
                     <span style={{ fontFamily:'var(--display)', fontSize:17, letterSpacing:1, color:active?'var(--gold)':'var(--t1)', lineHeight:1 }}>{hn}</span>
-                    <span style={{ fontFamily:'var(--mono)', fontSize:7, padding:'2px 6px', borderRadius:99, background:bg, color:col, border:`1px solid ${bdr}`, flexShrink:0 }}>{lbl}</span>
+                    <span style={{ fontFamily:'var(--body)', fontSize:7, padding:'2px 6px', borderRadius:99, background:bg, color:col, border:`1px solid ${bdr}`, flexShrink:0 }}>{lbl}</span>
                   </div>
                   <div style={{ fontFamily:'var(--body)', fontSize:11, color:'var(--t2)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
                 </div>
@@ -674,10 +674,10 @@ function GroupList({ groups, halls, onOpen, onAdd, onEdit, onDelete }) {
                 {/* Info */}
                 <div style={{ flex:1, minWidth:0, padding:'13px 12px' }}>
                   <div style={{ fontFamily:'var(--display)', fontSize:20, letterSpacing:1, color:'var(--t1)', lineHeight:1, marginBottom:4 }}>{group.name}</div>
-                  <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:.5 }}>
+                  <div style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--t3)', letterSpacing:.5 }}>
                     {group.halls.slice(0,4).join(' · ')}{group.halls.length > 4 ? ` +${group.halls.length-4}` : ''}
                   </div>
-                  {missing.length > 0 && <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--gold)', marginTop:3 }}>{missing.length} hall{missing.length>1?'s':''} not tonight</div>}
+                  {missing.length > 0 && <div style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--gold)', marginTop:3 }}>{missing.length} hall{missing.length>1?'s':''} not tonight</div>}
                 </div>
                 {/* Right — free time + chevron */}
                 <div style={{ padding:'13px 10px', display:'flex', flexDirection:'column', alignItems:'flex-end', justifyContent:'space-between', flexShrink:0 }}>
@@ -690,10 +690,10 @@ function GroupList({ groups, halls, onOpen, onAdd, onEdit, onDelete }) {
 
               {/* Edit / Delete actions — swipe feel with long-press alternative */}
               <div style={{ display:'flex', gap:0, borderTop:'1px solid var(--b0)' }}>
-                <button onClick={() => onEdit(group)} style={{ flex:1, padding:'8px', fontFamily:'var(--mono)', fontSize:8, letterSpacing:1, color:'var(--t3)', background:'transparent', border:'none', borderRight:'1px solid var(--b0)', display:'flex', alignItems:'center', justifyContent:'center', gap:5 }}>
+                <button onClick={() => onEdit(group)} style={{ flex:1, padding:'8px', fontFamily:'var(--body)', fontSize:8, letterSpacing:1, color:'var(--t3)', background:'transparent', border:'none', borderRight:'1px solid var(--b0)', display:'flex', alignItems:'center', justifyContent:'center', gap:5 }}>
                   <i className="ti ti-pencil" style={{ fontSize:11 }}/>Edit
                 </button>
-                <button onClick={() => setConfirmDel(group.id)} style={{ flex:1, padding:'8px', fontFamily:'var(--mono)', fontSize:8, letterSpacing:1, color: confirmDel === group.id ? '#FF5757' : 'var(--t3)', background: confirmDel === group.id ? 'rgba(255,87,87,0.08)' : 'transparent', border:'none', display:'flex', alignItems:'center', justifyContent:'center', gap:5, transition:'all 0.15s' }}>
+                <button onClick={() => setConfirmDel(group.id)} style={{ flex:1, padding:'8px', fontFamily:'var(--body)', fontSize:8, letterSpacing:1, color: confirmDel === group.id ? '#FF5757' : 'var(--t3)', background: confirmDel === group.id ? 'rgba(255,87,87,0.08)' : 'transparent', border:'none', display:'flex', alignItems:'center', justifyContent:'center', gap:5, transition:'all 0.15s' }}>
                   {confirmDel === group.id
                     ? <><i className="ti ti-trash" style={{ fontSize:11 }}/>Confirm delete</>
                     : <><i className="ti ti-trash" style={{ fontSize:11 }}/>Delete</>
@@ -734,11 +734,11 @@ function GroupDetail({ group, halls, cinemaId, onBack, onEdit }) {
     <div>
       {/* Back header */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-        <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:7, fontFamily:'var(--mono)', fontSize:8, fontWeight:700, letterSpacing:1, padding:'7px 12px', borderRadius:10, border:'1px solid var(--b2)', background:'var(--bg-2)', color:'var(--t2)', WebkitTapHighlightColor:'transparent' }}>
+        <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:7, fontFamily:'var(--body)', fontSize:8, fontWeight:700, letterSpacing:1, padding:'7px 12px', borderRadius:10, border:'1px solid var(--b2)', background:'var(--bg-2)', color:'var(--t2)', WebkitTapHighlightColor:'transparent' }}>
           <i className="ti ti-chevron-left" style={{ fontSize:13 }}/>Back
         </button>
         <div style={{ fontFamily:'var(--display)', fontSize:20, color:'var(--t1)', letterSpacing:1 }}>{group.name}</div>
-        <button onClick={onEdit} style={{ display:'flex', alignItems:'center', gap:5, fontFamily:'var(--mono)', fontSize:8, letterSpacing:1, padding:'7px 12px', borderRadius:10, border:'1px solid var(--b2)', background:'var(--bg-2)', color:'var(--t2)' }}>
+        <button onClick={onEdit} style={{ display:'flex', alignItems:'center', gap:5, fontFamily:'var(--body)', fontSize:8, letterSpacing:1, padding:'7px 12px', borderRadius:10, border:'1px solid var(--b2)', background:'var(--bg-2)', color:'var(--t2)' }}>
           <i className="ti ti-pencil" style={{ fontSize:11 }}/>Edit
         </button>
       </div>
@@ -747,7 +747,7 @@ function GroupDetail({ group, halls, cinemaId, onBack, onEdit }) {
       {missing.length > 0 && (
         <div style={{ marginBottom:10, padding:'9px 13px', background:'rgba(245,166,35,0.06)', border:'1px solid var(--gold-bdr)', borderRadius:10, display:'flex', alignItems:'center', gap:8 }}>
           <i className="ti ti-alert-triangle" style={{ fontSize:12, color:'var(--gold)', flexShrink:0 }}/>
-          <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--gold)', letterSpacing:.5 }}><span style={{ fontWeight:700 }}>Not tonight: </span>{missing.join(' · ')}</div>
+          <div style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--gold)', letterSpacing:.5 }}><span style={{ fontWeight:700 }}>Not tonight: </span>{missing.join(' · ')}</div>
         </div>
       )}
 
@@ -787,7 +787,7 @@ function GroupDetail({ group, halls, cinemaId, onBack, onEdit }) {
                 <div style={{ width:5, flexShrink:0, background: isFree ? 'var(--playing)' : accent, transition:'background 0.3s' }}/>
                 <div style={{ flex:1, minWidth:0, padding:'13px 12px' }}>
                   <div style={{ fontFamily:'var(--display)', fontSize:20, letterSpacing:1, color:'var(--t1)', lineHeight:1, marginBottom:4 }}>{name}</div>
-                  <div style={{ fontFamily:'var(--mono)', fontSize:8, color:col, letterSpacing:1, marginBottom:5 }}>{lbl}</div>
+                  <div style={{ fontFamily:'var(--body)', fontSize:8, color:col, letterSpacing:1, marginBottom:5 }}>{lbl}</div>
                   <div style={{ fontFamily:'var(--body)', fontSize:12, color:'var(--t2)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{last.movie}</div>
                 </div>
                 <div style={{ padding:'13px 14px 13px 8px', textAlign:'right', flexShrink:0, display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
@@ -795,7 +795,7 @@ function GroupDetail({ group, halls, cinemaId, onBack, onEdit }) {
                   <div style={{ display:'flex', alignItems:'center', gap:4, justifyContent:'flex-end' }}>
                     {!isFree && st !== 'upcoming' && <div style={{ width:5, height:5, borderRadius:'50%', background:statusCol, animation:'blip 1.4s ease-in-out infinite', flexShrink:0 }}/>}
                     {isFree && <i className="ti ti-check" style={{ fontSize:10, color:'var(--playing)' }}/>}
-                    <span style={{ fontFamily:'var(--mono)', fontSize:8, color:statusCol, letterSpacing:.5, textAlign:'right', maxWidth:120 }}>{statusText}</span>
+                    <span style={{ fontFamily:'var(--body)', fontSize:8, color:statusCol, letterSpacing:.5, textAlign:'right', maxWidth:120 }}>{statusText}</span>
                   </div>
                 </div>
                 {progress > 0 && !isFree && (
@@ -808,7 +808,7 @@ function GroupDetail({ group, halls, cinemaId, onBack, onEdit }) {
               {/* Expanded */}
               {isOpen && (
                 <div style={{ background:'var(--bg-2)', borderBottom: i < assigned.length - 1 ? '1px solid var(--b1)' : 'none', padding:'14px' }}>
-                  <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:10 }}>All sessions tonight</div>
+                  <div style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:10 }}>All sessions tonight</div>
                   {hall.sessions.map((s, si) => {
                     const sDone    = nowM >= s.endMin
                     const sPlaying = s.startMin <= nowM && nowM < s.endMin
@@ -820,25 +820,25 @@ function GroupDetail({ group, halls, cinemaId, onBack, onEdit }) {
                         <div style={{ fontFamily:'var(--display)', fontSize:16, color:sCol, letterSpacing:1, flexShrink:0, width:70 }}>{fmtTime(s.startMin)}</div>
                         <div style={{ flex:1, minWidth:0 }}>
                           <div style={{ fontFamily:'var(--body)', fontSize:12, fontWeight:600, color: sDone ? 'var(--t3)' : 'var(--t1)', overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' }}>{s.movie}</div>
-                          {s.runtime > 0 && <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', marginTop:1 }}>ends ~{fmtTime(s.endMin)}</div>}
+                          {s.runtime > 0 && <div style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--t3)', marginTop:1 }}>ends ~{fmtTime(s.endMin)}</div>}
                         </div>
-                        {isLast && <span style={{ fontFamily:'var(--mono)', fontSize:7, fontWeight:700, color: sPlaying ? 'var(--gold)' : sDone ? 'var(--t4)' : col, flexShrink:0 }}>LAST</span>}
-                        {sPlaying && !isLast && <span style={{ fontFamily:'var(--mono)', fontSize:7, color:'var(--playing)', flexShrink:0 }}>NOW</span>}
+                        {isLast && <span style={{ fontFamily:'var(--body)', fontSize:7, fontWeight:700, color: sPlaying ? 'var(--gold)' : sDone ? 'var(--t4)' : col, flexShrink:0 }}>LAST</span>}
+                        {sPlaying && !isLast && <span style={{ fontFamily:'var(--body)', fontSize:7, color:'var(--playing)', flexShrink:0 }}>NOW</span>}
                       </div>
                     )
                   })}
                   <div style={{ marginTop:12, display:'flex', alignItems:'center', gap:8, padding:'10px 12px', background: isFree ? 'rgba(0,229,160,0.08)' : 'var(--bg-3)', border:`1px solid ${isFree ? 'rgba(0,229,160,0.22)' : 'var(--b1)'}`, borderRadius:9 }}>
                     <i className={`ti ${isFree ? 'ti-check' : 'ti-clock'}`} style={{ fontSize:13, color: isFree ? 'var(--playing)' : 'var(--t3)', flexShrink:0 }}/>
                     <div>
-                      <div style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, color: isFree ? 'var(--playing)' : 'var(--t2)', letterSpacing:1 }}>
+                      <div style={{ fontFamily:'var(--body)', fontSize:8, fontWeight:700, color: isFree ? 'var(--playing)' : 'var(--t2)', letterSpacing:1 }}>
                         {isFree ? `Hall free since ${fmtTime(freeAt)}` : `Hall free from ~${fmtTime(freeAt)}`}
                       </div>
-                      {!isFree && minsToFree > 0 && <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', marginTop:2 }}>in {human$(minsToFree)}</div>}
+                      {!isFree && minsToFree > 0 && <div style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--t3)', marginTop:2 }}>in {human$(minsToFree)}</div>}
                     </div>
                   </div>
                   {last.sessionId && (
                     <div style={{ marginTop:12 }}>
-                      <div style={{ fontFamily:'var(--mono)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:6 }}>Seat map · {fmtTime((cur || last).startMin)}</div>
+                      <div style={{ fontFamily:'var(--body)', fontSize:8, color:'var(--t3)', letterSpacing:1.5, textTransform:'uppercase', marginBottom:6 }}>Seat map · {fmtTime((cur || last).startMin)}</div>
                       <SeatMap sessionId={String(cur?.sessionId || last.sessionId)} cinemaId={cur?.cinemaId || last.cinemaId || cinemaId} typeColor={col}/>
                     </div>
                   )}
@@ -946,12 +946,12 @@ export default function App() {
           {/* Inline page header — no PageTitle component, tighter */}
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
             <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, color:'var(--t3)', textTransform:'uppercase', marginBottom:3 }}>Final sessions</div>
+              <div style={{ fontFamily:'var(--body)', fontSize:11, fontWeight:500, color:'var(--t3)', textTransform:'uppercase', marginBottom:4 }}>Final sessions</div>
               <div style={{ fontFamily:'var(--display)', fontSize:'clamp(20px,5vw,28px)', color:'var(--t1)', letterSpacing:1, lineHeight:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{cinema?.name || 'Select a cinema'}</div>
             </div>
             <div style={{ display:'inline-flex', alignItems:'center', gap:5, background:'var(--gold-bg)', border:'1px solid var(--gold-bdr)', borderRadius:99, padding:'4px 10px', flexShrink:0 }}>
               <div style={{ width:4, height:4, borderRadius:'50%', background:'var(--gold)', animation:'pulse 2s ease-in-out infinite' }} />
-              <span style={{ fontFamily:'var(--mono)', fontSize:8, fontWeight:700, letterSpacing:1.5, color:'var(--gold)', textTransform:'uppercase' }}>Live</span>
+              <span style={{ fontFamily:'var(--body)', fontSize:8, fontWeight:700, letterSpacing:1.5, color:'var(--gold)', textTransform:'uppercase' }}>Live</span>
             </div>
           </div>
 
@@ -973,7 +973,7 @@ export default function App() {
       {view === 'schedule' && (
         <div style={wrap} className="fade-up">
           <div style={{ marginBottom:12 }}>
-            <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, color:'var(--t3)', textTransform:'uppercase', marginBottom:3 }}>Full schedule</div>
+            <div style={{ fontFamily:'var(--body)', fontSize:11, fontWeight:500, color:'var(--t3)', textTransform:'uppercase', marginBottom:4 }}>Full schedule</div>
             <div style={{ fontFamily:'var(--display)', fontSize:'clamp(20px,5vw,28px)', color:'var(--t1)', letterSpacing:1, lineHeight:1 }}>All Days</div>
           </div>
           {dates.length > 0 && <div style={{ marginBottom:12 }}><DateTabs dates={dates} selected={selDate} onSelect={setSelDate} /></div>}
@@ -987,7 +987,7 @@ export default function App() {
       {view === 'closing' && (
         <div style={wrap} className="fade-up">
           <div style={{ marginBottom:12 }}>
-            <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, color:'var(--t3)', textTransform:'uppercase', marginBottom:3 }}>Tonight</div>
+            <div style={{ fontFamily:'var(--body)', fontSize:11, fontWeight:500, color:'var(--t3)', textTransform:'uppercase', marginBottom:4 }}>Tonight</div>
             <div style={{ fontFamily:'var(--display)', fontSize:'clamp(20px,5vw,28px)', color:'var(--t1)', letterSpacing:1, lineHeight:1 }}>When halls close</div>
           </div>
           <DepartureBoard halls={todayH} loading={loading} />
@@ -1005,11 +1005,11 @@ export default function App() {
       {view === 'settings' && (
         <div style={wrap} className="fade-up">
           <div style={{ marginBottom:16 }}>
-            <div style={{ fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, color:'var(--t3)', textTransform:'uppercase', marginBottom:3 }}>Configuration</div>
+            <div style={{ fontFamily:'var(--body)', fontSize:11, fontWeight:500, color:'var(--t3)', textTransform:'uppercase', marginBottom:4 }}>Configuration</div>
             <div style={{ fontFamily:'var(--display)', fontSize:'clamp(20px,5vw,28px)', color:'var(--t1)', letterSpacing:1, lineHeight:1 }}>Settings</div>
           </div>
           <Sec label="Cinema">
-            <label style={{ display:'block', fontFamily:'var(--mono)', fontSize:8, letterSpacing:2, textTransform:'uppercase', color:'var(--t3)', marginBottom:10 }}>Your cinema</label>
+            <label style={{ display:'block', fontFamily:'var(--body)', fontSize:10, fontWeight:500, letterSpacing:.5, textTransform:'uppercase', color:'var(--t3)', marginBottom:10 }}>Your cinema</label>
             <CinemaPicker value={cinemaId} onOpen={() => setPicker(true)} />
           </Sec>
           <Sec label="Status">
@@ -1024,12 +1024,12 @@ export default function App() {
             </div>
           </Sec>
           <Sec label="Movie details">
-            <p style={{ fontFamily:'var(--mono)', fontSize:10, color:'var(--t3)', marginBottom:12, lineHeight:1.7 }}>Known movies pre-filled. Enter names/runtimes for missing IDs.</p>
+            <p style={{ fontFamily:'var(--body)', fontSize:10, color:'var(--t3)', marginBottom:12, lineHeight:1.7 }}>Known movies pre-filled. Enter names/runtimes for missing IDs.</p>
             {[...new Set(sessions.map(s => s.movieId).filter(Boolean))].map(mid => {
               const m = movies[mid] || {}
               return (
                 <div key={mid} style={{ display:'flex', gap:7, marginBottom:7, alignItems:'center', flexWrap:'wrap' }}>
-                  <span style={{ fontFamily:'var(--mono)', fontSize:9, color:'var(--t3)', width:86, flexShrink:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{mid}</span>
+                  <span style={{ fontFamily:'var(--body)', fontSize:9, color:'var(--t3)', width:86, flexShrink:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{mid}</span>
                   <input defaultValue={m.name||''} placeholder="Movie name" onChange={e => { const nm = { ...movieMap, [mid]: { ...(movieMap[mid]||{}), name:e.target.value } }; setMovieMap(nm); localStorage.setItem('hoyts-movies', JSON.stringify(nm)) }} style={{ flex:1, minWidth:110, fontFamily:'var(--body)', fontSize:13, background:'var(--bg-2)', border:'1px solid var(--b2)', borderRadius:7, padding:'7px 9px', color:'var(--t1)' }} />
                   <input defaultValue={m.runtime||''} placeholder="min" type="number" onChange={e => { const nm = { ...movieMap, [mid]: { ...(movieMap[mid]||{}), runtime:Number(e.target.value) } }; setMovieMap(nm); localStorage.setItem('hoyts-movies', JSON.stringify(nm)) }} style={{ width:60, fontFamily:'var(--body)', fontSize:13, background:'var(--bg-2)', border:'1px solid var(--b2)', borderRadius:7, padding:'7px 9px', color:'var(--t1)' }} />
                 </div>
