@@ -57,3 +57,25 @@ export async function GET(request) {
 
   return Response.json(out, { headers: { 'Access-Control-Allow-Origin': '*' } })
 }
+
+export async function POST(request) {
+  // Test which CDN base works for HOYTS poster images
+  const path  = 'mx/posters/au/resident-evil-d6c9cbf1.jpg'
+  const bases = [
+    'https://assets.hoyts.com.au/',
+    'https://cdn.hoyts.com.au/',
+    'https://media.hoyts.com.au/',
+    'https://www.hoyts.com.au/',
+    'https://images.hoyts.com.au/',
+    'https://static.hoyts.com.au/',
+    'https://apim-aea.hoyts.com.au/',
+  ]
+  const results = {}
+  await Promise.all(bases.map(async base => {
+    try {
+      const r = await fetch(base + path, { method: 'HEAD', redirect: 'follow' })
+      results[base] = { status: r.status, ok: r.ok, type: r.headers.get('content-type') }
+    } catch(e) { results[base] = { error: e.message } }
+  }))
+  return Response.json(results, { headers: { 'Access-Control-Allow-Origin': '*' } })
+}
