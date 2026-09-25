@@ -1049,6 +1049,36 @@ export default function App() {
               )
             })}
           </Sec>
+          <Sec label="Poster overrides">
+            <p style={{ fontFamily:'var(--font)', fontSize:12, color:'var(--fg-3)', marginBottom:12, lineHeight:1.6 }}>
+              If a poster is wrong, find the correct film on <span style={{color:'var(--gold)'}}>themoviedb.org</span> and enter the ID from the URL (e.g. themoviedb.org/movie/<strong>12345</strong>).
+            </p>
+            {[...new Set(sessions.map(s => s.movieId).filter(Boolean))].map(mid => {
+              const m = { ...KNOWN_MOVIES, ...movieMap }[mid] || {}
+              const [tmdbId, setTmdbId] = React.useState(m.tmdbId || '')
+              return (
+                <div key={mid} style={{ display:'flex', gap:8, marginBottom:8, alignItems:'center' }}>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontFamily:'var(--font)', fontSize:12, fontWeight:600, color:'var(--fg)', marginBottom:3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{m.name || mid}</div>
+                    <input
+                      defaultValue={m.tmdbId || ''}
+                      placeholder="TMDB ID (optional)"
+                      type="number"
+                      onChange={e => {
+                        const nm = { ...movieMap, [mid]: { ...(movieMap[mid]||{}), tmdbId: e.target.value, name: m.name } }
+                        setMovieMap(nm)
+                        localStorage.setItem('hoyts-movies', JSON.stringify(nm))
+                        // Clear cached poster so it re-fetches
+                        try { localStorage.removeItem('hoyts-poster-' + mid) } catch(e) {}
+                        delete (window.__posterCache || {})[mid]
+                      }}
+                      style={{ width:'100%', fontFamily:'var(--font)', fontSize:13, background:'var(--surface-3)', border:'1px solid var(--border-2)', borderRadius:'var(--r-sm)', padding:'6px 10px', color:'var(--fg)' }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </Sec>
           <Sec label="Data">
             <button onClick={() => { if (confirm('Clear all saved data?')) { try { localStorage.clear() } catch(e) {}; Object.keys(posterCache).forEach(k => delete posterCache[k]); window.location.reload() } }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'rgba(239,68,68,0.07)', color:'#EF4444' }}>Clear all data</button>
           </Sec>

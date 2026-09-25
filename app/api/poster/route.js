@@ -30,17 +30,60 @@ async function getHoytsMovies() {
   } catch (e) { return {} }
 }
 
-async function tmdbSearch(name) {
-  try {
-    const res = await fetch(
-      'https://api.themoviedb.org/3/search/movie?query=' + encodeURIComponent(name) + '&api_key=' + TMDB_KEY,
-      { next: { revalidate: 86400 } }
-    )
-    if (!res.ok) return null
-    const d = await res.json()
-    const m = d.results?.[0]
-    return m?.poster_path ? TMDB_IMG + m.poster_path : null
-  } catch (e) { return null }
+function cleanTitle(name) {
+  if (!name) return name
+  return name
+    .replace(/\s*\([^)]*(?:sub|dub|dubbed|subtitled|english|korean|mandarin|cantonese|japanese|CC|AD|3D|4DX|IMAX|ScreenX|re-release|encore|reissue)[^)]*\)/gi, '')
+    .replace(/\s*-\s*\d{4}\s*re-release/gi, '')
+    .replace(/\s*:\s*(encore|re-release|reissue).*/gi, '')
+    .trim()
+}
+
+// Check manual overrides stored in KV or fallback map
+const MANUAL_OVERRIDES = {
+  // format: 'movie name lowercase': tmdb_id
+  // Add here when TMDB returns wrong film
+  // Find ID at themoviedb.org — number in the URL
+}
+
+async function tmdbSearch(rawName) {
+  const name = cleanTitle(rawName) || rawName
+  if (!name) return null
+
+  // Check manual override first
+  const override = MANUAL_OVERRIDES[name.toLowerCase()]
+  if (override) {
+    try {
+      const r = await fetch(\`https://api.themoviedb.org/3/movie/\${override}?api_key=\${TMDB_KEY}\`,
+        { next: { revalidate: 86400 } })
+      if (r.ok) {
+        const d = await r.json()
+        if (d.poster_path) return TMDB_IMG + d.poster_path
+      }
+    } catch(e) {}
+  }
+
+  // Try year-scoped search first (current year → last year → any)
+  const year = new Date().getFullYear()
+  for (const y of [year, year-1, '']) {
+    try {
+      const url = \`https://api.themoviedb.org/3/search/movie?query=\${encodeURIComponent(name)}&api_key=\${TMDB_KEY}\${y?\`&primary_release_year=\${y}\`:''}&language=en-AU\`
+      const res = await fetch(url, { next: { revalidate: 86400 } })
+      if (!res.ok) continue
+      const d = await res.json()
+      if (!d.results?.length) continue
+      // Exact title match wins
+      const exact = d.results.find(r => 
+        r.title?.toLowerCase() === name.toLowerCase() ||
+        r.original_title?.toLowerCase() === name.toLowerCase()
+      )
+      // Otherwise most recent
+      const sorted = [...d.results].sort((a,b) => (b.release_date||'').localeCompare(a.release_date||''))
+      const best = exact || sorted[0]
+      if (best?.poster_path) return TMDB_IMG + best.poster_path
+    } catch(e) {}
+  }
+  return null
 }
 
 export async function GET(request) {
@@ -50,16 +93,37 @@ export async function GET(request) {
 
   if (!q && !vistaId) return Response.json({ poster: null })
 
-  const movies = await getHoytsMovies()
+  const movies  = await getHoytsMovies()
   let searchName = q
+  let tmdbId     = null
 
   if (vistaId) {
     const found = movies[vistaId]
-    if (found) searchName = found.name
+    if (found) {
+      searchName = found.name
+      tmdbId     = found.tmdbId || null
+    }
   }
 
-  if (!searchName) return Response.json({ poster: null })
+  // Also accept tmdbId directly as override
+  if (searchParams.get('tmdbId')) tmdbId = searchParams.get('tmdbId')
+
+  if (!searchName && !tmdbId) return Response.json({ poster: null })
+
+  // If tmdbId provided, fetch directly — always correct
+  if (tmdbId) {
+    try {
+      const r = await fetch(\`https://api.themoviedb.org/3/movie/\${tmdbId}?api_key=\${TMDB_KEY}\`,
+        { next: { revalidate: 86400 } })
+      if (r.ok) {
+        const d = await r.json()
+        if (d.poster_path) {
+          return Response.json({ poster: TMDB_IMG + d.poster_path }, { headers: { 'Access-Control-Allow-Origin': '*' } })
+        }
+      }
+    } catch(e) {}
+  }
 
   const poster = await tmdbSearch(searchName)
-  return Response.json({ poster, title: searchName }, { headers: { 'Access-Control-Allow-Origin': '*' } })
+  return Response.json({ poster }, { headers: { 'Access-Control-Allow-Origin': '*' } })
 }
