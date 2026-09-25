@@ -2,20 +2,9 @@ const HOYTS_BASE = 'https://apim-aea.hoyts.com.au/cinemaapi-au-live/api'
 const TMDB_KEY   = '26b1201a577ece50ab34775a74fb7d5e'
 const TMDB_IMG   = 'https://image.tmdb.org/t/p/w342'
 
-// Hardcoded TMDB IDs for films where search gives wrong results
-// Key = HOYTS movie name (cleaned), Value = TMDB movie ID
-const TMDB_OVERRIDES = {
-  'resident evil':              976573,  // 2025 Resident Evil reboot
-  'avengers endgame encore':    299534,  // Avengers Endgame (use main poster)
-  'avengers endgame: encore':   299534,
-  'spider-man brand new day':   1117913, // Spider-Man: Brand New Day 2025
-  'spider-man: brand new day':  1117913,
-  'heart of the beast':         1196830,
-  'the odyssey':                1126166,
-  'practical magic 2':          1241436,
-  'v':                          1402648,
-  'runner':                     1299339,
-}
+// TMDB ID overrides — add here when search returns wrong film
+// Find ID at themoviedb.org — it's the number in the URL
+const TMDB_OVERRIDES = {}
 
 let cache   = null
 let cacheAt = 0
@@ -59,21 +48,6 @@ async function getMovieMap() {
 async function tmdbPoster(name) {
   if (!name) return null
   const clean = cleanTitle(name).toLowerCase()
-
-  // Check override table first
-  const overrideId = TMDB_OVERRIDES[clean] || TMDB_OVERRIDES[name.toLowerCase()]
-  if (overrideId) {
-    try {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/movie/${overrideId}?api_key=${TMDB_KEY}`,
-        { next: { revalidate: 86400 } }
-      )
-      if (res.ok) {
-        const d = await res.json()
-        if (d.poster_path) return TMDB_IMG + d.poster_path
-      }
-    } catch(e) {}
-  }
 
   // Search TMDB — prefer most recent release date
   try {

@@ -28,9 +28,9 @@ function usePoster(movieName, movieId, posterImageDirect) {
 
     // 3. Check localStorage cache
     try {
-      const saved = localStorage.getItem('hoyts-poster-' + key)
+      // v2 key — forces ignore of old wrong poster cache
+      const saved = localStorage.getItem('hoyts-poster-v2-' + key)
       if (saved && saved.startsWith('http')) { cache[key] = saved; setPoster(saved); return }
-      if (saved) localStorage.removeItem('hoyts-poster-' + key)
     } catch(e) {}
 
     // 4. Fetch from poster API (tries HOYTS first, TMDB fallback)
@@ -40,7 +40,7 @@ function usePoster(movieName, movieId, posterImageDirect) {
     fetch(url).then(r => r.json()).then(d => {
       if (d.poster) {
         cache[key] = d.poster
-        try { localStorage.setItem('hoyts-poster-' + key, d.poster) } catch(e) {}
+        try { localStorage.setItem('hoyts-poster-v2-' + key, d.poster) } catch(e) {}
         setPoster(d.poster)
       }
     }).catch(() => {})
