@@ -4,6 +4,15 @@ import { useState, useEffect } from 'react'
 export const posterCache = {}
 const cache = posterCache
 
+// Wipe old incorrect poster cache versions on load
+if (typeof window !== 'undefined') {
+  try {
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('hoyts-poster-') && !k.startsWith('hoyts-poster-v3-'))
+      .forEach(k => localStorage.removeItem(k))
+  } catch(e) {}
+}
+
 function usePoster(movieName, movieId) {
   const [poster, setPoster] = useState(null)
   const key = movieId || movieName
@@ -14,17 +23,17 @@ function usePoster(movieName, movieId) {
     if (!hasId && !hasName) return
     if (cache[key]) { setPoster(cache[key]); return }
     try {
-      const saved = localStorage.getItem('hoyts-poster-' + key)
+      const saved = localStorage.getItem('hoyts-poster-v3-' + key)
       if (saved && saved.startsWith('https://')) { cache[key] = saved; setPoster(saved); return }
-      if (saved) localStorage.removeItem('hoyts-poster-' + key)
+      if (saved) localStorage.removeItem('hoyts-poster-v3-' + key)
       // Also clear old v2 keys that may have wrong data
-      localStorage.removeItem('hoyts-poster-v2-' + key)
+      localStorage.removeItem('hoyts-poster-v3-' + key)
     } catch(e) {}
     const url = hasId ? '/api/poster?vistaId=' + movieId : '/api/poster?q=' + encodeURIComponent(movieName || '')
     fetch(url).then(function(r) { return r.json() }).then(function(d) {
       if (d.poster) {
         cache[key] = d.poster
-        try { localStorage.setItem('hoyts-poster-' + key, d.poster) } catch(e) {}
+        try { localStorage.setItem('hoyts-poster-v3-' + key, d.poster) } catch(e) {}
         setPoster(d.poster)
       }
     }).catch(function() {})
