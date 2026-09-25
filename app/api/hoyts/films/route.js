@@ -6,6 +6,16 @@ let cache   = null
 let cacheAt = 0
 const TTL   = 3600000
 
+function cleanTitle(name) {
+  if (!name) return ''
+  return name
+    .replace(/\s*\([^)]*(?:sub|dub|dubbed|subtitled|english|korean|mandarin|cantonese|japanese|french|spanish|hindi|tamil|telugu|CC|AD|3D|4DX|IMAX|ScreenX|re-release|encore|reissue)[^)]*\)/gi, '')
+    .replace(/\s*-\s*\d{4}\s*re-release/gi, '')
+    .replace(/\s*:\s*\d{4}\s*re-release/gi, '')
+    .replace(/\s*\[[^\]]*\]/g, '')
+    .trim()
+}
+
 async function getMovieMap() {
   if (cache && Date.now() - cacheAt < TTL) return cache
   try {
@@ -16,63 +26,38 @@ async function getMovieMap() {
     if (!res.ok) return {}
     const d   = await res.json()
     const arr = Array.isArray(d) ? d : d.movies || d.data || []
-
     const map = {}
     arr.forEach(m => {
       if (!m.vistaId) return
-
-      // runtime can be number OR object {minutes: N}
       const runtime = typeof m.runtime === 'object'
-        ? (m.runtime?.minutes || m.runtime?.value || 0)
-        : Number(m.runtime || m.duration || 0)
-
-      // posterImage can be full URL or relative — normalise it
-      let posterImage = m.posterImage || m.headerImage || null
-      if (posterImage) {
-        if (!posterImage.startsWith('http')) {
-          posterImage = 'https://apim-aea.hoyts.com.au/' + posterImage
-        }
-        // HOYTS CDN returns 403 to browsers — proxy through our API
-        posterImage = '/api/img?url=' + encodeURIComponent(posterImage)
-      }
-
-      const entry = {
-        name:        m.name || m.title || null,
-        runtime,
-        posterImage,
-        // keep raw for debugging
-        _raw_runtime:     m.runtime,
-        _raw_posterImage: m.posterImage,
-      }
-
-      // vistaId can be comma-separated e.g. "HO00010000,HO00011219"
+        ? (m.runtime?.minutes || 0) : Number(m.runtime || 0)
       m.vistaId.split(',').map(s => s.trim()).filter(Boolean).forEach(id => {
-        map[id] = entry
+        map[id] = { name: m.name, runtime }
       })
     })
-
     cache   = map
     cacheAt = Date.now()
     return map
   } catch(e) { return {} }
 }
 
-// TMDB fallback for movies missing HOYTS poster
 async function tmdbPoster(name) {
   if (!name) return null
-  const clean = name
-    .replace(/\s*\([^)]*(?:sub|dub|eng|korean|mandarin|cantonese|japanese|dubbed|subtitled|3D|4DX|CC|AD)[^)]*\)/gi, '')
-    .trim()
+  const clean = cleanTitle(name)
+  if (!clean) return null
   try {
     const year = new Date().getFullYear()
     for (const y of [year, year - 1, '']) {
-      const url = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(clean)}&api_key=${TMDB_KEY}${y ? `&year=${y}` : ''}`
+      const url = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(clean)}&api_key=${TMDB_KEY}${y ? `&year=${y}` : ''}&language=en-AU`
       const res = await fetch(url, { next: { revalidate: 86400 } })
       if (!res.ok) continue
       const d = await res.json()
       if (!d.results?.length) continue
-      const exact = d.results.find(r => r.title?.toLowerCase() === clean.toLowerCase())
-      const best  = exact || d.results[0]
+      const exact = d.results.find(r =>
+        r.title?.toLowerCase() === clean.toLowerCase() ||
+        r.original_title?.toLowerCase() === clean.toLowerCase()
+      )
+      const best = exact || d.results[0]
       if (best?.poster_path) return TMDB_IMG + best.poster_path
     }
   } catch(e) {}
@@ -81,28 +66,20 @@ async function tmdbPoster(name) {
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
-  const ids   = (searchParams.get('ids') || '').split(',').map(s => s.trim()).filter(Boolean)
-  const bust  = searchParams.get('t')
+  const ids  = (searchParams.get('ids') || '').split(',').map(s => s.trim()).filter(Boolean)
+  const bust = searchParams.get('t')
   if (!ids.length) return Response.json({})
 
-  // If cache-bust param present, invalidate server cache
   if (bust) { cache = null; cacheAt = 0 }
 
-  const map    = await getMovieMap()
-  const result = {}
+  const map = await getMovieMap()
 
+  // Fetch TMDB posters in parallel
+  const result = {}
   await Promise.all(ids.map(async id => {
     const m = map[id]
-    if (!m) {
-      result[id] = { name: null, runtime: 0, posterImage: null }
-      return
-    }
-    // If HOYTS has no poster, try TMDB
-    let posterImage = m.posterImage
-    if (!posterImage && m.name) {
-      posterImage = await tmdbPoster(m.name)
-    }
-    // posterImage at this point is already proxied from the map
+    if (!m) { result[id] = { name: null, runtime: 0, posterImage: null }; return }
+    const posterImage = await tmdbPoster(m.name)
     result[id] = { name: m.name, runtime: m.runtime, posterImage }
   }))
 
