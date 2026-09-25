@@ -209,7 +209,7 @@ function HallCard({ hallName, hall, expanded, onToggle, cinemaId }) {
         <div style={{ width:3, flexShrink:0, background: st === 'done' ? 'var(--border-2)' : accent, borderRadius:'14px 0 0 14px', transition:'background 0.2s' }} />
 
         {/* Poster — full height */}
-        <div style={{ width:56, flexShrink:0, position:'relative', overflow:'hidden', background:'var(--surface-3)' }}>
+        <div style={{ width:56, minWidth:56, flexShrink:0, alignSelf:'stretch', position:'relative', overflow:'hidden' }}>
           <MoviePoster movieName="" movieId={poster.movieId} size="fill"/>
           {/* Occupancy dot */}
           {occ !== null && st !== 'done' && (
