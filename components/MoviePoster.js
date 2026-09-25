@@ -5,13 +5,12 @@ export const posterCache = {}
 
 function usePoster(movieName, movieId, posterImageDirect) {
   const [poster, setPoster] = useState(null)
-  // Key is always movieId when available — never use name as key
   const key = movieId || movieName
 
   useEffect(() => {
     if (!key) return
 
-    // 1. Use posterImage passed directly from films API — most accurate
+    // 1. Use posterImage passed directly (from films API) — skip all fetching
     if (posterImageDirect) {
       posterCache[key] = posterImageDirect
       try { localStorage.setItem('hoyts-poster-v2-' + key, posterImageDirect) } catch(e) {}
@@ -19,42 +18,39 @@ function usePoster(movieName, movieId, posterImageDirect) {
       return
     }
 
-    // 2. Check in-memory cache
+    // 2. Memory cache
     if (posterCache[key]) { setPoster(posterCache[key]); return }
 
-    // 3. Check localStorage cache (v2 key only — v1 was wrong)
+    // 3. localStorage cache
     try {
       const saved = localStorage.getItem('hoyts-poster-v2-' + key)
-      if (saved && saved.startsWith('http')) {
+      if (saved && saved.startsWith('https://')) {
         posterCache[key] = saved
         setPoster(saved)
         return
       }
     } catch(e) {}
 
-    // 4. If we have a movieId, DON'T search by name — wait for films API
-    // Name-based search causes wrong poster matches
-    // posterImage will arrive via prop once films API responds
-    if (movieId && movieId.startsWith('HO')) return
+    // 4. Fetch via server — use vistaId for HO IDs (accurate), name for others
+    const hasId = movieId && movieId.startsWith('HO')
+    if (!hasId && !movieName) return
 
-    // 5. Only use name search for unknown/custom entries (no HO id)
-    if (!movieName || movieName === 'Unknown Film') return
-    const clean = movieName.replace(/\s*\([^)]*(?:sub|dub|eng|korean|mandarin|cantonese|japanese|dubbed|subtitled)[^)]*\)/gi, '').trim()
-    fetch('/api/poster?q=' + encodeURIComponent(clean))
-      .then(r => r.json())
-      .then(d => {
-        if (d.poster) {
-          posterCache[key] = d.poster
-          try { localStorage.setItem('hoyts-poster-v2-' + key, d.poster) } catch(e) {}
-          setPoster(d.poster)
-        }
-      }).catch(() => {})
+    const url = hasId
+      ? '/api/poster?vistaId=' + movieId
+      : '/api/poster?q=' + encodeURIComponent(movieName || '')
+
+    fetch(url).then(r => r.json()).then(d => {
+      if (d.poster) {
+        posterCache[key] = d.poster
+        try { localStorage.setItem('hoyts-poster-v2-' + key, d.poster) } catch(e) {}
+        setPoster(d.poster)
+      }
+    }).catch(() => {})
   }, [key, posterImageDirect])
 
   return poster
 }
 
-// Full-bleed card background poster
 export function CardPoster({ movieName, movieId, posterImage }) {
   const poster = usePoster(movieName, movieId, posterImage)
   if (!poster) return null
@@ -70,7 +66,6 @@ export function CardPoster({ movieName, movieId, posterImage }) {
   )
 }
 
-// Small poster thumbnail
 export default function MoviePoster({ movieName, movieId, size, posterImage }) {
   const poster = usePoster(movieName, movieId, posterImage)
   const s = { sm:{w:38,h:57,r:6}, md:{w:52,h:78,r:8}, lg:{w:64,h:96,r:10} }[size] || {w:38,h:57,r:6}
