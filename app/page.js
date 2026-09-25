@@ -1030,7 +1030,7 @@ export default function App() {
             <SRow label="Sessions loaded" value={sessions.length} />
             <SRow label="Dates available" value={dates.length} />
             <SRow label="Last updated"    value={lastFetched ? lastFetched.toLocaleTimeString('en-AU') : '--'} />
-            <SRow label="Cache"           value={(() => { const c = loadC(cinemaId); return c ? `${c.length} sessions` : 'Empty' })()} />
+            <SRow label="Data" value={cacheCleared ? "✓ Cleared" : `${sessions.length} sessions · ${Object.keys(movieMap).length} films`}/>
             <div style={{ display:'flex', gap:8, marginTop:12, flexWrap:'wrap' }}>
               <button onClick={() => fetch$(cinemaId)} disabled={loading} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid var(--b2)', background:'var(--surface-2)', color:'var(--fg)' }}>{loading ? 'Refreshing…' : 'Refresh now'}</button>
               <button onClick={() => { try { localStorage.clear() } catch(e) {}; Object.keys(posterCache).forEach(k => delete posterCache[k]); setSessions([]); setMovieMap({}); setCacheCleared(true); fetch$(cinemaId); setTimeout(() => setCacheCleared(false), 3000) }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'transparent', color:'#EF4444' }}>Clear Cache</button>
