@@ -905,7 +905,7 @@ export default function App() {
       const data = await res.json(); if (data.error) throw new Error(data.error)
       const arr  = Array.isArray(data) ? data : []
       setSessions(arr); setLastFetched(new Date()); saveC(id, arr)
-      const miss = [...new Set(arr.map(s => s.movieId).filter(Boolean))].filter(mid => { const m = { ...KNOWN_MOVIES, ...mmRef.current }[mid]; return !m || !m.name })
+      const miss = [...new Set(arr.map(s => s.movieId).filter(Boolean))].filter(mid => { const m = { ...KNOWN_MOVIES, ...mmRef.current }[mid]; return !m || !m.name || !m.posterImage })
       if (miss.length) {
         fetch(`/api/hoyts/films?ids=${miss.join(',')}&t=${Date.now()}`).then(r => r.json()).then(map => {
           const mg = { ...mmRef.current }
