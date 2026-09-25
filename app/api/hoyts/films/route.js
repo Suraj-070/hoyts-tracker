@@ -2,6 +2,21 @@ const HOYTS_BASE = 'https://apim-aea.hoyts.com.au/cinemaapi-au-live/api'
 const TMDB_KEY   = '26b1201a577ece50ab34775a74fb7d5e'
 const TMDB_IMG   = 'https://image.tmdb.org/t/p/w342'
 
+// Hardcoded TMDB IDs for films where search gives wrong results
+// Key = HOYTS movie name (cleaned), Value = TMDB movie ID
+const TMDB_OVERRIDES = {
+  'resident evil':              976573,  // 2025 Resident Evil reboot
+  'avengers endgame encore':    299534,  // Avengers Endgame (use main poster)
+  'avengers endgame: encore':   299534,
+  'spider-man brand new day':   1117913, // Spider-Man: Brand New Day 2025
+  'spider-man: brand new day':  1117913,
+  'heart of the beast':         1196830,
+  'the odyssey':                1126166,
+  'practical magic 2':          1241436,
+  'v':                          1402648,
+  'runner':                     1299339,
+}
+
 let cache   = null
 let cacheAt = 0
 const TTL   = 3600000
@@ -43,21 +58,43 @@ async function getMovieMap() {
 
 async function tmdbPoster(name) {
   if (!name) return null
-  const clean = cleanTitle(name)
-  if (!clean) return null
+  const clean = cleanTitle(name).toLowerCase()
+
+  // Check override table first
+  const overrideId = TMDB_OVERRIDES[clean] || TMDB_OVERRIDES[name.toLowerCase()]
+  if (overrideId) {
+    try {
+      const res = await fetch(
+        `https://api.themoviedb.org/3/movie/${overrideId}?api_key=${TMDB_KEY}`,
+        { next: { revalidate: 86400 } }
+      )
+      if (res.ok) {
+        const d = await res.json()
+        if (d.poster_path) return TMDB_IMG + d.poster_path
+      }
+    } catch(e) {}
+  }
+
+  // Search TMDB — prefer most recent release date
   try {
     const year = new Date().getFullYear()
     for (const y of [year, year - 1, '']) {
-      const url = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(clean)}&api_key=${TMDB_KEY}${y ? `&year=${y}` : ''}&language=en-AU`
+      const url = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(cleanTitle(name))}&api_key=${TMDB_KEY}${y ? `&year=${y}` : ''}&language=en-AU`
       const res = await fetch(url, { next: { revalidate: 86400 } })
       if (!res.ok) continue
       const d = await res.json()
       if (!d.results?.length) continue
+
+      // Exact title match first
       const exact = d.results.find(r =>
-        r.title?.toLowerCase() === clean.toLowerCase() ||
-        r.original_title?.toLowerCase() === clean.toLowerCase()
+        r.title?.toLowerCase() === cleanTitle(name).toLowerCase() ||
+        r.original_title?.toLowerCase() === cleanTitle(name).toLowerCase()
       )
-      const best = exact || d.results[0]
+      // Then most recent
+      const sorted = [...d.results].sort((a, b) =>
+        (b.release_date || '').localeCompare(a.release_date || '')
+      )
+      const best = exact || sorted[0]
       if (best?.poster_path) return TMDB_IMG + best.poster_path
     }
   } catch(e) {}
@@ -74,7 +111,6 @@ export async function GET(request) {
 
   const map = await getMovieMap()
 
-  // Fetch TMDB posters in parallel
   const result = {}
   await Promise.all(ids.map(async id => {
     const m = map[id]
