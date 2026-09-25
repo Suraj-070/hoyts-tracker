@@ -1026,7 +1026,7 @@ export default function App() {
             <SRow label="Cache"           value={(() => { const c = loadC(cinemaId); return c ? `${c.length} sessions` : 'Empty' })()} />
             <div style={{ display:'flex', gap:8, marginTop:12, flexWrap:'wrap' }}>
               <button onClick={() => fetch$(cinemaId)} disabled={loading} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid var(--b2)', background:'var(--surface-2)', color:'var(--fg)' }}>{loading ? 'Refreshing…' : 'Refresh now'}</button>
-              <button onClick={() => { localStorage.removeItem(CK(cinemaId)); localStorage.removeItem('hoyts-movies'); clearPosters(); setSessions([]); setMovieMap({}); setTimeout(() => fetch$(cinemaId), 100) }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'transparent', color:'#EF4444' }}>Clear Cache</button>
+              <button onClick={() => { try { localStorage.clear() } catch(e) {}; Object.keys(posterCache).forEach(k => delete posterCache[k]); setSessions([]); setMovieMap({}); setTimeout(() => window.location.reload(), 200) }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'transparent', color:'#EF4444' }}>Clear Cache</button>
             </div>
           </Sec>
           <Sec label="Movie details">
@@ -1043,7 +1043,7 @@ export default function App() {
             })}
           </Sec>
           <Sec label="Data">
-            <button onClick={() => { if (confirm('Clear all saved data?')) { clearAll(); setSessions([]); setMovieMap({}); Object.keys(posterCache).forEach(k => delete posterCache[k]); setTimeout(() => fetch$(cinemaId), 100) } }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'rgba(239,68,68,0.07)', color:'#EF4444' }}>Clear all data</button>
+            <button onClick={() => { if (confirm('Clear all saved data?')) { try { localStorage.clear() } catch(e) {}; Object.keys(posterCache).forEach(k => delete posterCache[k]); window.location.reload() } }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'rgba(239,68,68,0.07)', color:'#EF4444' }}>Clear all data</button>
           </Sec>
         </div>
       )}
