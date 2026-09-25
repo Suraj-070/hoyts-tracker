@@ -1055,7 +1055,6 @@ export default function App() {
             </p>
             {[...new Set(sessions.map(s => s.movieId).filter(Boolean))].map(mid => {
               const m = { ...KNOWN_MOVIES, ...movieMap }[mid] || {}
-              const [tmdbId, setTmdbId] = React.useState(m.tmdbId || '')
               return (
                 <div key={mid} style={{ display:'flex', gap:8, marginBottom:8, alignItems:'center' }}>
                   <div style={{ flex:1, minWidth:0 }}>
