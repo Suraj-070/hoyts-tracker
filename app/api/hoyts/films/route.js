@@ -81,8 +81,12 @@ async function tmdbPoster(name) {
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
-  const ids = (searchParams.get('ids') || '').split(',').map(s => s.trim()).filter(Boolean)
+  const ids   = (searchParams.get('ids') || '').split(',').map(s => s.trim()).filter(Boolean)
+  const bust  = searchParams.get('t')
   if (!ids.length) return Response.json({})
+
+  // If cache-bust param present, invalidate server cache
+  if (bust) { cache = null; cacheAt = 0 }
 
   const map    = await getMovieMap()
   const result = {}

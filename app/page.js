@@ -906,7 +906,7 @@ export default function App() {
       setSessions(arr); setLastFetched(new Date()); saveC(id, arr)
       const miss = [...new Set(arr.map(s => s.movieId).filter(Boolean))].filter(mid => { const m = { ...KNOWN_MOVIES, ...mmRef.current }[mid]; return !m || !m.name })
       if (miss.length) {
-        fetch(`/api/hoyts/films?ids=${miss.join(',')}`).then(r => r.json()).then(map => {
+        fetch(`/api/hoyts/films?ids=${miss.join(',')}&t=${Date.now()}`).then(r => r.json()).then(map => {
           const mg = { ...mmRef.current }
           Object.entries(map).forEach(([id, f]) => {
             if (f && (f.name || f.runtime || f.posterImage)) {
@@ -1023,10 +1023,10 @@ export default function App() {
             <SRow label="Sessions loaded" value={sessions.length} />
             <SRow label="Dates available" value={dates.length} />
             <SRow label="Last updated"    value={lastFetched ? lastFetched.toLocaleTimeString('en-AU') : '--'} />
-            <SRow label="Cache"           value={(() => { const c = loadC(cinemaId); return c ? `${c.length} sessions (2 days)` : 'Empty' })()} />
+            <SRow label="Cache"           value={(() => { const c = loadC(cinemaId); return c ? `${c.length} sessions` : 'Empty' })()} />
             <div style={{ display:'flex', gap:8, marginTop:12, flexWrap:'wrap' }}>
               <button onClick={() => fetch$(cinemaId)} disabled={loading} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid var(--b2)', background:'var(--surface-2)', color:'var(--fg)' }}>{loading ? 'Refreshing…' : 'Refresh now'}</button>
-              <button onClick={() => { localStorage.removeItem(CK(cinemaId)); clearPosters(); setSessions([]); fetch$(cinemaId) }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'transparent', color:'#EF4444' }}>Clear Cache</button>
+              <button onClick={() => { localStorage.removeItem(CK(cinemaId)); localStorage.removeItem('hoyts-movies'); clearPosters(); setSessions([]); setMovieMap({}); setTimeout(() => fetch$(cinemaId), 100) }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'transparent', color:'#EF4444' }}>Clear Cache</button>
             </div>
           </Sec>
           <Sec label="Movie details">
@@ -1043,7 +1043,7 @@ export default function App() {
             })}
           </Sec>
           <Sec label="Data">
-            <button onClick={() => { if (confirm('Clear all saved data?')) { clearAll(); setSessions([]); setMovieMap({}) } }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'rgba(239,68,68,0.07)', color:'#EF4444' }}>Clear all data</button>
+            <button onClick={() => { if (confirm('Clear all saved data?')) { clearAll(); setSessions([]); setMovieMap({}); Object.keys(posterCache).forEach(k => delete posterCache[k]); setTimeout(() => fetch$(cinemaId), 100) } }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'rgba(239,68,68,0.07)', color:'#EF4444' }}>Clear all data</button>
           </Sec>
         </div>
       )}
