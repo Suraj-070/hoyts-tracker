@@ -883,6 +883,7 @@ export default function App() {
   const [lastFetched, setLastFetched] = useState(null)
   const [view,        setView]        = useState('tonight')
   const [picker,      setPicker]      = useState(false)
+  const [cacheCleared, setCacheCleared] = useState(false)
   const { groups, add: addGroup, update: updateGroup, remove: removeGroup } = useGroups(cinemaId)
   const [groupEditor, setGroupEditor] = useState(null) // null=closed, {}=new, {id,...}=edit
 
@@ -1018,6 +1019,12 @@ export default function App() {
             <label style={{ display:'block', fontFamily:'var(--font)', fontSize:10, fontWeight:500, letterSpacing:.5, textTransform:'uppercase', color:'var(--fg-3)', marginBottom:10 }}>Your cinema</label>
             <CinemaPicker value={cinemaId} onOpen={() => setPicker(true)} />
           </Sec>
+          {cacheCleared && (
+            <div style={{ marginBottom:12, padding:'10px 14px', background:'var(--green-bg)', border:'1px solid var(--green-bdr)', borderRadius:'var(--r-md)', display:'flex', alignItems:'center', gap:8 }}>
+              <i className="ti ti-check" style={{ fontSize:14, color:'var(--green)' }}/>
+              <span style={{ fontFamily:'var(--font)', fontSize:13, fontWeight:600, color:'var(--green)' }}>Cache cleared — fetching fresh data</span>
+            </div>
+          )}
           <Sec label="Status">
             <SRow label="Cinema"          value={cinema?.name || '--'} />
             <SRow label="Sessions loaded" value={sessions.length} />
@@ -1026,7 +1033,7 @@ export default function App() {
             <SRow label="Cache"           value={(() => { const c = loadC(cinemaId); return c ? `${c.length} sessions` : 'Empty' })()} />
             <div style={{ display:'flex', gap:8, marginTop:12, flexWrap:'wrap' }}>
               <button onClick={() => fetch$(cinemaId)} disabled={loading} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid var(--b2)', background:'var(--surface-2)', color:'var(--fg)' }}>{loading ? 'Refreshing…' : 'Refresh now'}</button>
-              <button onClick={() => { try { localStorage.clear() } catch(e) {}; Object.keys(posterCache).forEach(k => delete posterCache[k]); setSessions([]); setMovieMap({}); setTimeout(() => window.location.reload(), 200) }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'transparent', color:'#EF4444' }}>Clear Cache</button>
+              <button onClick={() => { try { localStorage.clear() } catch(e) {}; Object.keys(posterCache).forEach(k => delete posterCache[k]); setSessions([]); setMovieMap({}); setCacheCleared(true); fetch$(cinemaId); setTimeout(() => setCacheCleared(false), 3000) }} style={{ fontFamily:'var(--font)', fontWeight:600, fontSize:13, padding:'8px 14px', borderRadius:8, border:'1px solid rgba(239,68,68,0.28)', background:'transparent', color:'#EF4444' }}>Clear Cache</button>
             </div>
           </Sec>
           <Sec label="Movie details">
